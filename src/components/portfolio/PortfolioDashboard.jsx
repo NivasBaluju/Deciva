@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import PortfolioSummaryCards from './PortfolioSummaryCards';
 import PortfolioAttentionQueue from './PortfolioAttentionQueue';
 import PortfolioHealthTable from './PortfolioHealthTable';
@@ -16,11 +17,35 @@ import { PortfolioAnalyticsApi } from '../../services/portfolioAnalyticsApi';
 import { useToast } from '../../context/ToastContext';
 
 export const PortfolioDashboard = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('MONITORING');
   const [viewMode, setViewMode] = useState('EXECUTIVE'); // 'EXECUTIVE' | 'DENSE'
   const { toast } = useToast();
+
+  const tabParam = searchParams.get('tab');
+
+  useEffect(() => {
+    if (!tabParam) return;
+    const lower = tabParam.toLowerCase();
+    if (['monitoring', 'telemetry', 'events'].includes(lower)) {
+      setActiveSection('MONITORING');
+    } else if (['contracts', 'health', 'risk'].includes(lower)) {
+      setActiveSection('CONTRACTS');
+    } else if (['attention', 'deadlines', 'urgent', 'escalations'].includes(lower)) {
+      setActiveSection('ATTENTION');
+    } else if (['approvals', 'governed', 'operations'].includes(lower)) {
+      setActiveSection('APPROVALS');
+    } else if (['audit', 'compliance', 'export'].includes(lower)) {
+      setActiveSection('AUDIT');
+    }
+  }, [tabParam]);
+
+  const handleSectionSelect = (sectionId) => {
+    setActiveSection(sectionId);
+    setSearchParams({ tab: sectionId.toLowerCase() });
+  };
 
   const fetchSummary = async () => {
     setLoading(true);
@@ -161,7 +186,7 @@ export const PortfolioDashboard = () => {
               <button
                 key={s.id}
                 type="button"
-                onClick={() => setActiveSection(s.id)}
+                onClick={() => handleSectionSelect(s.id)}
                 className={`text-left p-3 border transition-all duration-fast flex flex-col justify-between ${
                   isActive
                     ? 'bg-ink text-paper border-ink font-medium shadow-sm'

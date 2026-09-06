@@ -46,7 +46,8 @@ const DOC_TABS = [
 
 export const DocumentDetail = () => {
   const { id, tab } = useParams();
-  const activeTab = tab || 'overview';
+  const isValidTab = DOC_TABS.some((t) => t.id === tab);
+  const activeTab = isValidTab ? tab : 'overview';
   const [doc, setDoc] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);

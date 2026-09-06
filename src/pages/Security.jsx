@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import PageTransition from '../components/common/PageTransition';
+import Breadcrumb from '../components/ui/Breadcrumb';
+import Icon from '../components/common/Icon';
 
 import ObservatoryRadial from '../components/security/ObservatoryRadial';
 import ObservatoryDetailPanel from '../components/security/ObservatoryDetailPanel';
@@ -89,14 +92,25 @@ export const Security = () => {
 
   return (
     <PageTransition>
+      <Breadcrumb items={[{ label: 'Cockpit', href: '/dashboard' }, { label: 'Security & Ledger' }]} />
+
       {/* Header */}
-      <div className="security-page-header mb-16">
+      <div className="security-page-header flex flex-wrap items-center justify-between gap-4 mb-16">
         <div>
           <span className="mono text-lo small" style={{ letterSpacing: '0.08em' }}>[ZERO-TRUST_OBSERVATORY]</span>
           <h1 className="page-title" style={{ marginTop: '2px', marginBottom: '4px' }}>Security Center</h1>
           <p className="page-sub" style={{ margin: 0 }}>
             Real-time zero-trust posture and cryptographic integrity.
           </p>
+        </div>
+        <div>
+          <Link
+            to="/security/mfa-setup"
+            className="btn btn-outline btn-sm"
+            style={{ fontSize: '12px', padding: '7px 14px' }}
+          >
+            <Icon.shield width={14} height={14} /> {zt?.mfaEnabled ? 'Authenticator Active (TOTP)' : 'Configure TOTP MFA'}
+          </Link>
         </div>
       </div>
 

@@ -124,10 +124,18 @@ export const ObservatoryDetailPanel = ({
               </div>
             </div>
 
-            <div className="panel-actions-row mt-16">
+            <div className="panel-actions-row mt-16 flex flex-wrap items-center justify-between gap-3">
               <span className="badge badge-ok" style={{ padding: '6px 12px', fontSize: '12px' }}>
-                ✓ Email OTP Multi-Factor Verification Active
+                {zt?.mfaEnabled ? '✓ Authenticator App (TOTP) Active' : '✓ Email OTP Verification Active'}
               </span>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => navigate('/security/mfa-setup')}
+                style={{ fontSize: '12px', padding: '6px 12px' }}
+              >
+                <Icon.shield width={13} height={13} /> {zt?.mfaEnabled ? 'Reconfigure Authenticator' : 'Configure Authenticator App (TOTP)'}
+              </button>
             </div>
           </div>
         )}

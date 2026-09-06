@@ -34,6 +34,7 @@ const Upload = lazy(() => import('./pages/Upload'));
 const Documents = lazy(() => import('./pages/Documents'));
 const DocumentDetail = lazy(() => import('./pages/DocumentDetail'));
 const Contracts = lazy(() => import('./pages/Contracts'));
+const Deadlines = lazy(() => import('./pages/Deadlines'));
 const Security = lazy(() => import('./pages/Security'));
 const Portfolio = lazy(() => import('./pages/Portfolio'));
 const MfaSetup = lazy(() => import('./pages/MfaSetup'));
@@ -193,7 +194,11 @@ const AppContent = () => {
             />
             <Route
               path="/deadlines"
-              element={<Navigate to="/portfolio?tab=deadlines" replace />}
+              element={
+                <ProtectedRoute>
+                  <Deadlines />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/security"
@@ -221,6 +226,14 @@ const AppContent = () => {
             />
             <Route
               path="/security/mfa-setup"
+              element={
+                <ProtectedRoute>
+                  <MfaSetup />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mfa-setup"
               element={
                 <ProtectedRoute>
                   <MfaSetup />

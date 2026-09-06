@@ -6,7 +6,7 @@ import PageTransition from '../components/common/PageTransition';
 export default function Integrations() {
   return (
     <PageTransition>
-      <div className="min-h-screen bg-paper text-ink pt-28 pb-16">
+      <div className="w-full text-ink pb-16">
         <div className="container-wide">
           <div className="mb-6">
             <Breadcrumb items={[{ label: 'Cockpit', href: '/dashboard' }, { label: 'Integrations' }]} />
