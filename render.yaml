@@ -1,10 +1,49 @@
 services:
+  # ---------------------------------------------------------------------------
+  # Tier 2: Node.js / Express API Gateway
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: deciva-api-gateway
+    env: node
+    plan: starter
+    buildCommand: npm ci --production && npm run build
+    startCommand: node server/index.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: INTERNAL_SERVICE_KEY
+        fromService:
+          type: web
+          name: deciva-ai-backend
+          envVarKey: INTERNAL_SERVICE_KEY
+      - key: AI_MICROSERVICE_URL
+        fromService:
+          type: web
+          name: deciva-ai-backend
+          property: host
+      - key: CLIENT_URL
+        value: https://deciva-ai.vercel.app
+
+  # ---------------------------------------------------------------------------
+  # Tier 4: Python / Flask AI Microservice
+  # ---------------------------------------------------------------------------
   - type: web
     name: deciva-ai-backend
     env: python
+    plan: starter
     buildCommand: pip install -r backend/requirements.txt
     startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
-    plan: free
+    healthCheckPath: /health
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
@@ -15,5 +54,7 @@ services:
         sync: false
       - key: INTERNAL_SERVICE_KEY
         generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
       - key: ALLOWED_ORIGINS
         value: https://deciva-ai.vercel.app,http://localhost:5000,http://localhost:3000

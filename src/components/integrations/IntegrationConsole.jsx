@@ -22,7 +22,7 @@ export default function IntegrationConsole() {
     name: '',
     provider: 'generic_rest',
     integration_type: 'DOCUMENT_SOURCE',
-    endpoint_url: 'http://localhost:5000/mock/partner',
+    endpoint_url: '',
     mock: true,
     secret: ''
   });
@@ -99,7 +99,7 @@ export default function IntegrationConsole() {
         name: '',
         provider: 'generic_rest',
         integration_type: 'DOCUMENT_SOURCE',
-        endpoint_url: 'http://localhost:5000/mock/partner',
+        endpoint_url: '',
         mock: true,
         secret: ''
       });

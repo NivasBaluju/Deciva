@@ -21,11 +21,19 @@ def get_db_url():
     except Exception:
         return url
 
-def get_db_connection():
+import time
+
+def get_db_connection(max_retries=2):
     db_url = get_db_url()
-    conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor)
-    conn.autocommit = True
-    return conn
+    for attempt in range(max_retries):
+        try:
+            conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor)
+            conn.autocommit = True
+            return conn
+        except psycopg2.OperationalError:
+            if attempt == max_retries - 1:
+                raise
+            time.sleep(0.5)
 
 def test_connection():
     try:

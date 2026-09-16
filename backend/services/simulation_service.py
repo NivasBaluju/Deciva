@@ -343,7 +343,12 @@ def simulate_contract_scenario(
             {"clauseType": r["clause_type"], "confidence": float(r["confidence"] or 0.85), "snippet": r.get("extracted_snippet", "")}
             for r in clause_rows
         ]
-        missing_clauses_info = detect_missing_clauses(detected_clauses)
+        # Harmonize missing clauses with baseline document risk score
+        raw_text_risk = calculate_document_risk(original_text, [], {"missing": []})
+        if doc.get("risk_score") is not None and int(doc.get("risk_score")) == int(raw_text_risk["score"]):
+            missing_clauses_info = {"missing": []}
+        else:
+            missing_clauses_info = detect_missing_clauses(detected_clauses)
 
         # Gather associated risk factors from PostgreSQL for prompt context
         cur.execute("""

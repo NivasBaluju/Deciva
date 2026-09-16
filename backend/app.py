@@ -60,7 +60,7 @@ def create_app():
         incoming_cid = request.headers.get('x-correlation-id') or request.headers.get('x-request-id')
         g.correlation_id = incoming_cid if incoming_cid else str(uuid.uuid4())
 
-        if request.path in ['/api/health', '/api/health/live', '/api/health/ready', '/']:
+        if request.path in ['/health', '/api/health', '/api/health/live', '/api/health/ready', '/']:
             return None
 
         if require_internal_key:
@@ -93,6 +93,7 @@ def create_app():
             "correlationId": getattr(g, 'correlation_id', None)
         }), 200
 
+    @app.route('/health', methods=['GET'])
     @app.route('/api/health', methods=['GET'])
     @app.route('/api/health/ready', methods=['GET'])
     def health_check():

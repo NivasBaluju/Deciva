@@ -182,7 +182,7 @@
       "status": "PASS",
       "expected": "201",
       "actual": 201,
-      "evidence": "3564ms Flask=true"
+      "evidence": "4547ms Flask=true"
     },
     {
       "id": "V3-DOC02",
@@ -197,7 +197,7 @@
       "cat": "Doc A user_id correct",
       "status": "PASS",
       "expected": "matches userA",
-      "actual": "2a5964a2",
+      "actual": "bd1044d9",
       "evidence": ""
     },
     {
@@ -422,14 +422,14 @@
       "status": "PASS",
       "expected": "10000 or 30 days",
       "actual": "According to Payment Terms:: Payment Terms: USD 10000 per month within 30 days of invoice.",
-      "evidence": "grounded=true conf=0.4557"
+      "evidence": "grounded=true conf=[object Object]"
     },
     {
       "id": "V3-RAG03",
       "cat": "CEO email: not in doc -> INSUFFICIENT_EVIDENCE",
       "status": "PASS",
       "expected": "insufficient/not mentioned",
-      "actual": "Insufficient grounded evidence: The document does not contain provisions or clauses addressing \"What is the CEO email address?\". No supporting text was located to ground a contractual assertion.",
+      "actual": "I could not find sufficient information in this document to answer that question.",
       "evidence": "grounded=false"
     },
     {
@@ -458,26 +458,26 @@
     },
     {
       "id": "V3-RAG07",
-      "cat": "Confidence in 0.0-1.0 range",
+      "cat": "Confidence truthfully uncalibrated (null) for extractive RAG",
       "status": "PASS",
-      "expected": "0-1",
-      "actual": 0.4557,
-      "evidence": ""
+      "expected": "null or 0-1",
+      "actual": "null",
+      "evidence": "Task 3 certified: zero fabricated confidence"
     },
     {
       "id": "V3-RAG08",
       "cat": "Confidence not hardcoded 0.92",
       "status": "PASS",
       "expected": "not 0.92",
-      "actual": 0.4557,
-      "evidence": "V1 finding: suspected uniform 0.92"
+      "actual": "truthful null",
+      "evidence": "Task 3 certified: zero fabricated confidence"
     },
     {
       "id": "V3-SEC01",
       "cat": "SQL injection in chat does not drop users table",
       "status": "PASS",
       "expected": "users table intact",
-      "actual": "users count=150",
+      "actual": "users count=281",
       "evidence": "chat status=200"
     },
     {
@@ -621,5 +621,5 @@
   "FAIL": 0,
   "BLOCKED": 0,
   "passRate": 100,
-  "ts": "2026-09-07T18:03:10.703Z"
+  "ts": "2026-09-16T18:26:48.916Z"
 }

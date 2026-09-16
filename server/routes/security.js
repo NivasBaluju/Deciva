@@ -28,6 +28,17 @@ router.get('/dashboard', requireAuth, async (req, res) => {
 
     const chain = await verifyChain();
 
+    const tenantId = req.user.tenant_id || req.user.id;
+    const compRes = await db.query(
+      `SELECT COUNT(*) AS c, AVG(compliance_score) AS avg_score
+       FROM contract_compliance_evaluations
+       WHERE tenant_id = $1 OR document_id IN (SELECT id FROM documents WHERE user_id = $2)`,
+      [tenantId, req.user.id]
+    );
+    const compCount = Number(compRes.rows[0]?.c || 0);
+    const complianceScore = compCount > 0 ? Math.round(Number(compRes.rows[0].avg_score)) : null;
+    const complianceStatus = compCount > 0 ? 'ASSESSED' : 'NOT_ASSESSED';
+
     res.json({
       documentsUploaded: docCount,
       avgRiskScore: avgRisk ? Math.round(avgRisk) : 0,
@@ -37,7 +48,9 @@ router.get('/dashboard', requireAuth, async (req, res) => {
       activeSessions,
       trustScore: req.trust.score,
       auditLedger: { totalBlocks: chain.totalBlocks, valid: chain.valid },
-      complianceGauge: 82
+      complianceGauge: complianceScore,
+      complianceStatus,
+      complianceEvaluationsCount: compCount
     });
   } catch (err) {
     console.error('Dashboard error:', err);

@@ -542,7 +542,7 @@ Router.register('#/dashboard', async () => {
       ${metricCard(Icon.chat,     'metric-icon-blue',  d.chatInteractions,  'AI Chat Sessions', null)}
       ${metricCard(Icon.pen,      'metric-icon-gold',  d.contractsGenerated,'Contracts Generated', null)}
       ${metricCard(Icon.lock,     'metric-icon-navy',  d.activeSessions,    'Active Sessions', null)}
-      ${metricCard(Icon.check,    'metric-icon-green', d.complianceGauge + '%', 'Compliance Score', 'badge-ok')}
+      ${metricCard(Icon.check,    'metric-icon-green', (d.complianceGauge !== null && d.complianceGauge !== undefined) ? d.complianceGauge + '%' : 'N/A', 'Compliance Score', d.complianceGauge !== null ? 'badge-ok' : 'badge-warn')}
     </div>
 
     <!-- Row 3: Audit Ledger + Quick Actions -->

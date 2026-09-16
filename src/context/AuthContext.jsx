@@ -31,7 +31,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     try {
       localStorage.removeItem('deciva_token');
-      localStorage.removeItem('docugaurd_token');
       localStorage.removeItem('token');
     } catch (e) {}
 
@@ -59,7 +58,6 @@ export const AuthProvider = ({ children }) => {
     try {
       localStorage.removeItem('token');
       localStorage.removeItem('deciva_token');
-      localStorage.removeItem('docugaurd_token');
       sessionStorage.clear();
     } catch (e) {}
     setUser(null);

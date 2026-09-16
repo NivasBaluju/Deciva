@@ -1,0 +1,44 @@
+# =============================================================================
+# Deciva AI — Tier 4: AI Microservice Container (Python / Flask)
+# =============================================================================
+
+FROM python:3.11-slim AS base
+
+# Install system utilities and build dependencies required for PDF parsing and OCR
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    tesseract-ocr \
+    libmupdf-dev \
+    gcc \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Set environment
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV FLASK_ENV=production
+ENV PORT=5001
+
+# Copy dependency definition and install
+COPY backend/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy backend source and wsgi entrypoint
+COPY backend/ ./backend/
+COPY wsgi.py ./wsgi.py
+
+# Run as non-privileged system user
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 5001
+
+# Health check
+HEALTHCHECK --interval=20s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5001/health || exit 1
+
+# Run with production WSGI server (Gunicorn)
+CMD ["gunicorn", "wsgi:app", "--bind", "0.0.0.0:5001", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]

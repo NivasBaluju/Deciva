@@ -1,23 +1,28 @@
 const TOKEN_KEY = 'deciva_token';
 
+// In-memory token override for non-cookie programmatic callers / test harnesses.
+// In standard browser execution, authentication is governed 100% via httpOnly
+// cookies via credentials: 'include' (GAP-01).
+let _inMemoryToken = null;
+
 export const Api = {
   getToken() {
-    return sessionStorage.getItem(TOKEN_KEY);
+    return _inMemoryToken;
   },
   setToken(token) {
-    sessionStorage.setItem(TOKEN_KEY, token);
+    _inMemoryToken = token || null;
     try {
       localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem('docugaurd_token');
       localStorage.removeItem('token');
+      sessionStorage.removeItem(TOKEN_KEY);
     } catch (e) {}
   },
   clearToken() {
-    sessionStorage.removeItem(TOKEN_KEY);
+    _inMemoryToken = null;
     try {
       localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem('docugaurd_token');
       localStorage.removeItem('token');
+      sessionStorage.removeItem(TOKEN_KEY);
     } catch (e) {}
   },
 

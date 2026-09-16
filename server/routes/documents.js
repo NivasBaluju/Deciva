@@ -921,6 +921,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     const fileHash = sha256(req.file.buffer);
 
     // 1. In-process concurrency synchronization check
+    let currentInFlightPromise = null;
     if (idempotencyKey) {
       inFlightKey = `${req.user.id}:${idempotencyKey}`;
       if (activeInFlightUploads.has(inFlightKey)) {
@@ -930,6 +931,13 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
         } catch (_) {
           // If the in-flight failed, proceed to database check/retry
         }
+      } else {
+        currentInFlightPromise = new Promise((resolve, reject) => {
+          resolveInFlight = resolve;
+          rejectInFlight = reject;
+        });
+        currentInFlightPromise.catch(() => {});
+        activeInFlightUploads.set(inFlightKey, currentInFlightPromise);
       }
     }
 
@@ -941,6 +949,9 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       );
 
       if (existingRows.length > 0) {
+        if (inFlightKey && activeInFlightUploads.get(inFlightKey) === currentInFlightPromise) {
+          activeInFlightUploads.delete(inFlightKey);
+        }
         const existing = existingRows[0];
         if (existing.request_hash !== fileHash) {
           return res.status(409).json({
@@ -986,16 +997,6 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     const tmpName = `${canonicalDocumentId}.tmp`;
     tmpFilePath = path.join(uploadsDir, tmpName);
 
-    // Register in-flight promise for in-process concurrency coordination
-    if (idempotencyKey) {
-      const p = new Promise((resolve, reject) => {
-        resolveInFlight = resolve;
-        rejectInFlight = reject;
-      });
-      p.catch(() => {});
-      activeInFlightUploads.set(inFlightKey, p);
-    }
-
     // 4. Register Persistent PROCESSING Record in PostgreSQL
     if (idempotencyKey) {
       try {
@@ -1005,12 +1006,6 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
         `, [uuidv4(), req.user.id, idempotencyKey, fileHash, canonicalDocumentId]);
       } catch (insertErr) {
         if (insertErr.code === '23505') { // Unique constraint violation (user_id, idempotency_key)
-          if (rejectInFlight) {
-            rejectInFlight(new Error('Concurrency conflict: key already processing or completed'));
-          }
-          if (inFlightKey) {
-            activeInFlightUploads.delete(inFlightKey);
-          }
           const { rows: raceRows } = await db.query(
             'SELECT id, user_id, idempotency_key, request_hash, document_id, status, response_payload FROM upload_idempotency WHERE user_id = $1 AND idempotency_key = $2',
             [req.user.id, idempotencyKey]
@@ -1018,12 +1013,24 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
           if (raceRows.length > 0) {
             const row = raceRows[0];
             if (row.request_hash !== fileHash) {
+              if (rejectInFlight) {
+                rejectInFlight(new Error('Concurrency conflict: key already processing or completed'));
+              }
+              if (inFlightKey && activeInFlightUploads.get(inFlightKey) === currentInFlightPromise) {
+                activeInFlightUploads.delete(inFlightKey);
+              }
               return res.status(409).json({
                 error: 'Idempotency key has already been used for a different file upload payload.',
                 code: 'IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD'
               });
             }
             if (row.status === 'PROCESSING') {
+              if (inFlightKey && activeInFlightUploads.has(inFlightKey)) {
+                try {
+                  const inFlightResult = await activeInFlightUploads.get(inFlightKey);
+                  return res.status(200).json(inFlightResult);
+                } catch (_) {}
+              }
               res.setHeader('Retry-After', '1');
               return res.status(409).json({
                 error: 'Upload operation with this idempotency key is currently in progress.',
@@ -1033,6 +1040,12 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
             if (row.status === 'COMPLETED' && row.response_payload) {
               return res.status(200).json(row.response_payload);
             }
+          }
+          if (inFlightKey && activeInFlightUploads.has(inFlightKey)) {
+            try {
+              const inFlightResult = await activeInFlightUploads.get(inFlightKey);
+              return res.status(200).json(inFlightResult);
+            } catch (_) {}
           }
           return res.status(409).json({
             error: 'Upload operation with this idempotency key is currently in progress.',

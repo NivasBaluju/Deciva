@@ -45,7 +45,7 @@ function sanitizeData(data, depth = 0) {
     const clean = {};
     for (const [k, v] of Object.entries(data)) {
       const lowerKey = k.toLowerCase();
-      if (SENSITIVE_KEYS.has(lowerKey) || lowerKey.includes('password') || lowerKey.includes('secret') || lowerKey.includes('token')) {
+      if (SENSITIVE_KEYS.has(lowerKey) || lowerKey.includes('password') || lowerKey.includes('secret') || lowerKey.includes('token') || lowerKey.includes('key')) {
         clean[k] = '[REDACTED]';
       } else {
         clean[k] = sanitizeData(v, depth + 1);
