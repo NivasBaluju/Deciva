@@ -31,8 +31,8 @@ const fs = require('fs');
 const { chromium } = require('playwright');
 const db = require('../server/db');
 
-const BASE_URL = 'http://localhost:3000';
-const GATEWAY_URL = 'http://127.0.0.1:5000';
+const BASE_URL = (process.env.CLIENT_URL || 'http://localhost:3000').replace(/\/+$/, '');
+const GATEWAY_URL = (process.env.GATEWAY_URL || 'http://127.0.0.1:5000').replace(/\/+$/, '');
 
 // Detect system Chrome or Edge binary
 function getBrowserExecutablePath() {
