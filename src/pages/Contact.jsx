@@ -4,12 +4,6 @@ import Button from '../components/ui/Button';
 import ThinkingLoader from '../components/common/ThinkingLoader';
 import Breadcrumb from '../components/ui/Breadcrumb';
 
-/**
- * Contact — Part 10.9
- * Split 5/7 layout on desktop, underline inputs,
- * active-voice submission with ThinkingOrb waiting state,
- * and calm typographic confirmation in aria-live region.
- */
 export function Contact() {
   const [formData, setFormData] = useState({
     name: '',
@@ -36,7 +30,6 @@ export function Contact() {
     setError('');
     setSubmitting(true);
 
-    // Simulate realistic executive dispatch handoff (900ms)
     setTimeout(() => {
       setSubmitting(false);
       setSubmitted(true);
@@ -49,7 +42,6 @@ export function Contact() {
         <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Contact' }]} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-20 items-start">
-          {/* Left Column (5 of 12): Editorial Lede & Offices */}
           <div className="lg:col-span-5">
             <h1 className="display-02 text-ink tracking-tight mb-6">
               Let’s talk.
@@ -82,7 +74,6 @@ export function Contact() {
             </div>
           </div>
 
-          {/* Right Column (7 of 12): Underline Form or Confirmation */}
           <div className="lg:col-span-7 bg-paper-dim p-8 sm:p-12 border border-rule">
             {submitted ? (
               <div

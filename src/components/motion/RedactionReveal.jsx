@@ -7,12 +7,6 @@ if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-/**
- * RedactionReveal — Part 6.2 / Part 19.3
- * The signature motion device of the Paper & Ink design system.
- * A black redaction bar covers the element and draws back via compositor scaleX from right-to-left.
- * Content is always present in DOM for accessibility; bar is aria-hidden="true".
- */
 export function RedactionReveal({
   children,
   triggerOnScroll = true,
@@ -37,9 +31,9 @@ export function RedactionReveal({
     const anim = () => {
       gsap.to(barRef.current, {
         scaleX: 0,
-        duration: 0.7, // --duration-slow
+        duration: 0.7,
         delay: delay,
-        ease: 'cubic-bezier(0.83, 0, 0.17, 1)', // --ease-redact
+        ease: 'cubic-bezier(0.83, 0, 0.17, 1)',
         onStart: () => {
           if (barRef.current) barRef.current.style.willChange = 'transform';
         },

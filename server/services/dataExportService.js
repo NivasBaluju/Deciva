@@ -67,7 +67,6 @@ async function exportTenantData(tenantId, { requestedBy = null } = {}) {
       contract_actions: []
     };
 
-    // 1. Documents & versions
     const { rows: docs } = await db.query('SELECT * FROM documents WHERE tenant_id = $1', [tenantId]);
     datasets.documents = docs.map(scrubSecrets);
 
@@ -82,7 +81,6 @@ async function exportTenantData(tenantId, { requestedBy = null } = {}) {
       } catch {}
     }
 
-    // 2. Monitoring & Workflows
     try {
       const { rows: monEvents } = await db.query(
         'SELECT * FROM contract_monitoring_events WHERE tenant_id = $1',
@@ -108,7 +106,6 @@ async function exportTenantData(tenantId, { requestedBy = null } = {}) {
       }
     } catch {}
 
-    // 3. Governance Policies, Controls, Evaluations, Findings & Exceptions
     try {
       const { rows: policies } = await db.query(
         'SELECT * FROM contract_governance_policies WHERE tenant_id = $1',
@@ -147,7 +144,6 @@ async function exportTenantData(tenantId, { requestedBy = null } = {}) {
       datasets.contract_governance_exceptions = exceptions.map(scrubSecrets);
     } catch {}
 
-    // 4. Integrations Mappings & Actions
     try {
       const { rows: mappings } = await db.query(
         'SELECT * FROM integration_object_mappings WHERE tenant_id = $1',

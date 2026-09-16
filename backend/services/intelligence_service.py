@@ -50,7 +50,6 @@ SCORE_WEIGHTS = {
     }
 }
 
-
 def _detect_contract_conflicts(document_text: str, segments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Deterministic rule and heuristic-based contradiction & inconsistency detector.
@@ -60,7 +59,6 @@ def _detect_contract_conflicts(document_text: str, segments: List[Dict[str, Any]
     conflicts = []
     text_lower = (document_text or "").lower()
 
-    # 1. Check for conflicting payment timelines across document
     # e.g., "within 30 days" in one place and "within 15 days" in another
     payment_terms = []
     for seg in segments:
@@ -90,7 +88,6 @@ def _detect_contract_conflicts(document_text: str, segments: List[Dict[str, Any]
             "disclaimer": AUTOMATED_ANALYSIS_DISCLAIMER
         })
 
-    # 2. Check for conflicting notice periods
     notice_terms = []
     for seg in segments:
         seg_text = seg.get("segment_text") or seg.get("text") or ""
@@ -119,7 +116,6 @@ def _detect_contract_conflicts(document_text: str, segments: List[Dict[str, Any]
             "disclaimer": AUTOMATED_ANALYSIS_DISCLAIMER
         })
 
-    # 3. Check for governing law conflicts
     jurisdiction_matches = re.findall(r'(?:laws\s+of\s+the\s+state\s+of|governed\s+by\s+the\s+laws\s+of)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)', document_text or "")
     if len(set(jurisdiction_matches)) > 1:
         conflicts.append({
@@ -132,7 +128,6 @@ def _detect_contract_conflicts(document_text: str, segments: List[Dict[str, Any]
             "disclaimer": AUTOMATED_ANALYSIS_DISCLAIMER
         })
 
-    # 4. Check for uncapped indemnity vs liability cap tension
     has_cap = bool(re.search(r'(?i)\b(aggregate\s+liability\s+(?:shall\s+not\s+exceed|capped\s+at)|maximum\s+cumulative\s+liability)\b', text_lower))
     has_unlimited_indemnity = bool(re.search(r'(?i)\b(indemnify.*hold\s+harmless.*all\s+claims|unlimited\s+indemnif)\b', text_lower))
     has_indemnity_carveout = bool(re.search(r'(?i)\b(excluding.*indemnif|except\s+for.*indemnif|indemnif.*shall\s+not\s+be\s+subject\s+to.*cap)\b', text_lower))
@@ -153,7 +148,6 @@ def _detect_contract_conflicts(document_text: str, segments: List[Dict[str, Any]
 
     return conflicts
 
-
 def compute_contract_intelligence(document_id: str) -> Dict[str, Any]:
     """
     Pure deterministic intelligence computation engine.
@@ -165,7 +159,6 @@ def compute_contract_intelligence(document_id: str) -> Dict[str, Any]:
     cur = conn.cursor()
 
     try:
-        # 1. Fetch document record
         cur.execute("SELECT id, original_name, filename, extracted_text, risk_score, created_at FROM documents WHERE id = %s;", (document_id,))
         doc_row = cur.fetchone()
         if not doc_row:
@@ -174,7 +167,6 @@ def compute_contract_intelligence(document_id: str) -> Dict[str, Any]:
         extracted_text = doc_row["extracted_text"] or ""
         doc_title = doc_row["original_name"] or doc_row["filename"] or "Contract"
 
-        # 2. Fetch detected clauses
         cur.execute("""
             SELECT c.id, c.clause_type, c.confidence, c.extracted_snippet, c.detection_method,
                    s.id AS segment_id, s.title AS section_title, s.position AS section_position, s.segment_text
@@ -185,19 +177,15 @@ def compute_contract_intelligence(document_id: str) -> Dict[str, Any]:
         """, (document_id,))
         clause_rows = cur.fetchall()
 
-        # 3. Fetch segments
         cur.execute("SELECT id, title, position, segment_text FROM document_segments WHERE document_id = %s ORDER BY position ASC;", (document_id,))
         segment_rows = cur.fetchall()
 
-        # 4. Fetch risk factors
         cur.execute("SELECT id, risk_type, severity, reason, risk_points FROM document_risk_factors WHERE document_id = %s ORDER BY risk_points DESC;", (document_id,))
         risk_rows = cur.fetchall()
 
-        # 5. Fetch deadlines
         cur.execute("SELECT id, deadline_date, relative_deadline, deadline_type, source_text, confidence FROM document_deadlines WHERE document_id = %s ORDER BY deadline_date ASC NULLS LAST;", (document_id,))
         deadline_rows = cur.fetchall()
 
-        # 6. Fetch historical simulations
         cur.execute("SELECT id, scenario, grounded, document_evidence, simulation_analysis, risk_level, created_at FROM contract_simulations WHERE document_id = %s ORDER BY created_at DESC;", (document_id,))
         simulation_rows = cur.fetchall()
 
@@ -222,14 +210,8 @@ def compute_contract_intelligence(document_id: str) -> Dict[str, Any]:
 
         opp_map = {o["clauseType"]: o for o in negotiation_opps}
 
-        # -------------------------------------------------------------
-        # 7. Contradiction & Conflict Engine (Deterministic)
-        # -------------------------------------------------------------
         conflicts = _detect_contract_conflicts(extracted_text, segment_rows or [])
 
-        # -------------------------------------------------------------
-        # 8. Deterministic Action Center & Scoring Engine
-        # -------------------------------------------------------------
         action_items = []
         action_idx = 1
 
@@ -343,7 +325,6 @@ def compute_contract_intelligence(document_id: str) -> Dict[str, Any]:
             # Compute Total Naturally Bounded Priority Score
             total_score = min(100, score_clause_sev + score_neg_imbalance + score_sim_exp + score_deadline_urg + score_compliance)
 
-            # Categorize
             if total_score >= 80:
                 cat = "CRITICAL"
                 sev = "HIGH"
@@ -493,9 +474,6 @@ def compute_contract_intelligence(document_id: str) -> Dict[str, Any]:
         # Sort action items descending by priorityScore deterministically
         action_items.sort(key=lambda x: x["priorityScore"], reverse=True)
 
-        # -------------------------------------------------------------
-        # 9. Metrics & Contract Health Score
-        # -------------------------------------------------------------
         critical_items = [a for a in action_items if a["category"] == "CRITICAL"]
         important_items = [a for a in action_items if a["category"] == "IMPORTANT"]
         monitoring_items = [a for a in action_items if a["category"] == "MONITORING"]
@@ -505,9 +483,6 @@ def compute_contract_intelligence(document_id: str) -> Dict[str, Any]:
         risk_penalty = (len(critical_items) * 15) + (len(important_items) * 8) + (len(monitoring_items) * 3) + (len(conflicts) * 10)
         health_score = max(5, min(100, 100 - risk_penalty))
 
-        # -------------------------------------------------------------
-        # 10. AI Synthesis Layer: Executive Summary Narrative
-        # -------------------------------------------------------------
         # Generate human-readable executive narrative grounded strictly in verified findings
         top_crit = critical_items[0] if critical_items else (important_items[0] if important_items else None)
         top_focus = top_crit['title'] if top_crit else "Standard contract terms"

@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-/**
- * src/components/common/AiDegradedModeBanner.jsx
- * Component 4: Graceful AI Service Degradation & Outage UX
- * Communicates clearly that core document, governance, workflow, audit and monitoring
- * functions remain fully active during external AI microservice degradation or maintenance.
- */
 export default function AiDegradedModeBanner() {
-  const [aiStatus, setAiStatus] = useState('CHECKING'); // 'READY' | 'DEGRADED' | 'OFFLINE' | 'CHECKING'
+  const [aiStatus, setAiStatus] = useState('CHECKING');
   const [isSimulated, setIsSimulated] = useState(false);
   const [isDismissed, setIsDismissed] = useState(() => {
     try {
@@ -52,7 +46,6 @@ export default function AiDegradedModeBanner() {
     try {
       localStorage.setItem('deciva_banner_dismissed', 'true');
     } catch {
-      // ignore
     }
   };
 
@@ -61,13 +54,11 @@ export default function AiDegradedModeBanner() {
     try {
       localStorage.removeItem('deciva_banner_dismissed');
     } catch {
-      // ignore
     }
   };
 
   useEffect(() => {
     checkAiHealth();
-    // Poll every 60s
     const interval = setInterval(checkAiHealth, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -142,7 +133,7 @@ export default function AiDegradedModeBanner() {
                 }}
               />
               <span style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#FCD34D' }}>
-                Operational Advisory {isSimulated && '• [DEMO SIMULATION ACTIVE]'}
+                Operational Advisory {isSimulated && '• Demo Simulation Active'}
               </span>
             </div>
 
@@ -151,7 +142,7 @@ export default function AiDegradedModeBanner() {
             </h2>
 
             <p style={{ margin: 0, fontSize: '0.82rem', lineHeight: 1.45, color: '#D1D5DB' }}>
-              Core document ingestion, 9-dimension risk evaluation, policy governance, workflow approvals, continuous monitoring, and blockchain audit ledger remain <strong>100% operational</strong>. Deep NLP extraction is operating under local deterministic rules.
+              Core document ingestion, 9-dimension risk evaluation, policy governance, workflow approvals, continuous monitoring, and cryptographic audit ledger remain <strong>100% operational</strong>. Deep NLP extraction is operating under local deterministic rules.
             </p>
           </div>
 
@@ -228,7 +219,7 @@ export default function AiDegradedModeBanner() {
               <div style={{ color: '#10B981', fontWeight: 600 }}>ONLINE (Deterministic)</div>
             </div>
             <div style={{ background: '#1F2937', padding: '0.5rem 0.75rem', border: '1px solid #374151' }}>
-              <div style={{ color: '#9CA3AF', marginBottom: '0.2rem' }}>Blockchain Ledger</div>
+              <div style={{ color: '#9CA3AF', marginBottom: '0.2rem' }}>Audit Ledger</div>
               <div style={{ color: '#10B981', fontWeight: 600 }}>VERIFIED (Chain Intact)</div>
             </div>
             <div style={{ background: '#1F2937', padding: '0.5rem 0.75rem', border: '1px solid #374151' }}>

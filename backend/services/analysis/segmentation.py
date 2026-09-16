@@ -22,7 +22,6 @@ def segment_document(document_text: str) -> List[Dict[str, Any]]:
 
     text = document_text.replace('\r\n', '\n').strip()
     
-    # 1. Attempt regex heading split
     split_matches = list(HEADING_PATTERN.finditer(text))
     
     segments = []

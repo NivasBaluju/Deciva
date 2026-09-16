@@ -14,7 +14,6 @@ export const ContractCommandCenter = ({ doc, analysisData, onNavigateTab }) => {
   const deadlines = analysisData?.deadlines || [];
   const nextDeadline = deadlines[0];
 
-  // Grounded Monetary Exposure check (Zero Fabrication Invariant)
   const extractMonetaryExposure = () => {
     const text = doc?.extracted_text || '';
     const match = text.match(/\$\s*([0-9,]+(\.[0-9]{2})?)/);
@@ -26,12 +25,10 @@ export const ContractCommandCenter = ({ doc, analysisData, onNavigateTab }) => {
 
   const monetaryExposure = extractMonetaryExposure();
 
-  // Governance & Policy evaluation estimates
   const governanceStatus = doc?.governance_status || 'NOT_ASSESSED';
   const pendingApprovalsCount = doc?.pending_approvals_count ?? 0;
   const monitoringAlertsCount = doc?.monitoring_alerts_count ?? 0;
 
-  // Build traceable decision items
   const decisionItems = [
     {
       id: 'trace-risk',
@@ -123,7 +120,6 @@ export const ContractCommandCenter = ({ doc, analysisData, onNavigateTab }) => {
         fontFamily: 'var(--font-sans, "Public Sans", sans-serif)'
       }}
     >
-      {/* Header Bar */}
       <div
         style={{
           display: 'flex',
@@ -188,7 +184,6 @@ export const ContractCommandCenter = ({ doc, analysisData, onNavigateTab }) => {
         </div>
       </div>
 
-      {/* Grid of Key Decision Signals */}
       <div
         style={{
           display: 'grid',
@@ -197,7 +192,6 @@ export const ContractCommandCenter = ({ doc, analysisData, onNavigateTab }) => {
           marginBottom: '20px'
         }}
       >
-        {/* Risk Score */}
         <div style={{ border: '1px solid rgba(255, 255, 255, 0.1)', padding: '12px', background: '#121218' }}>
           <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#A1A1AA', fontWeight: 600 }}>Overall Risk</div>
           <div style={{ fontSize: '22px', fontWeight: 700, margin: '4px 0', color: riskScore >= 60 ? '#FCA5A5' : riskScore >= 30 ? '#FDE047' : '#86EFAC' }}>
@@ -208,7 +202,6 @@ export const ContractCommandCenter = ({ doc, analysisData, onNavigateTab }) => {
           </div>
         </div>
 
-        {/* Monetary Exposure */}
         <div style={{ border: '1px solid rgba(255, 255, 255, 0.1)', padding: '12px', background: '#121218' }}>
           <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#A1A1AA', fontWeight: 600 }}>Grounded Exposure</div>
           <div style={{ fontSize: '18px', fontWeight: 700, margin: '6px 0', color: monetaryExposure.grounded ? '#FFFFFF' : '#71717A' }}>
@@ -219,7 +212,6 @@ export const ContractCommandCenter = ({ doc, analysisData, onNavigateTab }) => {
           </div>
         </div>
 
-        {/* Evidence Provisions */}
         <div style={{ border: '1px solid rgba(255, 255, 255, 0.1)', padding: '12px', background: '#121218' }}>
           <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#A1A1AA', fontWeight: 600 }}>Evidence Grounds</div>
           <div style={{ fontSize: '22px', fontWeight: 700, margin: '4px 0', color: '#FFFFFF' }}>
@@ -228,7 +220,6 @@ export const ContractCommandCenter = ({ doc, analysisData, onNavigateTab }) => {
           <div style={{ fontSize: '11px', color: '#A1A1AA' }}>Verified Provisions</div>
         </div>
 
-        {/* Policy Violations */}
         <div style={{ border: '1px solid rgba(255, 255, 255, 0.1)', padding: '12px', background: '#121218' }}>
           <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#A1A1AA', fontWeight: 600 }}>Policy Governance</div>
           <div style={{ fontSize: '18px', fontWeight: 700, margin: '6px 0', color: '#FFFFFF' }}>
@@ -237,7 +228,6 @@ export const ContractCommandCenter = ({ doc, analysisData, onNavigateTab }) => {
           <div style={{ fontSize: '11px', color: '#A1A1AA' }}>Control Engine</div>
         </div>
 
-        {/* Audit Status */}
         <div style={{ border: '1px solid rgba(255, 255, 255, 0.1)', padding: '12px', background: '#121218' }}>
           <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#A1A1AA', fontWeight: 600 }}>Audit Ledger</div>
           <div style={{ fontSize: '16px', fontWeight: 700, margin: '6px 0', color: '#34D399' }}>
@@ -249,7 +239,6 @@ export const ContractCommandCenter = ({ doc, analysisData, onNavigateTab }) => {
         </div>
       </div>
 
-      {/* Recommended Next Action Banner */}
       <div
         style={{
           border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -293,7 +282,6 @@ export const ContractCommandCenter = ({ doc, analysisData, onNavigateTab }) => {
         )}
       </div>
 
-      {/* Visible Path: Conclusion → Reason → Evidence → Clause → Page/Section → Rule */}
       <div>
         <div
           style={{

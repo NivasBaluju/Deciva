@@ -5,7 +5,6 @@
  * Respects prefers-reduced-motion and follows enterprise legal-tech aesthetics.
  */
 
-// Deceleration easing curve for snappy, smooth UI
 export const EASE_OUT = [0.16, 1, 0.3, 1];
 export const EASE_IN_OUT = [0.65, 0, 0.35, 1];
 
@@ -20,7 +19,6 @@ export const DURATIONS = {
   analysis: 0.65
 };
 
-// Page level entrance & exit transitions
 export const pageVariants = {
   initial: { opacity: 0, y: 6 },
   animate: {
@@ -39,7 +37,6 @@ export const pageVariants = {
   }
 };
 
-// Container with small, disciplined stagger delays
 export const staggerContainer = {
   initial: {},
   animate: {
@@ -50,7 +47,6 @@ export const staggerContainer = {
   }
 };
 
-// Subtle 6-8px vertical lift for item entrance
 export const itemFadeUp = {
   initial: { opacity: 0, y: 8 },
   animate: {
@@ -63,13 +59,11 @@ export const itemFadeUp = {
   }
 };
 
-// Tactile button interaction
 export const buttonMotion = {
   whileHover: { y: -1, transition: { duration: DURATIONS.instant, ease: EASE_OUT } },
   whileTap: { scale: 0.98, transition: { duration: 0.08 } }
 };
 
-// Refined card hover elevation (-2px max)
 export const cardHoverMotion = {
   whileHover: {
     y: -2,
@@ -77,7 +71,6 @@ export const cardHoverMotion = {
   }
 };
 
-// Modal transitions
 export const modalBackdropVariants = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { duration: DURATIONS.fast } },
@@ -100,7 +93,6 @@ export const modalDialogVariants = {
   }
 };
 
-// Toast notification entrance and exit
 export const toastVariants = {
   initial: { opacity: 0, y: 14, scale: 0.96 },
   animate: {
@@ -117,7 +109,6 @@ export const toastVariants = {
   }
 };
 
-// Analysis tab initial progressive revelation
 export const analysisStepVariants = {
   initial: { opacity: 0, y: 10 },
   animate: (custom = 0) => ({

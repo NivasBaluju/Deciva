@@ -6,9 +6,9 @@ import { fmtDate } from '../../utils/formatters';
 import { buttonMotion } from '../../styles/motion';
 
 const getPriorityColor = (score) => {
-  if (score >= 70) return '#EF4444'; // Red
-  if (score >= 45) return '#F59E0B'; // Amber
-  return '#3B82F6'; // Blue
+  if (score >= 70) return '#EF4444';
+  if (score >= 45) return '#F59E0B';
+  return '#3B82F6';
 };
 
 export const ActionCard = ({ action, onSelectAction }) => {
@@ -29,7 +29,6 @@ export const ActionCard = ({ action, onSelectAction }) => {
       }}
       onClick={() => onSelectAction(action.id)}
     >
-      {/* Top Left Colored Edge Indicator */}
       <div
         style={{
           position: 'absolute',
@@ -42,7 +41,6 @@ export const ActionCard = ({ action, onSelectAction }) => {
       />
 
       <div className="flex-between" style={{ alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
-        {/* Left: Priority + Title + Badges */}
         <div style={{ flex: 1, minWidth: '240px' }}>
           <div className="flex gap-8 mb-8" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
             <span
@@ -94,7 +92,6 @@ export const ActionCard = ({ action, onSelectAction }) => {
             </p>
           )}
 
-          {/* Owner + Due Date info row */}
           <div className="flex gap-16 text-muted small" style={{ fontSize: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Icon.user width={13} height={13} />
@@ -131,7 +128,6 @@ export const ActionCard = ({ action, onSelectAction }) => {
           </div>
         </div>
 
-        {/* Right Action Trigger */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <motion.button
             className="btn btn-outline btn-sm"

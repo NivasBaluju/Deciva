@@ -13,7 +13,7 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
   const [decisionIntel, setDecisionIntel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState('BRIEF'); // 'BRIEF' | 'EXPOSURE' | 'DEPENDENCY' | 'SCENARIOS' | 'CONFLICTS' | 'ACTIONS'
+  const [activeSubTab, setActiveSubTab] = useState('BRIEF');
   const [applyingScenarioId, setApplyingScenarioId] = useState(null);
   const [filterCategory, setFilterCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,7 +71,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
         notes: `Selected strategy: ${scenario.strategy}. Target delta: ${scenario.riskDelta} points.`
       });
       toast(`Decision applied to Action Center: ${scenario.title}`, 'ok');
-      // Navigate to Action Center after brief pause
       setTimeout(() => {
         navigate(`/document/${doc.id}/actions`);
       }, 800);
@@ -163,7 +162,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* 1. Executive Summary & Header Banner */}
       <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
@@ -212,9 +210,7 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
           </div>
         </div>
 
-        {/* Health Score & Primary Deterioration Driver Row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginTop: '20px' }}>
-          {/* Exposure Score Card */}
           <div
             style={{
               padding: '16px 20px',
@@ -251,7 +247,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
             </div>
           </div>
 
-          {/* Primary Driver Card */}
           <div
             style={{
               padding: '16px 20px',
@@ -274,7 +269,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
             </div>
           </div>
 
-          {/* Contract Health Metric */}
           <div
             style={{
               padding: '16px 20px',
@@ -298,7 +292,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
           </div>
         </div>
 
-        {/* Sub-Navigation Tabs */}
         <div
           style={{
             display: 'flex',
@@ -335,7 +328,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
         </div>
       </div>
 
-      {/* 2. TAB: 9-Question Executive Decision Brief */}
       {activeSubTab === 'BRIEF' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="card">
@@ -387,14 +379,12 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
             )}
           </div>
 
-          {/* Two-Tier Forward Risk Status */}
           <div className="card">
             <h3 style={{ fontSize: '15px', margin: '0 0 14px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span className="dot dot-blue" /> Forward-Looking Risk Intelligence (Two-Tier Model)
             </h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-              {/* Tier 1: Deterministic Forward Risk */}
               <div style={{ padding: '14px', borderRadius: '6px', background: 'var(--bg-elevated)', border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                   <span className="badge badge-ok" style={{ fontSize: '10px' }}>TIER 1</span>
@@ -424,7 +414,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
                 )}
               </div>
 
-              {/* Tier 2: Statistical / ML Prediction */}
               <div style={{ padding: '14px', borderRadius: '6px', background: 'var(--bg-elevated)', border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                   <span className="badge badge-neutral" style={{ fontSize: '10px' }}>TIER 2</span>
@@ -450,7 +439,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
         </div>
       )}
 
-      {/* 3. TAB: What-If Negotiation Scenarios */}
       {activeSubTab === 'SCENARIOS' && (
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
@@ -499,7 +487,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
                       {scenario.strategy}
                     </p>
 
-                    {/* Exposure Score & Delta Pill */}
                     <div
                       style={{
                         padding: '10px 12px',
@@ -528,7 +515,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
                       </span>
                     </div>
 
-                    {/* Financial Impact */}
                     <div style={{ marginBottom: '12px', fontSize: '12px' }}>
                       <div style={{ fontWeight: 600, color: 'var(--text-hi)', marginBottom: '2px' }}>
                         Financial Quantification
@@ -549,7 +535,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
                       </div>
                     </div>
 
-                    {/* Operational Impact */}
                     <div style={{ marginBottom: '12px', fontSize: '12px' }}>
                       <div style={{ fontWeight: 600, color: 'var(--text-hi)', marginBottom: '2px' }}>
                         Operational Impact
@@ -559,7 +544,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
                       </div>
                     </div>
 
-                    {/* Legal Position */}
                     <div style={{ marginBottom: '16px', fontSize: '12px' }}>
                       <div style={{ fontWeight: 600, color: 'var(--text-hi)', marginBottom: '2px' }}>
                         Legal Posture
@@ -587,7 +571,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
         </div>
       )}
 
-      {/* 4. TAB: Primary Dependency Chain */}
       {activeSubTab === 'DEPENDENCY' && (
         <div className="card">
           <div style={{ marginBottom: '16px' }}>
@@ -658,7 +641,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
         </div>
       )}
 
-      {/* 5. TAB: 9-Dimension Deterministic Exposure Model */}
       {activeSubTab === 'EXPOSURE' && (
         <div className="card">
           <div style={{ marginBottom: '16px' }}>
@@ -696,7 +678,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
                       </span>
                     </div>
 
-                    {/* Mini Score Bar */}
                     <div style={{ width: '100%', height: '6px', background: 'var(--bg-card)', borderRadius: '3px', overflow: 'hidden', marginBottom: '10px' }}>
                       <div style={{ width: `${dimData.score}%`, height: '100%', background: badge.color }} />
                     </div>
@@ -709,7 +690,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
                       <span>{isExp ? '▲ Hide contributors' : '▼ View contributing signals'}</span>
                     </div>
 
-                    {/* Contributors breakdown */}
                     {isExp && (
                       <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
                         <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-hi)', marginBottom: '6px' }}>
@@ -735,7 +715,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
         </div>
       )}
 
-      {/* 6. TAB: Cross-Clause Conflicts */}
       {activeSubTab === 'CONFLICTS' && (
         <div className="card">
           <div style={{ marginBottom: '16px' }}>
@@ -772,7 +751,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
                     {conflict.description}
                   </p>
 
-                  {/* Dual Evidence Side-by-Side Excerpts */}
                   {conflict.evidenceA && conflict.evidenceB ? (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                       <div style={{ padding: '10px', borderRadius: '4px', background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
@@ -825,7 +803,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
         </div>
       )}
 
-      {/* 7. TAB: Prioritized Action Center List */}
       {activeSubTab === 'ACTIONS' && intelData?.actionPlan && (
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
@@ -838,7 +815,6 @@ export const IntelligenceTab = ({ doc, refreshTrigger }) => {
               </p>
             </div>
 
-            {/* Category Filter Pills */}
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {['ALL', 'CRITICAL', 'IMPORTANT', 'MONITORING'].map((cat) => (
                 <button

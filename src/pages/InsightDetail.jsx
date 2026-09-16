@@ -20,7 +20,6 @@ export function InsightDetail() {
           ]}
         />
 
-        {/* Article Header */}
         <header className="max-w-4xl mb-16 sm:mb-20 pb-12 border-b border-rule">
           <span className="font-body text-label text-ink-soft mb-3 block">
             {article.category}
@@ -40,7 +39,6 @@ export function InsightDetail() {
           </div>
         </header>
 
-        {/* Article Body (Constrained to container-text ~800px) */}
         <div className="container-text px-0">
           <div className="font-body text-body text-ink space-y-6 leading-relaxed">
             {article.content.map((p, idx) => (
@@ -49,7 +47,6 @@ export function InsightDetail() {
               </p>
             ))}
 
-            {/* Mid-article pullquote */}
             <PullQuote
               quote={article.content[1] || article.dek}
               attribution={article.author}
@@ -61,7 +58,6 @@ export function InsightDetail() {
             </p>
           </div>
 
-          {/* Author Attribution Block */}
           <div className="mt-16 pt-10 border-t border-rule flex items-start gap-6">
             <div className="w-14 h-14 bg-paper-dim border border-rule flex items-center justify-center font-display text-xl text-ink select-none flex-shrink-0">
               {article.author.charAt(0)}
@@ -76,7 +72,6 @@ export function InsightDetail() {
             </div>
           </div>
 
-          {/* Related Articles */}
           <div className="mt-20 pt-12 border-t border-rule">
             <h3 className="display-03 text-ink mb-8">
               Related intelligence

@@ -2,7 +2,6 @@ import io
 import os
 from typing import Dict, Any
 
-# 1. PyMuPDF (fitz)
 try:
     import pymupdf as fitz
     PYMUPDF_AVAILABLE = True
@@ -13,14 +12,12 @@ except ImportError:
     except ImportError:
         PYMUPDF_AVAILABLE = False
 
-# 2. Python-docx
 try:
     from docx import Document as DocxDocument
     DOCX_AVAILABLE = True
 except ImportError:
     DOCX_AVAILABLE = False
 
-# 3. OCR Engines (RapidOCR onnx + pytesseract fallback)
 try:
     from rapidocr_onnxruntime import RapidOCR
     rapid_ocr_engine = RapidOCR()
@@ -35,7 +32,6 @@ try:
     PYTESSERACT_AVAILABLE = True
 except ImportError:
     PYTESSERACT_AVAILABLE = False
-
 
 def _perform_ocr_on_image_bytes(img_bytes: bytes) -> tuple[str, float]:
     """
@@ -54,8 +50,8 @@ def _perform_ocr_on_image_bytes(img_bytes: bytes) -> tuple[str, float]:
                         texts.append(text.strip())
                         confs.append(float(conf))
                 full_text = "\n".join(texts)
-                avg_conf = (sum(confs) / len(confs)) if confs else 0.90
-                return full_text, round(avg_conf, 2)
+                avg_conf = round(sum(confs) / len(confs), 2) if confs else None
+                return full_text, avg_conf
         except Exception as ocr_err:
             print(f"[RapidOCR Error] {ocr_err}")
 
@@ -65,14 +61,13 @@ def _perform_ocr_on_image_bytes(img_bytes: bytes) -> tuple[str, float]:
             img = Image.open(io.BytesIO(img_bytes))
             data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
             confs = [float(c) for c in data['conf'] if float(c) > 0]
-            avg_conf = (sum(confs) / len(confs) / 100.0) if confs else 0.85
+            avg_conf = round(sum(confs) / len(confs) / 100.0, 2) if confs else None
             text = pytesseract.image_to_string(img).strip()
-            return text, round(avg_conf, 2)
+            return text, avg_conf
         except Exception as pytess_err:
             print(f"[Pytesseract Error] {pytess_err}")
 
-    return "[OCR engine unavailable or image unreadable]", 0.0
-
+    return "[OCR engine unavailable or image unreadable]", None
 
 def extract_text_from_file(file_bytes: bytes, filename: str, mime_type: str = '') -> Dict[str, Any]:
     """
@@ -89,9 +84,6 @@ def extract_text_from_file(file_bytes: bytes, filename: str, mime_type: str = ''
     ext = (filename.rsplit('.', 1)[-1] if '.' in filename else '').lower()
     mime = (mime_type or '').lower()
 
-    # -------------------------------------------------------------
-    # 1. Plain Text / Markdown / CSV / JSON
-    # -------------------------------------------------------------
     if ext in ['txt', 'md', 'json', 'csv', 'log'] or mime.startswith('text/'):
         try:
             text = file_bytes.decode('utf-8', errors='replace').strip()
@@ -114,9 +106,6 @@ def extract_text_from_file(file_bytes: bytes, filename: str, mime_type: str = ''
                 "characterCount": len(text)
             }
 
-    # -------------------------------------------------------------
-    # 2. Microsoft Word (DOCX)
-    # -------------------------------------------------------------
     if ext == 'docx' or 'wordprocessingml' in mime:
         if DOCX_AVAILABLE:
             try:
@@ -147,9 +136,6 @@ def extract_text_from_file(file_bytes: bytes, filename: str, mime_type: str = ''
                     "characterCount": 0
                 }
 
-    # -------------------------------------------------------------
-    # 3. PDF Documents (Digital PDF vs Scanned PDF Fallback)
-    # -------------------------------------------------------------
     if ext == 'pdf' or 'pdf' in mime:
         page_count = 1
         if PYMUPDF_AVAILABLE:
@@ -194,13 +180,13 @@ def extract_text_from_file(file_bytes: bytes, filename: str, mime_type: str = ''
 
                 doc.close()
                 combined_ocr_text = "\n\n".join(ocr_page_texts).strip()
-                avg_ocr_conf = (sum(ocr_confs) / len(ocr_confs)) if ocr_confs else 0.90
+                avg_ocr_conf = round(sum(ocr_confs) / len(ocr_confs), 2) if ocr_confs else None
 
                 return {
                     "text": combined_ocr_text or "[Scanned PDF with no recognized text]",
                     "extractionMethod": "TESSERACT_OCR",
                     "extractionStatus": "COMPLETED",
-                    "ocrConfidence": round(avg_ocr_conf, 2),
+                    "ocrConfidence": avg_ocr_conf,
                     "pageCount": page_count,
                     "characterCount": len(combined_ocr_text)
                 }
@@ -208,9 +194,6 @@ def extract_text_from_file(file_bytes: bytes, filename: str, mime_type: str = ''
             except Exception as pdf_err:
                 print(f"[PDF Processing Error] {pdf_err}")
 
-    # -------------------------------------------------------------
-    # 4. Image Files (PNG, JPG, JPEG, WEBP)
-    # -------------------------------------------------------------
     if ext in ['png', 'jpg', 'jpeg', 'webp'] or mime.startswith('image/'):
         text, conf = _perform_ocr_on_image_bytes(file_bytes)
         return {
@@ -222,7 +205,6 @@ def extract_text_from_file(file_bytes: bytes, filename: str, mime_type: str = ''
             "characterCount": len(text)
         }
 
-    # Fallback
     return {
         "text": "[Binary document uploaded]",
         "extractionMethod": "UNKNOWN",

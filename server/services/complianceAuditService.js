@@ -61,7 +61,6 @@ async function getContractEvidence(documentId, user) {
     throw err;
   }
 
-  // 1. Authorize document ownership (owner or admin)
   const { rows: docRows } = await db.query(
     `SELECT id, filename, original_name, mime_type, size, created_at, user_id
      FROM documents
@@ -82,7 +81,6 @@ async function getContractEvidence(documentId, user) {
     throw err;
   }
 
-  // 2. Fetch historical Phase 6.4 intelligence snapshot (untouched)
   const { rows: intelRows } = await db.query(
     `SELECT id, document_id, user_id, health_score, critical_count, important_count,
             monitoring_count, healthy_count, executive_summary, conflicts_json,
@@ -95,7 +93,6 @@ async function getContractEvidence(documentId, user) {
   );
   const intelligence = intelRows.length > 0 ? intelRows[0] : null;
 
-  // 3. Fetch workflow actions (deterministic sort: priority_score DESC, created_at ASC, id ASC)
   const { rows: actionRows } = await db.query(
     `SELECT id, document_id, title, category, priority_score, status,
             decision, owner_id, due_date, is_escalated, escalation_rule,
@@ -106,7 +103,6 @@ async function getContractEvidence(documentId, user) {
     [documentId]
   );
 
-  // 4. Fetch decision ledger (deterministic sort: created_at ASC, id ASC)
   const { rows: decisionRows } = await db.query(
     `SELECT d.id, d.action_id, d.previous_status, d.new_status, d.decision, d.reason, d.decided_by, d.created_at AS decided_at
      FROM contract_action_decisions d
@@ -116,7 +112,6 @@ async function getContractEvidence(documentId, user) {
     [documentId]
   );
 
-  // 5. Fetch activity audit trail (deterministic sort: created_at ASC, id ASC)
   const { rows: activityRows } = await db.query(
     `SELECT act.id, act.action_id, act.event_type AS activity_type, act.actor_id, act.metadata, act.created_at
      FROM contract_action_activity act
@@ -126,7 +121,6 @@ async function getContractEvidence(documentId, user) {
     [documentId]
   );
 
-  // 6. Fetch collaboration comments (deterministic sort: created_at ASC, id ASC)
   const { rows: commentRows } = await db.query(
     `SELECT c.id, c.action_id, c.parent_comment_id, c.author_id, c.body AS content, c.created_at
      FROM contract_action_comments c
@@ -180,7 +174,6 @@ async function getContractEvidence(documentId, user) {
     }
   }
 
-  // 7. Calculate live operational health metrics at export time
   const now = new Date();
   const totalActions = actionRows.length;
   const resolvedActions = actionRows.filter(a => a.status === 'RESOLVED').length;
@@ -215,7 +208,6 @@ async function getContractEvidence(documentId, user) {
     reopenRate
   });
 
-  // 8. Construct canonical evidence content object with strict field whitelisting
   const evidenceContent = {
     subject: {
       documentId: doc.id,
@@ -296,10 +288,8 @@ async function getContractEvidence(documentId, user) {
     }
   };
 
-  // 9. Compute cryptographic SHA-256 hash of canonical evidence payload
   const canonicalHash = generateEvidenceHash(evidenceContent);
 
-  // 10. Construct manifest (manifest metadata is intentionally outside the content hash)
   const manifest = {
     evidenceId: uuidv4(),
     evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,

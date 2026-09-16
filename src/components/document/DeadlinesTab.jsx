@@ -36,7 +36,6 @@ export const DeadlinesTab = ({ doc, refreshTrigger }) => {
 
   const rawDeadlines = deadlinesData?.deadlines || [];
 
-  // Sort: explicit calendar dates chronologically, followed by relative timelines
   const sorted = [...rawDeadlines].sort((a, b) => {
     if (a.deadlineDate && b.deadlineDate) {
       return new Date(a.deadlineDate) - new Date(b.deadlineDate);
@@ -81,7 +80,6 @@ export const DeadlinesTab = ({ doc, refreshTrigger }) => {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '20px', position: 'relative' }}>
-            {/* Timeline vertical line indicator */}
             <div
               style={{
                 position: 'absolute',
@@ -109,7 +107,6 @@ export const DeadlinesTab = ({ doc, refreshTrigger }) => {
                     zIndex: 1
                   }}
                 >
-                  {/* Timeline Badge Icon */}
                   <div
                     style={{
                       width: '48px',
@@ -132,7 +129,6 @@ export const DeadlinesTab = ({ doc, refreshTrigger }) => {
                     <Icon.calendar stroke="white" />
                   </div>
 
-                  {/* Deadline Detail Card */}
                   <div
                     className="card"
                     style={{

@@ -74,7 +74,7 @@ export const Security = () => {
     try {
       const res = await Api.get('/api/security/audit/verify');
       setChainVerifyResult(res);
-      toast(res.valid ? 'Blockchain audit chain verified successfully' : 'Tampering detected in chain', res.valid ? 'ok' : 'error');
+      toast(res.valid ? 'Cryptographic audit chain verified successfully' : 'Tampering detected in chain', res.valid ? 'ok' : 'error');
     } catch (err) {
       toast(err.message || 'Chain verification failed', 'error');
     } finally {
@@ -94,10 +94,8 @@ export const Security = () => {
     <PageTransition>
       <Breadcrumb items={[{ label: 'Cockpit', href: '/dashboard' }, { label: 'Security & Ledger' }]} />
 
-      {/* Header */}
       <div className="security-page-header flex flex-wrap items-center justify-between gap-4 mb-16">
         <div>
-          <span className="mono text-lo small" style={{ letterSpacing: '0.08em' }}>[ZERO-TRUST_OBSERVATORY]</span>
           <h1 className="page-title" style={{ marginTop: '2px', marginBottom: '4px' }}>Security Center</h1>
           <p className="page-sub" style={{ margin: 0 }}>
             Real-time zero-trust posture and cryptographic integrity.
@@ -114,7 +112,6 @@ export const Security = () => {
         </div>
       </div>
 
-      {/* Primary Visual Instrument: Radial Observatory */}
       <div className="security-observatory-wrapper">
         <ObservatoryRadial
           score={ztScore}
@@ -129,7 +126,6 @@ export const Security = () => {
         />
       </div>
 
-      {/* Contextual Progressive Disclosure Detail Panel */}
       <ObservatoryDetailPanel
         selectedNode={selectedNode}
         onClose={() => setSelectedNode(null)}
@@ -146,14 +142,12 @@ export const Security = () => {
         chainVerifyResult={chainVerifyResult}
       />
 
-      {/* Security Signals Strip */}
       <SecuritySignalsStrip
         zt={zt}
         isAuditValid={isAuditValid}
         activeSessionsCount={activeSessionsCount}
       />
 
-      {/* Special Admin Watchtower Radar (Only visible to Institutional Admin) */}
       {isAdmin && <AdminWatchtower />}
     </PageTransition>
   );

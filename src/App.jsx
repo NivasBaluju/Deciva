@@ -10,7 +10,6 @@ import ThinkingLoader from './components/common/ThinkingLoader';
 import LenisProvider from './components/motion/LenisProvider';
 import AiDegradedModeBanner from './components/common/AiDegradedModeBanner';
 
-// Lazy-loaded Public Pages
 const Landing = lazy(() => import('./pages/Landing'));
 const Capabilities = lazy(() => import('./pages/Capabilities'));
 const CapabilityDetail = lazy(() => import('./pages/CapabilityDetail'));
@@ -23,12 +22,10 @@ const Terms = lazy(() => import('./pages/Terms'));
 const Accessibility = lazy(() => import('./pages/Accessibility'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-// Lazy-loaded Auth Pages
 const Register = lazy(() => import('./pages/Register'));
 const Login = lazy(() => import('./pages/Login'));
 const Mfa = lazy(() => import('./pages/Mfa'));
 
-// Lazy-loaded Protected Enterprise Pages
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Upload = lazy(() => import('./pages/Upload'));
 const Documents = lazy(() => import('./pages/Documents'));
@@ -96,7 +93,6 @@ const AppContent = () => {
       <main id="app" role="main" className="flex-1">
         <Suspense fallback={<RouteLoadingFallback />}>
           <Routes>
-            {/* Public Marketing & Intelligence Routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/capabilities" element={<Capabilities />} />
             <Route path="/capabilities/:slug" element={<CapabilityDetail />} />
@@ -109,7 +105,6 @@ const AppContent = () => {
             <Route path="/terms" element={<Terms />} />
             <Route path="/accessibility" element={<Accessibility />} />
 
-            {/* Authentication Routes */}
             <Route
               path="/register"
               element={
@@ -135,7 +130,6 @@ const AppContent = () => {
               }
             />
 
-            {/* Protected Enterprise Portal Routes (Preserved 100%) */}
             <Route
               path="/dashboard"
               element={
@@ -241,7 +235,6 @@ const AppContent = () => {
               }
             />
 
-            {/* 404 Fallback */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -251,13 +244,11 @@ const AppContent = () => {
   );
 };
 
-// Clean up path + hash mismatch (e.g. /login#/login -> /#/login)
 if (typeof window !== 'undefined' && window.location.pathname !== '/' && window.location.pathname !== '') {
   try {
     const hashPart = window.location.hash ? window.location.hash.replace(/^#\/?/, '/') : window.location.pathname;
     window.history.replaceState(null, '', '/#' + hashPart);
   } catch (e) {
-    // Ignore history state errors in restricted environments
   }
 }
 

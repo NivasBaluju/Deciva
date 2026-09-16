@@ -41,7 +41,6 @@ export const ObservatoryDetailPanel = ({
     setTimeout(() => setCopiedHash(null), 1800);
   };
 
-  // Velocity data computed from live sessions and uploads
   const totalAuthCount = (sessions?.sessions || []).length + (dash?.documentsUploaded || 0);
   const sparklineData = totalAuthCount > 0 ? [0, 0, 0, 0, 0, 0, totalAuthCount] : [0, 0, 0, 0, 0, 0, 0];
   const maxSpark = Math.max(...sparklineData, 1);
@@ -64,17 +63,15 @@ export const ObservatoryDetailPanel = ({
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Panel Header */}
       <div className="panel-header-row">
         <div className="panel-header-left">
-          <span className="mono text-lo small">[EVIDENCE_STREAM // {selectedNode.toUpperCase()}]</span>
           <h2 className="panel-title">
             {selectedNode === 'identity' && 'Identity & Multi-Factor Access'}
             {selectedNode === 'encryption' && 'Cryptographic AES-256-GCM Vault'}
             {selectedNode === 'integrity' && 'Non-Repudiation & Signing Key'}
             {selectedNode === 'sessions' && 'Active Session Enclaves'}
             {selectedNode === 'threats' && 'Threat Anomaly Intercepts'}
-            {selectedNode === 'audit' && 'Immutable Blockchain Audit Ledger'}
+            {selectedNode === 'audit' && 'Cryptographic Audit Ledger'}
           </h2>
         </div>
         <button
@@ -86,9 +83,7 @@ export const ObservatoryDetailPanel = ({
         </button>
       </div>
 
-      {/* Panel Body by Selected Domain */}
       <div className="panel-content-body">
-        {/* DOMAIN 1: IDENTITY */}
         {selectedNode === 'identity' && (
           <div className="domain-view-identity">
             <div className="detail-metrics-grid">
@@ -140,7 +135,6 @@ export const ObservatoryDetailPanel = ({
           </div>
         )}
 
-        {/* DOMAIN 2: ENCRYPTION */}
         {selectedNode === 'encryption' && (
           <div className="domain-view-encryption">
             <div className="detail-metrics-grid">
@@ -165,12 +159,11 @@ export const ObservatoryDetailPanel = ({
           </div>
         )}
 
-        {/* DOMAIN 3: INTEGRITY */}
         {selectedNode === 'integrity' && (
           <div className="domain-view-integrity">
             <div className="detail-metrics-grid">
               <div className="detail-stat-card">
-                <span className="detail-stat-label">Merkle Chain Status</span>
+                <span className="detail-stat-label">Cryptographic Chain Status</span>
                 <strong className="detail-stat-val" style={{ color: dash?.auditLedger?.valid ? '#10B981' : '#EF4444' }}>
                   {dash?.auditLedger?.valid ? '✓ SHA-256 Valid' : '⚠ Anomaly Detected'}
                 </strong>
@@ -229,7 +222,6 @@ export const ObservatoryDetailPanel = ({
           </div>
         )}
 
-        {/* DOMAIN 4: SESSIONS */}
         {selectedNode === 'sessions' && (
           <div className="domain-view-sessions">
             <div className="compact-session-list">
@@ -295,7 +287,6 @@ export const ObservatoryDetailPanel = ({
           </div>
         )}
 
-        {/* DOMAIN 5: THREATS */}
         {selectedNode === 'threats' && (
           <div className="domain-view-threats">
             <div className="detail-metrics-grid mb-16">
@@ -338,12 +329,11 @@ export const ObservatoryDetailPanel = ({
           </div>
         )}
 
-        {/* DOMAIN 6: AUDIT LEDGER */}
         {selectedNode === 'audit' && (
           <div className="domain-view-audit">
             <div className="flex-between mb-12">
               <span className="text-lo small">
-                Displaying sequential SHA-256 Merkle chain blocks.
+                Displaying sequential SHA-256 cryptographic audit ledger blocks.
               </span>
               <motion.button
                 className="btn btn-outline btn-sm"
@@ -355,7 +345,6 @@ export const ObservatoryDetailPanel = ({
               </motion.button>
             </div>
 
-            {/* Verification Banner */}
             <AnimatePresence>
               {chainVerifyResult && (
                 <motion.div

@@ -5,7 +5,6 @@ export const ActivityChart = ({ auditBlocks = [], sessions = [] }) => {
   const [activeRange, setActiveRange] = useState('7d');
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
-  // Synthesize chart data points based on actual audit blocks
   const dataPoints = [
     { label: 'Mon', logins: 18, docs: 24, threats: 1, height: 42 },
     { label: 'Tue', logins: 29, docs: 38, threats: 2, height: 68 },
@@ -23,7 +22,6 @@ export const ActivityChart = ({ auditBlocks = [], sessions = [] }) => {
     <div className="card security-chart-card">
       <div className="security-chart-header">
         <div>
-          <span className="mono text-lo small" style={{ letterSpacing: '0.08em' }}>[SOC_ANALYTICS_02]</span>
           <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#FFFFFF', margin: '2px 0 0' }}>
             Authentication & Audit Event Velocity
           </h3>
@@ -41,7 +39,6 @@ export const ActivityChart = ({ auditBlocks = [], sessions = [] }) => {
         </div>
       </div>
 
-      {/* Summary KPI Strip */}
       <div className="chart-kpi-strip">
         <div className="chart-kpi-item">
           <span className="kpi-label">Ledger Blocks</span>
@@ -61,7 +58,6 @@ export const ActivityChart = ({ auditBlocks = [], sessions = [] }) => {
         </div>
       </div>
 
-      {/* SVG Chart Visualization */}
       <div className="chart-visual-container">
         <div className="chart-bars-wrap">
           {dataPoints.map((dp, i) => {
@@ -73,7 +69,6 @@ export const ActivityChart = ({ auditBlocks = [], sessions = [] }) => {
                 onMouseEnter={() => setHoveredIndex(i)}
                 onMouseLeave={() => setHoveredIndex(null)}
               >
-                {/* Tooltip */}
                 {isHovered && (
                   <motion.div
                     className="chart-tooltip"
@@ -88,7 +83,6 @@ export const ActivityChart = ({ auditBlocks = [], sessions = [] }) => {
                   </motion.div>
                 )}
 
-                {/* Stacked Interactive Bar */}
                 <div className="chart-bar-track">
                   <motion.div
                     className="chart-bar-fill"

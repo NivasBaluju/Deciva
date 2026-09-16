@@ -53,24 +53,19 @@ function calculateOperationalHealthScore({
     };
   }
 
-  // 1. Resolution Performance (0–30 pts)
   const resolutionPerformance = Number(((resolvedActions / totalActions) * 30).toFixed(2));
 
-  // 2. Deadline Performance (0–25 pts)
   // If no actions have deadlines, award full 25 pts
   const deadlinePerformance = actionsWithDeadlines > 0
     ? Number(((onTimeRate / 100) * 25).toFixed(2))
     : 25;
 
-  // 3. Priority Management (0–20 pts)
   // Penalize unaddressed critical and high priority items in backlog
   const priorityDeduction = (activeCritical * 4) + (activeHigh * 2);
   const priorityManagement = Math.max(0, Number((20 - priorityDeduction).toFixed(2)));
 
-  // 4. Overdue Penalty (0 to -15 pts)
   const overduePenalty = -Math.min(15, overdueActions * 5);
 
-  // 5. Reopen Penalty (0 to -10 pts)
   const reopenPenalty = -Math.min(10, Math.round((reopenRate / 100) * 10));
 
   const rawScore = resolutionPerformance + deadlinePerformance + priorityManagement + overduePenalty + reopenPenalty;
@@ -105,7 +100,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
     return { errorStatus: 400, errorMessage: 'Document ID is required' };
   }
 
-  // 1. Authorize document access
   const { rows: docRows } = await db.query(
     'SELECT id, user_id, filename, original_name FROM documents WHERE id = $1',
     [documentId]
@@ -120,7 +114,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
     return { errorStatus: 403, errorMessage: 'Unauthorized access to document' };
   }
 
-  // 2. Query all workflow datasets in parallel
   const [actionsRes, decisionsRes, activityRes, commentsRes] = await Promise.all([
     db.query(
       `SELECT a.id, a.document_id, a.source_action_id, a.title, a.category,
@@ -168,7 +161,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
   const now = new Date();
   const upcoming3d = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
-  // --- A. Overview Metrics ----------------------------------------------------
   let openCount = 0;
   let inReviewCount = 0;
   let resolvedCount = 0;
@@ -207,7 +199,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
     resolutionRate
   };
 
-  // --- B. Resolution Performance ----------------------------------------------
   const validResolutionHours = [];
 
   actions.forEach((a) => {
@@ -241,7 +232,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
     };
   }
 
-  // --- C. Deadline Performance ------------------------------------------------
   let actionsWithDeadlines = 0;
   let resolvedWithDeadlines = 0;
   let resolvedOnTime = 0;
@@ -275,7 +265,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
     onTimeRate
   };
 
-  // --- D. Priority Distribution -----------------------------------------------
   let criticalCount = 0;
   let highCount = 0;
   let mediumCount = 0;
@@ -329,7 +318,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
     averageOverduePriority: avgPriority(overduePriorityScores)
   };
 
-  // --- E. Decision Intelligence -----------------------------------------------
   let acceptDecisions = 0;
   let negotiateDecisions = 0;
   let escalateDecisions = 0;
@@ -354,7 +342,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
     escalationRate
   };
 
-  // --- F. Owner Workload Analytics -------------------------------------------
   const ownerMap = new Map();
   let unassignedCount = 0;
 
@@ -416,7 +403,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
     })
   };
 
-  // --- G. Reopened Action Analysis --------------------------------------------
   const reopenedActionIds = new Set();
   const reopenedCategoryCounts = {};
 
@@ -437,7 +423,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
     reopenedCategories: reopenedCategoryCounts
   };
 
-  // --- H. Collaboration Analytics ---------------------------------------------
   const activeComments = comments.filter((c) => !c.deleted_at);
   const totalComments = activeComments.length;
   const totalReplies = activeComments.filter((c) => c.parent_comment_id !== null).length;
@@ -480,7 +465,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
     mostDiscussedAction
   };
 
-  // --- I. Category Intelligence -----------------------------------------------
   const categoryMap = new Map();
 
   actions.forEach((a) => {
@@ -529,7 +513,6 @@ async function getDocumentWorkflowAnalytics(documentId, user) {
       : 0
   }));
 
-  // --- J. Operational Health Score -------------------------------------------
   const operationalHealth = calculateOperationalHealthScore({
     totalActions,
     resolvedActions: resolvedCount,

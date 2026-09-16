@@ -1,5 +1,5 @@
 /**
- * Deciva — Contract Decision Workflow Service (Phase 12)
+ * Deciva — Contract Decision Workflow Service
  * ---------------------------------------------------------------------------
  * Coordinates enterprise human-in-the-loop decision governance, deterministic
  * approval policy enforcement, collaborative multi-reviewer workflows,
@@ -42,7 +42,6 @@ function validateTransition(fromStatus, toStatus) {
  * Creates a new contract decision workflow.
  */
 async function createDecisionWorkflow(tenantId, documentId, creatorId, workflowData = {}) {
-  // 1. Verify document access & ownership
   const docRes = await db.query(
     'SELECT id, original_name, filename, user_id FROM documents WHERE id = $1',
     [documentId]
@@ -75,7 +74,6 @@ async function createDecisionWorkflow(tenantId, documentId, creatorId, workflowD
   const recommendationJson = workflowData.recommendationJson || {};
   const actionId = workflowData.actionId || null;
 
-  // 2. Evaluate Approval Policy deterministically
   const policyOutcome = evaluateApprovalPolicy({
     riskScore,
     liabilityExposure,
@@ -94,7 +92,6 @@ async function createDecisionWorkflow(tenantId, documentId, creatorId, workflowD
     throw err;
   }
 
-  // 3. Insert into contract_decision_workflows
   await db.query(`
     INSERT INTO contract_decision_workflows (
       id, tenant_id, document_id, action_id, decision_type,
@@ -127,7 +124,6 @@ async function createDecisionWorkflow(tenantId, documentId, creatorId, workflowD
     requiresIndependent
   ]);
 
-  // 4. If currentApprover provided, add to reviewers table with role APPROVER
   if (currentApprover) {
     await db.query(`
       INSERT INTO contract_decision_reviewers (
@@ -137,7 +133,6 @@ async function createDecisionWorkflow(tenantId, documentId, creatorId, workflowD
     `, [uuidv4(), id, currentApprover, creatorId]);
   }
 
-  // 5. If initial reviewers provided, insert them
   if (Array.isArray(workflowData.reviewers)) {
     for (const rev of workflowData.reviewers) {
       const revUserId = typeof rev === 'string' ? rev : rev.userId;
@@ -153,7 +148,6 @@ async function createDecisionWorkflow(tenantId, documentId, creatorId, workflowD
     }
   }
 
-  // 6. Record immutable event
   const eventId = uuidv4();
   await db.query(`
     INSERT INTO contract_decision_events (
@@ -172,7 +166,6 @@ async function createDecisionWorkflow(tenantId, documentId, creatorId, workflowD
     })
   ]);
 
-  // 7. Record cryptographic audit
   const auditResult = await recordAudit(creatorId, 'DECISION_WORKFLOW_CREATED', {
     decisionId: id,
     documentId,
@@ -1212,7 +1205,6 @@ async function getWorkflowInbox(user, options = {}) {
   const userId = user.id;
   const isAdmin = user.role === 'admin';
 
-  // 1. Pending Approvals
   const pendingApprovalsQuery = `
     SELECT
       w.*,
@@ -1229,7 +1221,6 @@ async function getWorkflowInbox(user, options = {}) {
   `;
   const { rows: pendingApprovals } = await db.query(pendingApprovalsQuery, [userId]);
 
-  // 2. Assigned Reviews
   const assignedReviewsQuery = `
     SELECT
       w.*,
@@ -1250,7 +1241,6 @@ async function getWorkflowInbox(user, options = {}) {
   `;
   const { rows: assignedReviews } = await db.query(assignedReviewsQuery, [userId]);
 
-  // 3. My Decisions (created or owned)
   const myDecisionsQuery = `
     SELECT
       w.*,

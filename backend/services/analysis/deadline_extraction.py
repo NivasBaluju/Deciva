@@ -39,7 +39,6 @@ def _classify_deadline_type(context: str) -> str:
         return "EFFECTIVE_DATE"
     return "CONTRACT_MILESTONE"
 
-
 def extract_deadlines_from_text(document_text: str) -> List[Dict[str, Any]]:
     """
     Extracts both explicit calendar dates and relative deadlines with context classification.
@@ -57,7 +56,6 @@ def extract_deadlines_from_text(document_text: str) -> List[Dict[str, Any]]:
         if len(sentence_clean) < 10:
             continue
 
-        # 1. Look for explicit calendar dates
         for pattern in EXPLICIT_DATE_PATTERNS:
             for match in pattern.finditer(sentence_clean):
                 groups = match.groups()
@@ -94,10 +92,10 @@ def extract_deadlines_from_text(document_text: str) -> List[Dict[str, Any]]:
                         "relativeDeadline": None,
                         "deadlineType": d_type,
                         "sourceText": snippet,
-                        "confidence": 0.95
+                        "confidence": None,
+                        "confidenceMethodology": "deterministic_pattern_match"
                     })
 
-        # 2. Look for relative deadlines (e.g. within 30 days)
         for rel_match in RELATIVE_DEADLINE_PATTERN.finditer(sentence_clean):
             rel_text = rel_match.group(1).strip()
             if rel_text and rel_text not in seen:
@@ -109,7 +107,8 @@ def extract_deadlines_from_text(document_text: str) -> List[Dict[str, Any]]:
                     "relativeDeadline": rel_text,
                     "deadlineType": d_type,
                     "sourceText": snippet,
-                    "confidence": 0.88
+                    "confidence": None,
+                    "confidenceMethodology": "deterministic_pattern_match"
                 })
 
     return deadlines

@@ -13,13 +13,11 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Modals / forms
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showRequestChangesModal, setShowRequestChangesModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
 
-  // Form states
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newDecisionType, setNewDecisionType] = useState('MATERIAL_CONTRACT_CHANGE');
@@ -29,19 +27,15 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
   const [newOwnerId, setNewOwnerId] = useState('');
   const [newApproverId, setNewApproverId] = useState('');
 
-  // Comment state
   const [commentBody, setCommentBody] = useState('');
   const [clauseRef, setClauseRef] = useState('');
 
-  // Request changes form state
   const [changeReason, setChangeReason] = useState('');
   const [changeNotes, setChangeNotes] = useState('');
   const [changeClauseRef, setChangeClauseRef] = useState('');
 
-  // Reject form state
   const [rejectReason, setRejectReason] = useState('');
 
-  // Assign form state
   const [assignUserId, setAssignUserId] = useState('');
   const [assignRole, setAssignRole] = useState('REVIEWER');
   const [assignNotes, setAssignNotes] = useState('');
@@ -329,7 +323,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
 
   return (
     <div className="decision-workflow-container">
-      {/* Top Bar / Header */}
       <div className="card mb-16" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--paper)' }}>
         <div>
           <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0, color: 'var(--ink)' }}>
@@ -349,9 +342,7 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
         </button>
       </div>
 
-      {/* Main Two-Column Layout: Decisions List & Cockpit Detail */}
       <div style={{ display: 'grid', gridTemplateColumns: decisions.length > 0 ? '320px 1fr' : '1fr', gap: '16px' }}>
-        {/* Left Column: Decision Selection List */}
         {decisions.length > 0 && (
           <div className="card" style={{ padding: '12px', height: 'fit-content' }}>
             <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', padding: '0 4px' }}>
@@ -393,7 +384,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
           </div>
         )}
 
-        {/* Right Column: Active Decision Detail Cockpit */}
         <div>
           {decisions.length === 0 ? (
             <div className="card text-center" style={{ padding: '48px 24px' }}>
@@ -410,7 +400,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
             <SkeletonLoader.Card count={2} height="200px" />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Decision Header Card */}
               <div className="card" style={{ padding: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
                   <div>
@@ -431,7 +420,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
                     </p>
                   </div>
 
-                  {/* Top Action Buttons based on status & role */}
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {decisionDetail.status === 'DRAFT' && (
                       <button
@@ -503,7 +491,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
                   </div>
                 </div>
 
-                {/* Policy Banner / Separation of Duties Notification */}
                 {decisionDetail.requires_independent_approval && (
                   <div style={{ marginTop: '16px', padding: '10px 14px', borderRadius: '6px', background: '#FEF3C7', border: '1px solid #FDE68A', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontSize: '18px' }}>⚖️</span>
@@ -514,7 +501,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
                 )}
               </div>
 
-              {/* Stakeholders & Reviewers Panel */}
               <div className="card" style={{ padding: '16px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px' }}>
                   👥 Decision Stakeholders & Review Roles
@@ -533,7 +519,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
                   </div>
                 </div>
 
-                {/* Assigned Reviewers List */}
                 {decisionDetail.reviewers && decisionDetail.reviewers.length > 0 && (
                   <div style={{ marginTop: '14px' }}>
                     <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink-light)', textTransform: 'uppercase', marginBottom: '6px' }}>
@@ -555,7 +540,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
                 )}
               </div>
 
-              {/* Discussion & Collaborative Clause Comments */}
               <div className="card" style={{ padding: '16px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px' }}>
                   💬 Collaborative Review Discussion ({decisionDetail.comments?.length || 0})
@@ -601,7 +585,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
                   </div>
                 )}
 
-                {/* Comment Input */}
                 <form onSubmit={handleAddComment} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '8px' }}>
                     <input
@@ -629,7 +612,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
                 </form>
               </div>
 
-              {/* Cryptographic Audit Timeline */}
               <div className="card" style={{ padding: '16px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px' }}>
                   🛡️ Immutable Decision Timeline & Governance Audit
@@ -659,7 +641,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
         </div>
       </div>
 
-      {/* --- CREATE WORKFLOW MODAL --- */}
       <AnimatePresence>
         {showCreateModal && (
           <div className="modal-backdrop" onClick={() => setShowCreateModal(false)}>
@@ -763,7 +744,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
         )}
       </AnimatePresence>
 
-      {/* --- ASSIGN STAKEHOLDER MODAL --- */}
       <AnimatePresence>
         {showAssignModal && (
           <div className="modal-backdrop" onClick={() => setShowAssignModal(false)}>
@@ -825,7 +805,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
         )}
       </AnimatePresence>
 
-      {/* --- REQUEST CHANGES MODAL --- */}
       <AnimatePresence>
         {showRequestChangesModal && (
           <div className="modal-backdrop" onClick={() => setShowRequestChangesModal(false)}>
@@ -886,7 +865,6 @@ export const DecisionWorkflow = ({ doc, refreshTrigger }) => {
         )}
       </AnimatePresence>
 
-      {/* --- REJECT MODAL --- */}
       <AnimatePresence>
         {showRejectModal && (
           <div className="modal-backdrop" onClick={() => setShowRejectModal(false)}>

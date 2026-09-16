@@ -19,7 +19,6 @@ export function CapabilityDetail() {
           ]}
         />
 
-        {/* Hero */}
         <div className="max-w-4xl mb-16 sm:mb-24">
           <span className="font-body text-label text-ink-soft mb-3 block">
             Intelligence Engine
@@ -32,7 +31,6 @@ export function CapabilityDetail() {
           </p>
         </div>
 
-        {/* Technical Overview & Services (Asymmetric Layout) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 sm:gap-16 pt-12 border-t border-rule">
           <div className="lg:col-span-7">
             <h2 className="font-body text-heading-01 text-ink font-semibold mb-6">
@@ -63,7 +61,6 @@ export function CapabilityDetail() {
           </div>
         </div>
 
-        {/* Closing Action Block */}
         <div className="mt-24 p-12 sm:p-16 border border-neutral-800 bg-neutral-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
           <div>
             <h3 className="display-03 text-white mb-2">

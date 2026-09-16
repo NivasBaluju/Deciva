@@ -1,12 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-/**
- * Footer — Part 8.3
- * --ink background takeover, four-column layout on desktop,
- * top structural hairline rule, bottom legal links with 16px real spacing.
- * Zero box shadows, zero middots.
- */
 export function Footer() {
   return (
     <footer
@@ -14,9 +8,7 @@ export function Footer() {
       role="contentinfo"
     >
       <div className="container-wide py-16 sm:py-24">
-        {/* Top 4-Column Directory */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 sm:gap-8 pb-16 border-b border-neutral-800">
-          {/* Column 1: Platform Architecture & Assurance */}
           <div>
             <h4 className="font-body text-heading-02 text-white font-semibold mb-4">
               Architecture &amp; Trust
@@ -28,7 +20,7 @@ export function Footer() {
               </div>
               <div className="border-l border-neutral-700 pl-3">
                 <p className="text-white font-medium">Cryptographic Ledger</p>
-                <p className="text-neutral-400 text-micro">SHA-256 Merkle chain non-repudiation</p>
+                <p className="text-neutral-400 text-micro">SHA-256 hash-chain non-repudiation</p>
               </div>
               <div className="border-l border-neutral-700 pl-3">
                 <p className="text-white font-medium">Statutory Compliance</p>
@@ -37,7 +29,6 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Column 2: Capabilities */}
           <div>
             <h4 className="font-body text-heading-02 text-white font-semibold mb-4">
               Capabilities
@@ -71,7 +62,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Column 3: Firm & Trust */}
           <div>
             <h4 className="font-body text-heading-02 text-white font-semibold mb-4">
               Platform &amp; Trust
@@ -100,7 +90,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Column 4: Connect */}
           <div>
             <h4 className="font-body text-heading-02 text-white font-semibold mb-4">
               Connect
@@ -131,7 +120,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom Metadata Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 font-body text-micro text-neutral-500">
           <p className="m-0">
             © 2026 Deciva. Precision legal intelligence and zero-trust contract governance.

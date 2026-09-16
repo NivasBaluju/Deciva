@@ -21,9 +21,8 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
   const [commentCount, setCommentCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [mutating, setMutating] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState('context'); // 'context' | 'discussion' | 'history' | 'decisions'
+  const [activeSubTab, setActiveSubTab] = useState('context');
 
-  // Dialog states
   const [showDecisionDialog, setShowDecisionDialog] = useState(false);
   const [showResolutionDialog, setShowResolutionDialog] = useState(false);
   const [showDismissalDialog, setShowDismissalDialog] = useState(false);
@@ -123,7 +122,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 280 }}
         >
-          {/* Top Sticky Header */}
           <div
             style={{
               padding: '20px 24px',
@@ -167,7 +165,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
             </div>
           ) : action ? (
             <div style={{ padding: '24px' }}>
-              {/* Priority & Executive Metrics Card */}
               <div
                 className="card mb-20"
                 style={{
@@ -193,7 +190,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                     </div>
                   </div>
 
-                  {/* Priority Breakdown Pill Matrix */}
                   {action.priority_breakdown && (
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', maxWidth: '340px' }}>
                       <span className="badge" style={{ fontSize: '11px', background: 'rgba(239, 68, 68, 0.15)', color: '#FCA5A5' }}>
@@ -216,7 +212,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                 </div>
               </div>
 
-              {/* State Machine Transition Control Center */}
               <div
                 className="card mb-20"
                 style={{
@@ -230,7 +225,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                 </div>
 
                 <div className="flex gap-8" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
-                  {/* Contextual state buttons */}
                   {action.status === 'OPEN' && (
                     <>
                       <motion.button
@@ -308,7 +302,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                     </motion.button>
                   )}
 
-                  {/* Universal Owner & Due Date buttons */}
                   <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
                     <button
                       className="btn btn-ghost btn-sm"
@@ -331,7 +324,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                 </div>
               </div>
 
-              {/* Sub-tab Navigation (Context / Discussion / Decisions / Activity) */}
               <div className="tab-bar mb-16" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                 <button
                   className={`tab-btn ${activeSubTab === 'context' ? 'active' : ''}`}
@@ -359,10 +351,8 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                 </button>
               </div>
 
-              {/* SUB-TAB 1: INTELLIGENCE & EVIDENCE */}
               {activeSubTab === 'context' && (
                 <div>
-                  {/* Resolution Notes Banner if resolved */}
                   {action.status === 'RESOLVED' && action.resolution_notes && (
                     <div
                       className="card mb-16"
@@ -386,7 +376,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                     </div>
                   )}
 
-                  {/* Dismissal Reason Banner if dismissed */}
                   {action.status === 'DISMISSED' && action.decision_reason && (
                     <div
                       className="card mb-16"
@@ -405,7 +394,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                     </div>
                   )}
 
-                  {/* 1. IMMUTABLE SOURCE DOCUMENT EVIDENCE */}
                   <div
                     className="card mb-16"
                     style={{
@@ -445,7 +433,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                     </p>
                   </div>
 
-                  {/* 2. AI INTELLIGENCE ASSESSMENT */}
                   <div
                     className="card mb-16"
                     style={{
@@ -481,7 +468,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                     )}
                   </div>
 
-                  {/* 3. MACHINE-READABLE TRACEABILITY PROVENANCE */}
                   {action.provenance && (
                     <div
                       className="card"
@@ -511,7 +497,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                 </div>
               )}
 
-              {/* SUB-TAB 2: DISCUSSION THREAD */}
               {activeSubTab === 'discussion' && (
                 <ActionComments
                   actionId={action.id}
@@ -521,7 +506,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                 />
               )}
 
-              {/* SUB-TAB 3: DECISION LEDGER */}
               {activeSubTab === 'decisions' && (
                 <div>
                   <div className="flex-between mb-16">
@@ -540,7 +524,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
                 </div>
               )}
 
-              {/* SUB-TAB 4: ACTIVITY TIMELINE */}
               {activeSubTab === 'history' && (
                 <div>
                   <h3 style={{ margin: '0 0 16px 0', fontSize: '15px' }}>Chronological Action Activity</h3>
@@ -554,7 +537,6 @@ export const ActionDetail = ({ actionId, isOpen, onClose, onActionUpdated }) => 
             </div>
           )}
 
-          {/* Dialogs */}
           <DecisionDialog
             isOpen={showDecisionDialog}
             onClose={() => setShowDecisionDialog(false)}

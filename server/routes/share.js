@@ -12,7 +12,6 @@ const { recordAudit, logThreat } = require('../utils/audit');
 const router = express.Router();
 const uploadsDir = path.join(__dirname, '..', '..', 'data', 'uploads');
 
-// --- Create a secure share link ---------------------------------------------
 router.post('/', requireAuth, async (req, res) => {
   const { documentId, password, expiresInHours, maxDownloads } = req.body;
   const { rows } = await db.query('SELECT * FROM documents WHERE id = $1 AND user_id = $2', [documentId, req.user.id]);
@@ -54,7 +53,6 @@ router.post('/:id/revoke', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-// --- Public access to a shared document (no auth required) -----------------
 router.post('/:token/access', async (req, res) => {
   const { rows } = await db.query('SELECT * FROM share_links WHERE token = $1', [req.params.token]);
   const link = rows[0];

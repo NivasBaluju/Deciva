@@ -1,11 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import Icon from '../common/Icon';
 
-/**
- * LegalSideBySideRedline Component
- * Phase D: Legal Side-by-Side Redline View with Synchronized Scrolling,
- * clause navigation, and Word DOCX export trigger.
- */
 export const LegalSideBySideRedline = ({
   originalText = '',
   proposedText = '',
@@ -18,15 +13,19 @@ export const LegalSideBySideRedline = ({
   onAccept,
   isAccepted = false,
   onExportDocx,
-  exportingDocx = false
+  exportingDocx = false,
+  beforeScore = null,
+  afterScore = null,
+  riskDelta = null,
+  riskDirection = null,
+  riskFindings = null
 }) => {
-  const [viewMode, setViewMode] = useState('side-by-side'); // 'side-by-side' | 'stacked'
+  const [viewMode, setViewMode] = useState('side-by-side');
   const leftPaneRef = useRef(null);
   const rightPaneRef = useRef(null);
   const isSyncingLeft = useRef(false);
   const isSyncingRight = useRef(false);
 
-  // Synchronized scrolling handlers
   const handleLeftScroll = () => {
     if (isSyncingLeft.current) {
       isSyncingLeft.current = false;
@@ -51,13 +50,12 @@ export const LegalSideBySideRedline = ({
       const left = leftPaneRef.current;
       const right = rightPaneRef.current;
       const scrollPct = right.scrollTop / (right.scrollHeight - right.clientHeight || 1);
-      left.scrollTop = scrollPct * (left.scrollHeight - left.clientHeight);
+      left.scrollTop = scrollPct * (right.scrollHeight - right.clientHeight);
     }
   };
 
   return (
     <div style={{ border: '1px solid var(--line, #27272A)', borderRadius: '0px', background: '#09090B' }}>
-      {/* Top Toolbar */}
       <div
         style={{
           display: 'flex',
@@ -93,7 +91,6 @@ export const LegalSideBySideRedline = ({
           </span>
         </div>
 
-        {/* View Mode Toggle & DOCX Trigger */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ display: 'inline-flex', border: '1px solid #3F3F46' }}>
             <button
@@ -152,7 +149,6 @@ export const LegalSideBySideRedline = ({
         </div>
       </div>
 
-      {/* Rationale & Evidence Header */}
       <div style={{ padding: '8px 14px', background: '#0D0D10', borderBottom: '1px solid #1E1E24', fontSize: '11.5px', color: '#A1A1AA' }}>
         <strong style={{ color: '#E4E4E7' }}>Objective:</strong> {rationale || 'Commercially balanced counter-proposal.'}
         {evidenceRef && (
@@ -162,10 +158,93 @@ export const LegalSideBySideRedline = ({
         )}
       </div>
 
-      {/* Content Panes */}
+      {typeof beforeScore === 'number' && typeof afterScore === 'number' && (
+        <div
+          style={{
+            padding: '10px 14px',
+            background: 'rgba(24, 24, 27, 0.7)',
+            borderBottom: '1px solid var(--line, #27272A)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+            fontSize: '12px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <div>
+              <span style={{ color: '#71717A', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '6px' }}>Baseline Risk:</span>
+              <span style={{ fontWeight: 700, color: '#E4E4E7' }}>{beforeScore}/100</span>
+            </div>
+            <div style={{ color: '#52525B' }}>➔</div>
+            <div>
+              <span style={{ color: '#71717A', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '6px' }}>Projected Risk:</span>
+              <span style={{ fontWeight: 700, color: '#FAFAFA' }}>{afterScore}/100</span>
+            </div>
+            <div>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  background: (riskDelta < 0) ? 'rgba(16, 185, 129, 0.15)' : (riskDelta > 0) ? 'rgba(239, 68, 68, 0.15)' : 'rgba(113, 113, 122, 0.15)',
+                  color: (riskDelta < 0) ? '#34D399' : (riskDelta > 0) ? '#F87171' : '#A1A1AA',
+                  border: `1px solid ${riskDelta < 0 ? '#059669' : riskDelta > 0 ? '#DC2626' : '#52525B'}`
+                }}
+              >
+                {riskDelta > 0 ? `+${riskDelta}` : riskDelta} pts ({riskDirection || (riskDelta < 0 ? 'REDUCED' : riskDelta > 0 ? 'INCREASED' : 'UNCHANGED')})
+              </span>
+            </div>
+          </div>
+
+          {riskFindings?.resolvedHazards && riskFindings.resolvedHazards.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '11px', color: '#10B981', fontWeight: 600 }}>Resolved:</span>
+              {riskFindings.resolvedHazards.map((h, i) => (
+                <span
+                  key={i}
+                  style={{
+                    fontSize: '10px',
+                    padding: '1px 6px',
+                    borderRadius: '2px',
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    color: '#6EE7B7',
+                    border: '1px solid rgba(16, 185, 129, 0.3)'
+                  }}
+                >
+                  ✓ {h.replace('CONFIRMED_HAZARD_', '').replace(/_/g, ' ')}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {riskFindings?.introducedHazards && riskFindings.introducedHazards.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '11px', color: '#EF4444', fontWeight: 600 }}>Introduced:</span>
+              {riskFindings.introducedHazards.map((h, i) => (
+                <span
+                  key={i}
+                  style={{
+                    fontSize: '10px',
+                    padding: '1px 6px',
+                    borderRadius: '2px',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#FCA5A5',
+                    border: '1px solid rgba(239, 68, 68, 0.3)'
+                  }}
+                >
+                  ⚠ {h.replace('CONFIRMED_HAZARD_', '').replace(/_/g, ' ')}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {viewMode === 'side-by-side' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', minHeight: '220px' }}>
-          {/* Left Pane: Original */}
           <div
             ref={leftPaneRef}
             onScroll={handleLeftScroll}
@@ -185,7 +264,6 @@ export const LegalSideBySideRedline = ({
             </div>
           </div>
 
-          {/* Right Pane: Proposed Redline */}
           <div
             ref={rightPaneRef}
             onScroll={handleRightScroll}
@@ -245,7 +323,6 @@ export const LegalSideBySideRedline = ({
           </div>
         </div>
       ) : (
-        /* Stacked View */
         <div style={{ padding: '14px' }}>
           <div style={{ marginBottom: '14px' }}>
             <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#71717A', marginBottom: '4px', textTransform: 'uppercase' }}>
@@ -286,7 +363,6 @@ export const LegalSideBySideRedline = ({
         </div>
       )}
 
-      {/* Action Footer */}
       <div
         style={{
           display: 'flex',

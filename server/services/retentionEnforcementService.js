@@ -1,6 +1,6 @@
 /**
  * server/services/retentionEnforcementService.js
- * Component 10: Retention Enforcement Engine
+ * Retention Enforcement Engine
  * Evaluates, previews, and safely executes retention policies across documents,
  * monitoring events, workflow events, evaluations, exceptions, and outbox logs.
  * Strictly respects legal holds, ensuring protected records are never purged.

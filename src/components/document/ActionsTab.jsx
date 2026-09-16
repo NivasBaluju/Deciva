@@ -17,7 +17,7 @@ import { buttonMotion } from '../../styles/motion';
 
 export const ActionsTab = ({ doc, refreshTrigger }) => {
   const { user } = useAuth();
-  const [activeView, setActiveView] = useState('ACTIONS'); // 'ACTIONS' | 'ATTENTION' | 'ANALYTICS'
+  const [activeView, setActiveView] = useState('ACTIONS');
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -25,7 +25,6 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
   const [selectedActionId, setSelectedActionId] = useState(null);
   const [error, setError] = useState(null);
 
-  // Filters & Sorting state
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [ownerFilter, setOwnerFilter] = useState('ALL');
@@ -55,14 +54,12 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
   };
 
   useEffect(() => {
-    // Multi-document isolation: reset state on doc change
     setActions([]);
     setSelectedActionId(null);
     setSyncSummary(null);
     loadActions(false);
   }, [doc?.id, refreshTrigger]);
 
-  // Deep-link action selector via URL query parameter ?action=:actionId
   useEffect(() => {
     if (actions.length === 0) return;
     try {
@@ -79,7 +76,6 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
         }
       }
     } catch {
-      // Ignore URL parsing errors
     }
   }, [actions]);
 
@@ -112,7 +108,6 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
     );
   };
 
-  // Metric counts
   const counts = useMemo(() => {
     const res = {
       total: actions.length,
@@ -137,24 +132,19 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
     return res;
   }, [actions]);
 
-  // Filtered and sorted action list
   const filteredActions = useMemo(() => {
     return actions
       .filter((a) => {
-        // Status filter
         if (statusFilter !== 'ALL' && a.status !== statusFilter) return false;
 
-        // Category filter
         if (categoryFilter !== 'ALL' && a.category !== categoryFilter) return false;
 
-        // Owner filter
         if (ownerFilter === 'ASSIGNED_TO_ME') {
           if (!user?.id || a.owner_id !== user.id) return false;
         } else if (ownerFilter === 'UNASSIGNED') {
           if (a.owner_id) return false;
         }
 
-        // Search text
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
           const matchTitle = (a.title || '').toLowerCase().includes(q);
@@ -204,7 +194,6 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
 
   return (
     <div className="action-center-container">
-      {/* Top Banner & Synchronize Bar */}
       <div className="card mb-20" style={{ padding: '20px 24px', background: 'linear-gradient(135deg, rgba(30,27,75,0.4), rgba(15,23,42,0.6))' }}>
         <div className="flex-between" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
@@ -233,7 +222,6 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
           </div>
         </div>
 
-        {/* Sync Summary Notification Banner */}
         <AnimatePresence>
           {syncSummary && (
             <motion.div
@@ -268,7 +256,6 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
         </AnimatePresence>
       </div>
 
-      {/* View Mode Navigation Tabs */}
       <div
         className="flex gap-8 mb-20 p-4"
         style={{
@@ -328,7 +315,6 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
         <WorkflowAnalyticsDashboard documentId={doc?.id} />
       ) : (
         <>
-          {/* Metrics Row */}
           <div className="grid grid-4 gap-16 mb-20">
             <MetricCard
               title="Total Actions"
@@ -358,7 +344,6 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
             />
           </div>
 
-          {/* Filters and Search */}
           <ActionFilters
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
@@ -373,7 +358,6 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
             counts={counts}
           />
 
-          {/* Error state */}
           {error && (
             <div
               className="card mb-16"
@@ -392,7 +376,6 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
             </div>
           )}
 
-          {/* Action Cards List or Empty States */}
           {actions.length === 0 && !loading && !error ? (
             <div className="card text-center" style={{ padding: '48px 24px' }}>
               <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚡</div>
@@ -443,7 +426,6 @@ export const ActionsTab = ({ doc, refreshTrigger }) => {
         </>
       )}
 
-      {/* Action Detail Drawer */}
       <ActionDetail
         actionId={selectedActionId}
         isOpen={!!selectedActionId}

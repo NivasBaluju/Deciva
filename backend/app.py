@@ -9,7 +9,6 @@ for p in [BACKEND_DIR, PROJECT_ROOT]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
-
 import hmac
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -58,11 +57,9 @@ def create_app():
 
     @app.before_request
     def handle_request_preliminaries():
-        # 1. Track Request Correlation ID
         incoming_cid = request.headers.get('x-correlation-id') or request.headers.get('x-request-id')
         g.correlation_id = incoming_cid if incoming_cid else str(uuid.uuid4())
 
-        # 2. Public operational health endpoints
         if request.path in ['/api/health', '/api/health/live', '/api/health/ready', '/']:
             return None
 

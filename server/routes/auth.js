@@ -16,17 +16,34 @@ const { sendOtpEmail, sendWelcomeEmail } = require('../utils/email');
 
 const router = express.Router();
 
-const ADMIN_EMAIL = 'balujunivas@gmail.com';
-
-function isAdminEmail(email) {
-  return String(email || '').trim().toLowerCase() === ADMIN_EMAIL;
-}
-
+// [SECURITY] Role is assigned at account creation ('user') and elevated
+// only by an authenticated admin through the admin API.
+// There are NO hard-coded privileged email addresses.
 function issueToken(sessionId, userId) {
   return jwt.sign({ sessionId, userId }, JWT_SECRET, { expiresIn: '7d' });
 }
 
-// --- Register (Passwordless Email OTP) ---------------------------------------
+function getAuthCookieOptions() {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? (process.env.COOKIE_SAMESITE || 'lax') : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (matches jwt expiresIn: '7d')
+    path: '/'
+  };
+}
+
+function getClearCookieOptions() {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? (process.env.COOKIE_SAMESITE || 'lax') : 'lax',
+    path: '/'
+  };
+}
+
 router.post('/register', authLimiter, async (req, res) => {
   try {
     const { name, email } = req.body;
@@ -39,29 +56,27 @@ router.post('/register', authLimiter, async (req, res) => {
     const { rows: existingRows } = await db.query('SELECT * FROM users WHERE email = $1', [cleanEmail]);
     let user = existingRows[0];
 
-    const role = isAdminEmail(cleanEmail) ? 'admin' : 'user';
-    const displayName = (name && name.trim()) ? name.trim() : cleanEmail.split('@')[0];
+    // Sanitize displayName to prevent stored XSS attacks
+    const rawName = (name && typeof name === 'string') ? name.replace(/<[^>]*>?/gm, '').trim() : '';
+    const displayName = rawName || cleanEmail.split('@')[0];
 
     if (!user) {
       const id = uuidv4();
       const placeholderHash = await bcrypt.hash(uuidv4(), 10);
       const { rows: newRows } = await db.query(
         'INSERT INTO users (id, name, email, password_hash, role, mfa_enabled) VALUES ($1, $2, $3, $4, $5, true) RETURNING *',
-        [id, displayName, cleanEmail, placeholderHash, role]
+        [id, displayName, cleanEmail, placeholderHash, 'user']
       );
       user = newRows[0];
-      await recordAudit(id, 'USER_REGISTERED', { email: cleanEmail, role });
+      await recordAudit(id, 'USER_REGISTERED', { email: cleanEmail, role: 'user' });
       setImmediate(() => {
         sendWelcomeEmail(cleanEmail, displayName).catch(err => console.warn('Welcome email background dispatch error:', err.message));
       });
     } else {
-      const finalRole = isAdminEmail(cleanEmail) ? 'admin' : (user.role || 'user');
-      await db.query('UPDATE users SET role = $1, name = COALESCE($2, name) WHERE id = $3', [
-        finalRole,
+      await db.query('UPDATE users SET name = COALESCE($1, name) WHERE id = $2', [
         displayName,
         user.id
       ]);
-      user.role = finalRole;
     }
 
     // Invalidate older unused login OTPs for this user
@@ -75,7 +90,18 @@ router.post('/register', authLimiter, async (req, res) => {
       [uuidv4(), user.id, code, 'login']
     );
 
-    const emailRes = await sendOtpEmail(user.email, code);
+    // Send OTP email in the background — never block the HTTP response on SMTP latency.
+    setImmediate(() => {
+      sendOtpEmail(user.email, code).catch(err =>
+        console.error('[OTP EMAIL] Background delivery error for', user.email, '—', err.message)
+      );
+    });
+
+    // Determine devMode synchronously: is SMTP configured?
+    const smtpConfigured = Boolean(
+      (process.env.SMTP_USER || process.env.EMAIL_USER) &&
+      (process.env.SMTP_PASS || process.env.EMAIL_PASS)
+    );
     const preToken = jwt.sign({ preauth: true, userId: user.id }, JWT_SECRET, { expiresIn: '10m' });
 
     res.json({
@@ -83,9 +109,10 @@ router.post('/register', authLimiter, async (req, res) => {
       mfaRequired: true,
       method: 'email',
       preToken,
-      deliveryFailed: Boolean(emailRes.deliveryFailed),
-      deliveryError: emailRes.error || null,
-      backupPass: (emailRes.deliveryFailed || emailRes.devMode) ? code : undefined
+      // [SECURITY] OTP is NEVER returned over HTTP — not even on delivery failure.
+      // Inform the client of the failure mode so it can show an appropriate message.
+      devMode: !smtpConfigured,
+      deliveryFailed: false
     });
   } catch (err) {
     console.error('Register error:', err);
@@ -93,7 +120,6 @@ router.post('/register', authLimiter, async (req, res) => {
   }
 });
 
-// --- Login (Passwordless Email OTP) ------------------------------------------
 router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email } = req.body;
@@ -106,23 +132,17 @@ router.post('/login', authLimiter, async (req, res) => {
     const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [cleanEmail]);
     if (rows[0]) {
       user = rows[0];
-      const expectedRole = isAdminEmail(cleanEmail) ? 'admin' : (user.role || 'user');
-      if (user.role !== expectedRole) {
-        await db.query('UPDATE users SET role = $1 WHERE id = $2', [expectedRole, user.id]);
-        user.role = expectedRole;
-      }
     } else {
       // Seamless passwordless auto-provisioning
       const id = uuidv4();
       const displayName = cleanEmail.split('@')[0];
       const placeholderHash = await bcrypt.hash(uuidv4(), 10);
-      const role = isAdminEmail(cleanEmail) ? 'admin' : 'user';
       const { rows: newRows } = await db.query(
         'INSERT INTO users (id, name, email, password_hash, role, mfa_enabled) VALUES ($1, $2, $3, $4, $5, true) RETURNING *',
-        [id, displayName, cleanEmail, placeholderHash, role]
+        [id, displayName, cleanEmail, placeholderHash, 'user']
       );
       user = newRows[0];
-      await recordAudit(id, 'USER_REGISTERED', { email: cleanEmail, role });
+      await recordAudit(id, 'USER_REGISTERED', { email: cleanEmail, role: 'user' });
       setImmediate(() => {
         sendWelcomeEmail(cleanEmail, displayName).catch(err => console.warn('Welcome email error:', err.message));
       });
@@ -139,7 +159,17 @@ router.post('/login', authLimiter, async (req, res) => {
       [uuidv4(), user.id, code, 'login']
     );
 
-    const emailRes = await sendOtpEmail(user.email, code);
+    // Send OTP email in the background — never block the HTTP response on SMTP latency.
+    setImmediate(() => {
+      sendOtpEmail(user.email, code).catch(err =>
+        console.error('[OTP EMAIL] Background delivery error for', user.email, '—', err.message)
+      );
+    });
+
+    const smtpConfigured = Boolean(
+      (process.env.SMTP_USER || process.env.EMAIL_USER) &&
+      (process.env.SMTP_PASS || process.env.EMAIL_PASS)
+    );
     const preToken = jwt.sign({ preauth: true, userId: user.id }, JWT_SECRET, { expiresIn: '10m' });
 
     return res.json({
@@ -147,9 +177,9 @@ router.post('/login', authLimiter, async (req, res) => {
       mfaRequired: true,
       method: 'email',
       preToken,
-      deliveryFailed: Boolean(emailRes.deliveryFailed),
-      deliveryError: emailRes.error || null,
-      backupPass: (emailRes.deliveryFailed || emailRes.devMode) ? code : undefined
+      // [SECURITY] OTP is NEVER returned over HTTP.
+      devMode: !smtpConfigured,
+      deliveryFailed: false
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -157,7 +187,6 @@ router.post('/login', authLimiter, async (req, res) => {
   }
 });
 
-// --- TOTP MFA setup ----------------------------------------------------------
 router.post('/mfa/totp/setup', async (req, res) => {
   try {
     let userId;
@@ -295,15 +324,14 @@ router.post('/mfa/totp/verify', otpVerifyLimiter, async (req, res) => {
     );
     const token = issueToken(sessionId, user.id);
     await recordAudit(user.id, 'LOGIN_SUCCESS', { mfa: true });
-    const userRole = isAdminEmail(user.email) ? 'admin' : (user.role || 'user');
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: userRole, mfaEnabled: true } });
+    res.cookie('token', token, getAuthCookieOptions());
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role || 'user', mfaEnabled: true } });
   } catch (err) {
     console.error('TOTP verify error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// --- Email OTP (alternative second factor) ----------------------------------
 router.post('/mfa/otp/request', authLimiter, async (req, res) => {
   try {
     const { preToken } = req.body;
@@ -325,12 +353,22 @@ router.post('/mfa/otp/request', authLimiter, async (req, res) => {
       [id, user.id, code, 'login']
     );
 
-    const emailRes = await sendOtpEmail(user.email, code);
+    // Send OTP email in the background — never block the HTTP response on SMTP latency.
+    setImmediate(() => {
+      sendOtpEmail(user.email, code).catch(err =>
+        console.error('[OTP EMAIL] Background delivery error for', user.email, '—', err.message)
+      );
+    });
+
+    const smtpConfigured = Boolean(
+      (process.env.SMTP_USER || process.env.EMAIL_USER) &&
+      (process.env.SMTP_PASS || process.env.EMAIL_PASS)
+    );
     res.json({
       ok: true,
-      deliveryFailed: Boolean(emailRes.deliveryFailed),
-      deliveryError: emailRes.error || null,
-      backupPass: (emailRes.deliveryFailed || emailRes.devMode) ? code : undefined
+      // [SECURITY] OTP never returned over HTTP.
+      devMode: !smtpConfigured,
+      deliveryFailed: false
     });
   } catch (err) {
     console.error('OTP request error:', err);
@@ -340,7 +378,9 @@ router.post('/mfa/otp/request', authLimiter, async (req, res) => {
 
 router.post('/mfa/otp/verify', otpVerifyLimiter, async (req, res) => {
   try {
-    const { preToken, code } = req.body;
+    // Accept both `code` (canonical) and `otp` (legacy client alias)
+    const { preToken, code, otp } = req.body;
+    const resolvedCode = code || otp;
     let payload;
     try {
       payload = jwt.verify(preToken, JWT_SECRET);
@@ -352,7 +392,7 @@ router.post('/mfa/otp/verify', otpVerifyLimiter, async (req, res) => {
     const user = userRows[0];
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const cleanCode = String(code || '').trim();
+    const cleanCode = String(resolvedCode || '').trim();
     let valid = await verifyOtpCode(user.id, cleanCode);
 
     if (!valid && user.totp_secret) {
@@ -367,12 +407,6 @@ router.post('/mfa/otp/verify', otpVerifyLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Incorrect or expired verification code. Please try again.', field: 'otp' });
     }
 
-    // Ensure role is admin if special email
-    const userRole = isAdminEmail(user.email) ? 'admin' : (user.role || 'user');
-    if (user.role !== userRole) {
-      await db.query('UPDATE users SET role = $1 WHERE id = $2', [userRole, user.id]);
-    }
-
     const sessionId = uuidv4();
     await db.query(
       'INSERT INTO sessions (id, user_id, device_fingerprint, ip, mfa_verified) VALUES ($1, $2, $3, $4, true)',
@@ -380,14 +414,14 @@ router.post('/mfa/otp/verify', otpVerifyLimiter, async (req, res) => {
     );
     const token = issueToken(sessionId, user.id);
     await recordAudit(user.id, 'LOGIN_SUCCESS', { mfa: 'email_otp' });
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: userRole, mfaEnabled: !!user.mfa_enabled } });
+    res.cookie('token', token, getAuthCookieOptions());
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role || 'user', mfaEnabled: !!user.mfa_enabled } });
   } catch (err) {
     console.error('OTP verify error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// --- Session info / logout ---------------------------------------------------
 router.get('/me', requireAuth, (req, res) => {
   res.json({ user: req.user, trust: req.trust, session: { id: req.session.id, createdAt: req.session.created_at } });
 });
@@ -396,6 +430,7 @@ router.post('/logout', requireAuth, async (req, res) => {
   try {
     await db.query('UPDATE sessions SET revoked = true WHERE id = $1', [req.session.id]);
     await recordAudit(req.user.id, 'LOGOUT', {});
+    res.clearCookie('token', getClearCookieOptions());
     res.json({ ok: true });
   } catch (err) {
     console.error('Logout error:', err);

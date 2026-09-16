@@ -2,14 +2,14 @@
   {
     "slug": "cryptographic-non-repudiation-contracts",
     "title": "Cryptographic Non-Repudiation in Enterprise Contract Governance",
-    "dek": "How append-only SHA-256 Merkle ledgers and dual-signatory separation of duties enforce evidential non-repudiation.",
+    "dek": "How append-only SHA-256 cryptographic audit ledgers and dual-signatory separation of duties enforce evidential non-repudiation.",
     "category": "Security & Governance",
     "author": "Deciva Systems Engineering Group",
     "date": "2026 Systems Paper",
     "readTime": "5 min read",
     "content": [
       "In enterprise contract administration, standard database audit trails are increasingly susceptible to challenges regarding mutability and data integrity. Traditional database logs can be manipulated by privileged administrators without leaving an external tamper-evident trace. When multi-million dollar liability hinges on verifying exact clause revisions, approval timestamps, and notification lineage, conventional database logs provide insufficient evidentiary weight.",
-      "Deciva solves this evidential challenge through an immutable, append-only cryptographic ledger. Every contract state transition, risk declassification, and policy waiver is hashed into an unbroken SHA-256 Merkle chain. Dual-signatory separation of duties guarantees that high-stakes modifications require independent cryptographic signoff, preventing unilateral authorization or unauthorized tampering.",
+      "Deciva solves this evidential challenge through an immutable, append-only cryptographic ledger. Every contract state transition, risk declassification, and policy waiver is hashed into an unbroken SHA-256 cryptographic hash chain. Dual-signatory separation of duties guarantees that high-stakes modifications require independent cryptographic signoff, preventing unilateral authorization or unauthorized tampering.",
       "The resulting evidence packages are mathematically self-verifying: altering a single character in an executed agreement breaks the canonical digest across the entire chain, establishing mathematically verifiable judicial non-repudiation."
     ]
   },

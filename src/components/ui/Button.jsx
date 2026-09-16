@@ -2,12 +2,6 @@ import React, { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ThinkingOrb } from 'thinking-orbs';
 
-/**
- * Button — Part 8.5 & 8.6
- * Rectangular (0px radius), active-voice labels, keyboard focus-visible.
- * Primary: ink fill -> paper fill inversion on hover.
- * Ghost: transparent fill, 1px ink border -> 2px inset border on hover.
- */
 export const Button = forwardRef(({
   variant = 'primary',
   href,
@@ -41,7 +35,6 @@ export const Button = forwardRef(({
   );
 
   if (href && !disabled) {
-    // If external link
     if (href.startsWith('http') || href.startsWith('mailto:')) {
       return (
         <a ref={ref} href={href} className={classes} {...props}>

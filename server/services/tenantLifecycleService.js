@@ -1,6 +1,6 @@
 /**
  * server/services/tenantLifecycleService.js
- * Component 9: Tenant Lifecycle Management
+ * Tenant Lifecycle Management
  * Controls the full enterprise tenant lifecycle:
  * ACTIVE <-> SUSPENDED -> ARCHIVING -> ARCHIVED -> DELETION_PENDING -> DELETION_AUTHORIZED -> DELETING -> DELETED
  * Enforces legal hold protection so no tenant under legal hold can be destroyed.

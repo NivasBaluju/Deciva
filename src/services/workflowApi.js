@@ -1,7 +1,6 @@
 import Api from './api';
 
 export const WorkflowApi = {
-  // Workflow Inbox & Portfolios
   getWorkflowInbox(params = {}) {
     const query = new URLSearchParams(params).toString();
     return Api.get(`/api/workflow/inbox${query ? `?${query}` : ''}`);
@@ -15,7 +14,6 @@ export const WorkflowApi = {
     return Api.get('/api/workflow/my-decisions');
   },
 
-  // Document-scoped Decisions
   getDocumentDecisions(docId) {
     return Api.get(`/api/documents/${encodeURIComponent(docId)}/decisions`);
   },
@@ -28,7 +26,6 @@ export const WorkflowApi = {
     return Api.post(`/api/documents/${encodeURIComponent(docId)}/decisions/policy-evaluate`, draftContext);
   },
 
-  // Decision Lifecycle & Actions
   getDecision(decisionId) {
     return Api.get(`/api/workflow/decisions/${encodeURIComponent(decisionId)}`);
   },
@@ -69,7 +66,6 @@ export const WorkflowApi = {
     return Api.post(`/api/workflow/decisions/${encodeURIComponent(decisionId)}/cancel`, cancelData);
   },
 
-  // Collaboration: Comments & Timeline
   addComment(decisionId, commentData) {
     return Api.post(`/api/workflow/decisions/${encodeURIComponent(decisionId)}/comments`, commentData);
   },

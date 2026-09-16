@@ -10,7 +10,7 @@ export const PortfolioMonitoring = () => {
   const [events, setEvents] = useState([]);
   const [lifecycle, setLifecycle] = useState({ contracts: [], calendarEvents: [] });
   const [changeIntel, setChangeIntel] = useState(null);
-  const [activeSubTab, setActiveSubTab] = useState('ATTENTION'); // 'ATTENTION' | 'TIMELINE' | 'CALENDAR' | 'MAP'
+  const [activeSubTab, setActiveSubTab] = useState('ATTENTION');
   const { toast } = useToast();
 
   const loadMonitoringData = async () => {
@@ -74,7 +74,6 @@ export const PortfolioMonitoring = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Top Banner: Enterprise Portfolio Intelligence Overview */}
       <div className="card bg-paper-dim border border-rule" style={{ padding: '20px 24px', borderRadius: '0px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
@@ -111,7 +110,6 @@ export const PortfolioMonitoring = () => {
           </button>
         </div>
 
-        {/* Change Intelligence Narrative Metrics */}
         {changeIntel && (
           <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-rule, #333)' }}>
             <div style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--ink-muted, #888)', marginBottom: '10px' }}>
@@ -147,7 +145,6 @@ export const PortfolioMonitoring = () => {
         )}
       </div>
 
-      {/* Sub-navigation Controls */}
       <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-rule, #333)', paddingBottom: '8px' }}>
         <button
           className={`btn btn-sm ${activeSubTab === 'ATTENTION' ? 'btn-primary' : 'btn-ghost'}`}
@@ -179,7 +176,6 @@ export const PortfolioMonitoring = () => {
         </button>
       </div>
 
-      {/* 1. Prioritized Attention Queue */}
       {activeSubTab === 'ATTENTION' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {attentionQueue.length === 0 ? (
@@ -280,7 +276,6 @@ export const PortfolioMonitoring = () => {
         </div>
       )}
 
-      {/* 2. Contract Change Timeline */}
       {activeSubTab === 'TIMELINE' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {events.length === 0 ? (
@@ -306,7 +301,6 @@ export const PortfolioMonitoring = () => {
                       {ev.title}
                     </div>
 
-                    {/* Diff comparison display */}
                     {(ev.previous_value !== 'NOT_AVAILABLE' || ev.current_value !== 'NOT_AVAILABLE') && (
                       <div style={{ display: 'flex', gap: '16px', marginTop: '8px', fontSize: '12px' }}>
                         <div style={{ padding: '4px 8px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
@@ -342,7 +336,6 @@ export const PortfolioMonitoring = () => {
         </div>
       )}
 
-      {/* 3. Evidence-Backed Lifecycle Calendar */}
       {activeSubTab === 'CALENDAR' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ fontSize: '13px', color: 'var(--ink-muted, #888)', fontStyle: 'italic' }}>
@@ -369,7 +362,6 @@ export const PortfolioMonitoring = () => {
                     className="card bg-paper-dim border border-rule"
                     style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '20px' }}
                   >
-                    {/* Calendar Badge */}
                     <div
                       style={{
                         display: 'flex',
@@ -422,7 +414,6 @@ export const PortfolioMonitoring = () => {
         </div>
       )}
 
-      {/* 4. Portfolio Exposure & Concentration Map */}
       {activeSubTab === 'MAP' && (
         <div className="card bg-paper-dim border border-rule" style={{ padding: '24px' }}>
           <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: 600 }}>

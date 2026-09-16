@@ -15,7 +15,7 @@ export const MetricCard = ({ icon, iconCls = 'metric-icon-blue', value, label, b
     }
 
     if (isInView) {
-      const duration = 500; // ms
+      const duration = 500;
       const start = 0;
       const end = value;
       const startTime = performance.now();
@@ -23,7 +23,6 @@ export const MetricCard = ({ icon, iconCls = 'metric-icon-blue', value, label, b
       const animateCount = (now) => {
         const elapsed = now - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        // Easing: ease out quad
         const current = Math.round(start + (end - start) * (1 - Math.pow(1 - progress, 3)));
         setDisplayValue(current);
 

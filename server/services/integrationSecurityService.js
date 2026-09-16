@@ -54,7 +54,6 @@ const IntegrationSecurityService = {
       return { valid: false, error: 'MISSING_SIGNATURE_OR_SECRET' };
     }
 
-    // 1. Timestamp freshness check (Replay attack defense)
     if (timestampHeader) {
       const tsNumber = Number(timestampHeader);
       const currentTimeSeconds = Math.floor(Date.now() / 1000);
@@ -70,7 +69,6 @@ const IntegrationSecurityService = {
       }
     }
 
-    // 2. Prepare payload representation
     const bodyStr = Buffer.isBuffer(rawBody)
       ? rawBody.toString('utf8')
       : (typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody || {}));
@@ -78,7 +76,6 @@ const IntegrationSecurityService = {
     // Support both "timestamp.body" and direct body signing conventions
     const candidatePayload = timestampHeader ? `${timestampHeader}.${bodyStr}` : bodyStr;
 
-    // 3. Compute expected HMAC
     const hmac = crypto.createHmac('sha256', secret);
     hmac.update(candidatePayload);
     const expectedHex = hmac.digest('hex');

@@ -1,11 +1,12 @@
 const express = require('express');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
-const { verifyChain, recordAudit, logThreat } = require('../utils/audit');
+const { verifyChain, verifyLedger, recordAudit, logThreat } = require('../utils/audit');
+const { EnterpriseError, formatErrorResponse } = require('../utils/errorTaxonomy');
+const adminProvisioningService = require('../services/adminProvisioningService');
 
 const router = express.Router();
 
-// --- Admin Platform Overview -------------------------------------------------
 router.get('/overview', requireAdmin, async (req, res) => {
   try {
     const [usersRes, docsRes, sessRes, threatsRes] = await Promise.all([
@@ -15,14 +16,15 @@ router.get('/overview', requireAdmin, async (req, res) => {
       db.query('SELECT COUNT(*) AS c FROM threat_logs')
     ]);
 
-    const chain = await verifyChain();
+    const chain = await verifyLedger();
 
     res.json({
       totalUsers: Number(usersRes.rows[0].c),
       totalDocuments: Number(docsRes.rows[0].c),
       totalActiveSessions: Number(sessRes.rows[0].c),
       totalThreatAlerts: Number(threatsRes.rows[0].c),
-      blockchainAudit: { totalBlocks: chain.totalBlocks, valid: chain.valid }
+      cryptographicAudit: { totalBlocks: chain.totalBlocks, valid: chain.valid },
+      blockchainAudit: { totalBlocks: chain.totalBlocks, valid: chain.valid } // backward-compatible deprecated alias
     });
   } catch (err) {
     console.error('Admin overview error:', err);
@@ -30,7 +32,6 @@ router.get('/overview', requireAdmin, async (req, res) => {
   }
 });
 
-// --- Global Risky Users Radar ------------------------------------------------
 router.get('/risky-users', requireAdmin, async (req, res) => {
   try {
     const { rows: users } = await db.query(`
@@ -104,7 +105,6 @@ router.get('/risky-users', requireAdmin, async (req, res) => {
   }
 });
 
-// --- Quarantine / Revoke All Sessions for Risky User -------------------------
 router.post('/quarantine-user/:id', requireAdmin, async (req, res) => {
   try {
     const targetUserId = req.params.id;
@@ -126,7 +126,58 @@ router.post('/quarantine-user/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// --- Global Threat Logs ------------------------------------------------------
+router.get('/users', requireAdmin, async (req, res) => {
+  try {
+    const { rows: users } = await db.query(`
+      SELECT 
+        u.id, 
+        u.name, 
+        u.email, 
+        u.role, 
+        u.mfa_enabled,
+        u.created_at,
+        COALESCE(s.active_sessions, 0) AS active_sessions,
+        COALESCE(t.threat_count, 0) AS threat_count
+      FROM users u
+      LEFT JOIN (
+        SELECT user_id, COUNT(*) AS active_sessions FROM sessions WHERE revoked = false GROUP BY user_id
+      ) s ON s.user_id = u.id
+      LEFT JOIN (
+        SELECT user_id, COUNT(*) AS threat_count FROM threat_logs GROUP BY user_id
+      ) t ON t.user_id = u.id
+      ORDER BY u.created_at DESC
+    `);
+    res.json({ users });
+  } catch (err) {
+    console.error('Admin list users error:', err);
+    res.status(500).json(formatErrorResponse(err, req.correlationId));
+  }
+});
+
+router.post('/users/:id/role', requireAdmin, async (req, res) => {
+  try {
+    const targetUserId = req.params.id;
+    const { role, reason } = req.body || {};
+    const result = await adminProvisioningService.provisionUserRole(
+      db,
+      targetUserId,
+      role,
+      req.user,
+      reason
+    );
+    res.json(result);
+  } catch (err) {
+    if (err instanceof EnterpriseError || err.statusCode) {
+      return res.status(err.statusCode || 400).json({
+        error: err.message,
+        code: err.errorCode || err.code
+      });
+    }
+    console.error('Admin provision user role error:', err);
+    res.status(500).json(formatErrorResponse(err, req.correlationId));
+  }
+});
+
 router.get('/threat-logs', requireAdmin, async (req, res) => {
   try {
     const { rows: threats } = await db.query(`
@@ -143,10 +194,6 @@ router.get('/threat-logs', requireAdmin, async (req, res) => {
   }
 });
 
-// ============================================================================
-// PHASE 15: ENTERPRISE OPERATIONS & RELIABILITY ENDPOINTS
-// ============================================================================
-
 const backupService = require('../services/backupService');
 const dataExportService = require('../services/dataExportService');
 const dataImportService = require('../services/dataImportService');
@@ -159,9 +206,7 @@ const productionConfigService = require('../services/productionConfigService');
 const featureFlagService = require('../services/featureFlagService');
 const databaseIntegrityService = require('../services/databaseIntegrityService');
 const demoSeedService = require('../services/demoSeedService');
-const { formatErrorResponse } = require('../utils/errorTaxonomy');
 
-// 1. Centralized Operational Metrics
 router.get('/operations/metrics', requireAdmin, async (req, res) => {
   try {
     const tenantId = req.query.tenant_id || null;
@@ -172,7 +217,6 @@ router.get('/operations/metrics', requireAdmin, async (req, res) => {
   }
 });
 
-// 2. Database Schema & Constraint Integrity
 router.get('/database/integrity', requireAdmin, async (req, res) => {
   try {
     const report = await databaseIntegrityService.checkDatabaseIntegrity();
@@ -182,7 +226,6 @@ router.get('/database/integrity', requireAdmin, async (req, res) => {
   }
 });
 
-// 3. Cryptographic Audit Integrity (Component 27)
 router.get('/audit/integrity', requireAdmin, async (req, res) => {
   try {
     const verification = await verifyChain();
@@ -198,7 +241,6 @@ router.get('/audit/integrity', requireAdmin, async (req, res) => {
   }
 });
 
-// 4. Backups & Disaster Recovery
 router.get('/backups', requireAdmin, async (req, res) => {
   try {
     const tenantId = req.query.tenant_id || null;
@@ -289,7 +331,6 @@ router.get('/backups/metrics', requireAdmin, async (req, res) => {
   }
 });
 
-// 5. Data Export & Import Portability
 router.post('/export', requireAdmin, async (req, res) => {
   try {
     const { tenant_id } = req.body;
@@ -318,7 +359,6 @@ router.post('/import', requireAdmin, async (req, res) => {
   }
 });
 
-// 6. Tenant Lifecycle Management
 router.get('/lifecycle/:tenantId', requireAdmin, async (req, res) => {
   try {
     const status = await tenantLifecycleService.getTenantStatus(req.params.tenantId);
@@ -412,7 +452,6 @@ router.post('/lifecycle/:tenantId/execute-deletion', requireAdmin, async (req, r
   }
 });
 
-// 7. Retention Enforcement
 router.post('/retention/preview', requireAdmin, async (req, res) => {
   try {
     const { tenant_id, policy_id } = req.body;
@@ -438,7 +477,6 @@ router.post('/retention/apply', requireAdmin, async (req, res) => {
   }
 });
 
-// 8. Legal Holds
 router.get('/legal-holds', requireAdmin, async (req, res) => {
   try {
     const tenantId = req.query.tenant_id;
@@ -482,7 +520,6 @@ router.post('/legal-holds/:id/release', requireAdmin, async (req, res) => {
   }
 });
 
-// 9. Emergency Break-Glass Controls (Component 21)
 router.post('/break-glass', requireAdmin, async (req, res) => {
   try {
     const { reason, tenant_id, scope = 'EMERGENCY_RECOVERY' } = req.body;
@@ -516,7 +553,6 @@ router.post('/break-glass', requireAdmin, async (req, res) => {
   }
 });
 
-// 10. Background Jobs
 router.get('/jobs', requireAdmin, async (req, res) => {
   try {
     const { tenant_id, status, limit = 50 } = req.query;
@@ -536,7 +572,6 @@ router.post('/jobs/:id/retry', requireAdmin, async (req, res) => {
   }
 });
 
-// 11. Feature Flags & Configuration Fingerprint
 router.get('/feature-flags', requireAdmin, async (req, res) => {
   try {
     const flags = await featureFlagService.listFeatureFlags();
@@ -570,7 +605,6 @@ router.get('/config/fingerprint', requireAdmin, (req, res) => {
   }
 });
 
-// 12. Curated Demo / Showcase Environment
 router.get('/demo/status', requireAdmin, async (req, res) => {
   try {
     const status = await demoSeedService.getDemoStatus();
@@ -599,5 +633,4 @@ router.post('/demo/purge', requireAdmin, async (req, res) => {
 });
 
 module.exports = router;
-
 

@@ -1,6 +1,6 @@
 /**
  * server/services/databaseIntegrityService.js
- * Component 26: Database Schema & Referential Integrity Verification
+ * Database Schema & Referential Integrity Verification
  * Verifies table presence, index coverage, foreign key references, unique constraints,
  * migration sequence consistency, and orphan record detection across all enterprise tables.
  */
@@ -50,7 +50,6 @@ async function checkDatabaseIntegrity() {
     orphan_checks: {}
   };
 
-  // 1. Table existence check
   const { rows: tableRows } = await db.query(`
     SELECT table_name 
     FROM information_schema.tables 
@@ -65,7 +64,6 @@ async function checkDatabaseIntegrity() {
     }
   }
 
-  // 2. Migration consistency check
   const { rows: migRows } = await db.query(`
     SELECT version, applied_at FROM schema_migrations ORDER BY version
   `);
@@ -74,7 +72,6 @@ async function checkDatabaseIntegrity() {
     details.migration_consistency = 'INCOMPLETE';
   }
 
-  // 3. Orphan record detection
   // A. Workflows without parent document
   try {
     const { rows: orphanWorkflows } = await db.query(`

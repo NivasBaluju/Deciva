@@ -3,7 +3,7 @@
  * ---------------------------------------------------------------------------
  * Coordinates inbound synchronization, version conflict detection, idempotency,
  * and seamless integration bridges into Phase 10 Decision Intelligence,
- * Phase 11 Monitoring, Phase 12 Workflows, Phase 13 Governance, and Action Center.
+ * Monitoring, Phase 12 Workflows, Phase 13 Governance, and Action Center.
  */
 
 const { v4: uuidv4 } = require('uuid');
@@ -31,7 +31,6 @@ const IntegrationSyncService = {
    * Executes an end-to-end synchronization run for an integration.
    */
   executeSyncRun: async (tenantId, integrationId, options = {}) => {
-    // 1. Fetch and validate integration status
     const { rows: intgRows } = await db.query(
       `SELECT * FROM enterprise_integrations WHERE id = $1 AND tenant_id = $2`,
       [integrationId, tenantId]
@@ -49,7 +48,6 @@ const IntegrationSyncService = {
     const correlationId = options.correlationId || IntegrationSecurityService.generateIntegrationCorrelationId();
     const runId = uuidv4();
 
-    // 2. Initialize sync run record
     await db.query(
       `INSERT INTO integration_sync_runs (
         id, tenant_id, integration_id, operation, direction, status,
@@ -67,7 +65,6 @@ const IntegrationSyncService = {
     let errorSummary = null;
 
     try {
-      // 3. Resolve provider & credentials
       const provider = getProvider(integration.provider);
       const config = typeof integration.configuration_json === 'string'
         ? JSON.parse(integration.configuration_json)
@@ -81,12 +78,10 @@ const IntegrationSyncService = {
         ? { apiKey: CredentialVaultService.retrieveSecret(integration.credentials_reference) }
         : {};
 
-      // 4. Fetch documents from remote source
       const remoteResult = await provider.listDocuments(config, creds, options.query_params || {});
       const rawDocs = remoteResult.documents || [];
       received = rawDocs.length;
 
-      // 5. Process each document with idempotency & version conflict protection
       for (const rawDoc of rawDocs) {
         try {
           const canonical = IntegrationNormalizationService.normalizeDocument(integration.provider, rawDoc);
@@ -135,7 +130,6 @@ const IntegrationSyncService = {
               [String(newExtVersion), mapping.id]
             );
 
-            // Phase 11 Continuous Monitoring Bridge
             if (contractMonitoringService && contractMonitoringService.evaluateContractMonitoring) {
               await contractMonitoringService.evaluateContractMonitoring(docId, tenantId, {
                 changeType: 'EXTERNAL_DOCUMENT_UPDATED',
@@ -144,13 +138,11 @@ const IntegrationSyncService = {
               }).catch(e => console.warn('[Sync] Monitoring bridge warning:', e.message));
             }
 
-            // Phase 10 Decision Intelligence Bridge
             if (contractDecisionService && contractDecisionService.getDocumentDecisionIntelligence) {
               await contractDecisionService.getDocumentDecisionIntelligence(docId, tenantId)
                 .catch(e => console.warn('[Sync] Intelligence bridge warning:', e.message));
             }
 
-            // Phase 13 Governance Bridge
             if (policyComplianceService && policyComplianceService.evaluateDocumentCompliance) {
               await policyComplianceService.evaluateDocumentCompliance(tenantId, docId)
                 .catch(e => console.warn('[Sync] Compliance bridge warning:', e.message));
@@ -215,13 +207,11 @@ const IntegrationSyncService = {
               ]
             );
 
-            // Phase 10 Decision Intelligence Bridge
             if (contractDecisionService && contractDecisionService.getDocumentDecisionIntelligence) {
               await contractDecisionService.getDocumentDecisionIntelligence(docId, tenantId)
                 .catch(e => console.warn('[Sync] Intelligence bridge warning:', e.message));
             }
 
-            // Phase 13 Governance Bridge
             if (policyComplianceService && policyComplianceService.evaluateDocumentCompliance) {
               await policyComplianceService.evaluateDocumentCompliance(tenantId, docId)
                 .catch(e => console.warn('[Sync] Compliance bridge warning:', e.message));
@@ -256,7 +246,6 @@ const IntegrationSyncService = {
         }
       }
 
-      // 6. Update integration last_sync_at
       await db.query(
         `UPDATE enterprise_integrations SET last_sync_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
         [integrationId]
@@ -313,7 +302,6 @@ const IntegrationSyncService = {
    * Processes incoming webhook payloads with signature validation and replay idempotency.
    */
   processWebhookEvent: async (tenantId, integrationId, { rawBody, signatureHeader, timestampHeader, payload }) => {
-    // 1. Fetch integration
     const { rows: intgRows } = await db.query(
       `SELECT * FROM enterprise_integrations WHERE id = $1 AND tenant_id = $2`,
       [integrationId, tenantId]
@@ -328,7 +316,6 @@ const IntegrationSyncService = {
       throw new Error(`Integration is currently ${integration.status}`);
     }
 
-    // 2. Validate webhook signature
     const secret = integration.credentials_reference
       ? CredentialVaultService.retrieveSecret(integration.credentials_reference)
       : null;
@@ -353,11 +340,9 @@ const IntegrationSyncService = {
       }
     }
 
-    // 3. Normalize event payload
     const canonicalEvent = IntegrationNormalizationService.normalizeEvent(integration.provider, payload);
     const payloadHash = sha256(JSON.stringify(payload));
 
-    // 4. Deterministic Replay / Idempotency Check
     const { rows: existingEvt } = await db.query(
       `SELECT * FROM integration_webhook_events
        WHERE tenant_id = $1 AND integration_id = $2 AND event_id = $3`,
@@ -374,7 +359,6 @@ const IntegrationSyncService = {
       };
     }
 
-    // 5. Record incoming webhook event
     const webhookEventId = uuidv4();
     await db.query(
       `INSERT INTO integration_webhook_events (
@@ -392,7 +376,6 @@ const IntegrationSyncService = {
       ]
     );
 
-    // 6. Cryptographic audit
     await recordAudit(tenantId, 'WEBHOOK_ACCEPTED', {
       integrationId,
       eventId: canonicalEvent.event_id,

@@ -24,7 +24,6 @@ export const ActionFilters = ({
       }}
     >
       <div className="flex-between mb-12" style={{ flexWrap: 'wrap', gap: '12px' }}>
-        {/* Search input */}
         <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
           <input
             type="text"
@@ -45,7 +44,6 @@ export const ActionFilters = ({
           </div>
         </div>
 
-        {/* Sort selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className="text-muted small" style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
             Sort by:
@@ -70,9 +68,7 @@ export const ActionFilters = ({
         </div>
       </div>
 
-      {/* Filter Buttons Row */}
       <div className="flex gap-16 flex-wrap" style={{ alignItems: 'center', fontSize: '12.5px' }}>
-        {/* Status filter pills */}
         <div className="flex gap-6 flex-wrap" style={{ alignItems: 'center' }}>
           <span className="text-muted small" style={{ fontWeight: 600, marginRight: '2px' }}>Status:</span>
           {[
@@ -101,7 +97,6 @@ export const ActionFilters = ({
           })}
         </div>
 
-        {/* Category filter */}
         <div className="flex gap-6 flex-wrap" style={{ alignItems: 'center' }}>
           <span className="text-muted small" style={{ fontWeight: 600, marginRight: '2px' }}>Severity:</span>
           {['ALL', 'CRITICAL', 'IMPORTANT', 'MONITORING'].map((cat) => {
@@ -124,7 +119,6 @@ export const ActionFilters = ({
           })}
         </div>
 
-        {/* Owner filter */}
         <div className="flex gap-6 flex-wrap" style={{ alignItems: 'center' }}>
           <span className="text-muted small" style={{ fontWeight: 600, marginRight: '2px' }}>Owner:</span>
           {[

@@ -1,5 +1,5 @@
 /**
- * Portfolio Analytics Routes (Phase 7.8)
+ * Portfolio Analytics Routes
  * 
  * Provides authenticated, strictly read-only endpoints for cross-contract
  * portfolio intelligence, health scoring, attention queue, and workload oversight.
@@ -119,7 +119,7 @@ router.get('/escalations', requireAuth, async (req, res, next) => {
 });
 
 /**
- * GET /api/portfolio/concentration (Phase 10)
+ * GET /api/portfolio/concentration
  * Evaluates empirical concentration across governing law, liability caps, vendors, and renewals.
  */
 router.get('/concentration', requireAuth, async (req, res, next) => {
@@ -132,7 +132,7 @@ router.get('/concentration', requireAuth, async (req, res, next) => {
 });
 
 /**
- * GET /api/portfolio/anomalies (Phase 10)
+ * GET /api/portfolio/anomalies
  * Evaluates baseline-grounded anomalies across the user's contract portfolio.
  * Returns INSUFFICIENT_HISTORICAL_DATA when user has < 2 contracts.
  */

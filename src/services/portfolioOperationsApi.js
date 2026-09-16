@@ -1,7 +1,7 @@
 import Api from './api';
 
 /**
- * Phase 8.0 — Portfolio Operations API
+ * Portfolio Operations API
  *
  * All execute requests use only previewId + Idempotency-Key.
  * No action IDs or payload are sent on execute — the server loads the
@@ -46,6 +46,7 @@ export const PortfolioOperationsApi = {
       res = await fetch(`/api/portfolio/operations/${encodeURIComponent(previewId)}/execute`, {
         method: 'POST',
         headers,
+        credentials: 'include',
         signal: controller.signal,
       });
     } catch (fetchErr) {

@@ -2,7 +2,6 @@ const TOKEN_KEY = 'deciva_token';
 
 export const Api = {
   getToken() {
-    // sessionStorage ensures the user is automatically logged out when the tab or browser is closed
     return sessionStorage.getItem(TOKEN_KEY);
   },
   setToken(token) {
@@ -36,6 +35,7 @@ export const Api = {
       res = await fetch(url, {
         method,
         headers,
+        credentials: 'include',
         body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
         signal: controller.signal
       });
@@ -64,7 +64,6 @@ export const Api = {
           }
         }
       } catch {
-        // Fallback to status text
       }
 
       const err = new Error(errorMessage);

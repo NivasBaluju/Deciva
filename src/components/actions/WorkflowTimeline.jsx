@@ -85,7 +85,6 @@ export const WorkflowTimeline = ({ activity = [] }) => {
               borderLeft: idx === activity.length - 1 ? '2px solid transparent' : '2px solid rgba(255, 255, 255, 0.1)'
             }}
           >
-            {/* Timeline node icon */}
             <div
               style={{
                 position: 'absolute',
@@ -105,7 +104,6 @@ export const WorkflowTimeline = ({ activity = [] }) => {
               {getEventIcon(item.event_type)}
             </div>
 
-            {/* Event content */}
             <div style={{ fontSize: '13px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
                 <strong style={{ color: '#E4E4E7', fontWeight: 600 }}>

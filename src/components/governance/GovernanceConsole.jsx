@@ -126,7 +126,6 @@ export const GovernanceConsole = ({ doc }) => {
 
   return (
     <div className="governance-console">
-      {/* Top Header Card */}
       <div className="card p-20 mb-16" style={{ borderLeft: '4px solid var(--royal)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
@@ -162,7 +161,6 @@ export const GovernanceConsole = ({ doc }) => {
           </div>
         </div>
 
-        {/* Explainable Score & Metrics Bar */}
         {evaluation && (
           <div className="mt-16 pt-16" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
             <div style={{ background: '#121218', padding: '10px 14px', borderRadius: '4px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
@@ -216,7 +214,6 @@ export const GovernanceConsole = ({ doc }) => {
         )}
       </div>
 
-      {/* Dry Run Simulation Banner */}
       {dryRunResult && (
         <div className="card p-16 mb-16" style={{ background: 'rgba(34, 197, 94, 0.1)', borderColor: 'rgba(34, 197, 94, 0.3)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -233,7 +230,6 @@ export const GovernanceConsole = ({ doc }) => {
         </div>
       )}
 
-      {/* Findings & Controls Table */}
       {evaluation?.findings && evaluation.findings.length > 0 ? (
         <div className="card p-20 mb-16">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -327,7 +323,6 @@ export const GovernanceConsole = ({ doc }) => {
         </div>
       )}
 
-      {/* Exceptions Panel */}
       {exceptions.length > 0 && (
         <div className="card p-20 mb-16">
           <h3 style={{ margin: '0 0 12px 0', fontSize: '15px', fontWeight: 700 }}>Governance Exceptions Log ({exceptions.length})</h3>
@@ -366,7 +361,6 @@ export const GovernanceConsole = ({ doc }) => {
         </div>
       )}
 
-      {/* Exception Request Modal */}
       {selectedFinding && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,

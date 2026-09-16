@@ -70,7 +70,6 @@ export const RiskTab = ({ doc, refreshTrigger }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Top Gauge & Point Calibrations */}
       <div className="grid grid-2">
         <div className="card" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px' }}>
           <div className="card-title" style={{ justifyContent: 'center' }}>
@@ -97,7 +96,6 @@ export const RiskTab = ({ doc, refreshTrigger }) => {
           </span>
         </div>
 
-        {/* Hazard vs Omission Explainability Card */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div className="card-title">
             <span className="dot dot-gold" />
@@ -127,9 +125,7 @@ export const RiskTab = ({ doc, refreshTrigger }) => {
         </div>
       </div>
 
-      {/* Itemized Risk Breakdown Lists */}
       <div className="grid grid-2">
-        {/* Confirmed Hazards List */}
         <div className="card">
           <div className="card-title">
             <span className="dot dot-red" />
@@ -161,7 +157,6 @@ export const RiskTab = ({ doc, refreshTrigger }) => {
           )}
         </div>
 
-        {/* Potential Omissions List */}
         <div className="card">
           <div className="card-title">
             <span className="dot dot-amber" />

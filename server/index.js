@@ -1,4 +1,9 @@
 require('dotenv').config();
+const { validateStartupConfig } = require('./services/productionConfigService');
+
+// [P0 SECURITY] Enforce fail-fast configuration validation before server initialization
+validateStartupConfig();
+
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const path = require('path');
@@ -6,6 +11,7 @@ const fs = require('fs');
 
 const db = require('./db'); // eslint-disable-line no-unused-vars -- initializes schema
 const { recordAudit } = require('./utils/audit');
+const adminProvisioningService = require('./services/adminProvisioningService');
 
 const authRoutes = require('./routes/auth');
 const documentRoutes = require('./routes/documents');
@@ -36,18 +42,21 @@ app.set('trust proxy', 1);
 // Mount request correlation tracking early
 app.use(correlationMiddleware);
 
-// --- CORS -------------------------------------------------------------------
 // Allow the Vercel-hosted frontend and local dev to reach the API.
 const ALLOWED_ORIGINS = [
   process.env.CLIENT_URL,           // e.g. https://deciva-ai.vercel.app
   'http://localhost:5000',
   'http://localhost:3000',
+  'http://127.0.0.1:5000',
+  'http://127.0.0.1:3000',
 ].filter(Boolean);
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Correlation-Id');
@@ -56,7 +65,6 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
-// ---------------------------------------------------------------------------
 
 // Enforce standard request body boundary (1MB) and preserve rawBody for HMAC verification
 app.use(express.json({
@@ -106,8 +114,6 @@ app.use('/api/governance', governanceRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/jobs', jobsRoutes);
 
-// --- Health & Readiness Model ------------------------------------------------
-// 1. Process Liveness Probe (Fast process response check)
 app.get(['/api/health/live', '/api/health/liveness'], (req, res) => {
   res.status(200).json({
     status: 'live',
@@ -118,7 +124,6 @@ app.get(['/api/health/live', '/api/health/liveness'], (req, res) => {
   });
 });
 
-// 2. Deep Readiness Probe (PostgreSQL pool + Flask microservice validation)
 app.get(['/api/health/ready', '/api/health/readiness'], async (req, res) => {
   const health = {
     status: 'ready',
@@ -183,7 +188,6 @@ app.get(['/api/health/ready', '/api/health/readiness'], async (req, res) => {
   res.status(isReady ? 200 : 503).json(health);
 });
 
-// 3. Deep Enterprise Dependency Health Probe (Component 15)
 app.get('/api/health/dependencies', async (req, res) => {
   const dependencies = {
     postgresql: { status: 'FAILED' },
@@ -196,7 +200,6 @@ app.get('/api/health/dependencies', async (req, res) => {
 
   let overall = 'READY';
 
-  // 1. PostgreSQL
   try {
     const t0 = Date.now();
     await db.query('SELECT 1');
@@ -206,7 +209,6 @@ app.get('/api/health/dependencies', async (req, res) => {
     overall = 'FAILED';
   }
 
-  // 2. AI Microservice
   try {
     const t0 = Date.now();
     const flaskRes = await fetch(`${AI_MICROSERVICE_URL}/api/health`, {
@@ -221,7 +223,6 @@ app.get('/api/health/dependencies', async (req, res) => {
     dependencies.ai_microservice = { status: 'READY', mode: 'NODE_FALLBACK', note: 'Node fallback active' };
   }
 
-  // 3. Credential Vault
   try {
     const { getCredentialVaultStats } = require('./services/credentialVaultService');
     const stats = await getCredentialVaultStats();
@@ -230,7 +231,6 @@ app.get('/api/health/dependencies', async (req, res) => {
     dependencies.credential_vault = { status: 'READY', algorithm: 'AES-256-GCM' };
   }
 
-  // 4. Outbox Ledger
   try {
     const { rows: dlq } = await db.query("SELECT COUNT(*) AS c FROM integration_event_outbox WHERE status = 'DEAD_LETTER'");
     const dlqCount = Number(dlq[0]?.c || 0);
@@ -241,7 +241,6 @@ app.get('/api/health/dependencies', async (req, res) => {
     if (dlqCount > 10 && overall !== 'FAILED') overall = 'DEGRADED';
   } catch {}
 
-  // 5. Audit Ledger
   try {
     const { rows: audit } = await db.query('SELECT COUNT(*) AS c FROM blockchain_audit');
     dependencies.audit_ledger = {
@@ -263,7 +262,6 @@ app.get('/api/health/dependencies', async (req, res) => {
   });
 });
 
-// 4. Backward-Compatible General Health Check
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -273,15 +271,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Bootstrap genesis audit block on first run.
+// Bootstrap genesis audit block and cold-start administrator on first run.
 (async () => {
   try {
     const { rows } = await db.query('SELECT COUNT(*) AS c FROM blockchain_audit');
     if (Number(rows[0].c) === 0) {
       await recordAudit(null, 'SYSTEM_INITIALIZED', { message: 'Deciva audit ledger initialized' });
     }
+    await adminProvisioningService.bootstrapInitialAdmin(db);
   } catch (e) {
-    console.error('Failed to initialize audit ledger:', e.message);
+    console.error('Startup initialization error:', e.message);
   }
 })();
 

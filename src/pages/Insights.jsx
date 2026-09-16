@@ -3,11 +3,6 @@ import { Link } from 'react-router-dom';
 import insightsData from '../content/insights.json';
 import Breadcrumb from '../components/ui/Breadcrumb';
 
-/**
- * Insights — Part 10.7
- * Legal Engineering research and regulatory intelligence publications.
- * Stacked table of contents layout with client-side category filtering.
- */
 export function Insights() {
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -22,7 +17,6 @@ export function Insights() {
       <div className="container-wide">
         <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Intelligence' }]} />
 
-        {/* Hero */}
         <div className="max-w-3xl mb-16 sm:mb-20">
           <h1 className="display-02 text-ink tracking-tight mb-6">
             Intelligence
@@ -32,7 +26,6 @@ export function Insights() {
           </p>
         </div>
 
-        {/* Category Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-16 pb-8 border-b border-rule">
           {categories.map((cat) => (
             <button
@@ -50,7 +43,6 @@ export function Insights() {
           ))}
         </div>
 
-        {/* Stacked Publications List */}
         <div className="space-y-0">
           {filtered.map((item) => (
             <Link

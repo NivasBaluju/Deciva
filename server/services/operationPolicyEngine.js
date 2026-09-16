@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Phase 8.1 — Governance Policy Engine
+ * Governance Policy Engine
  *
  * Deterministic, zero-AI/zero-ML evaluation of bulk portfolio operations.
  * Decides whether an operation is approval-exempt or mandates independent four-eyes review.
@@ -57,12 +57,10 @@ function evaluateBatchPolicy({ operation, mode, eligibleActions = [], payload = 
     }
   }
 
-  // 1. CRITICAL_PRIORITY_INCLUDED: Any action in the batch has priority score >= 80
   if (hasCriticalPriority) {
     policyFlags.push(GOVERNANCE_POLICY_FLAGS.CRITICAL_PRIORITY_INCLUDED);
   }
 
-  // 2. HIGH_IMPACT_TRANSITION: Terminal or high-impact state change
   const targetStatus = (payload.targetStatus || '').toUpperCase();
   const isHighImpactTransition =
     operation === 'BULK_TRANSITION' &&
@@ -71,14 +69,12 @@ function evaluateBatchPolicy({ operation, mode, eligibleActions = [], payload = 
     policyFlags.push(GOVERNANCE_POLICY_FLAGS.HIGH_IMPACT_TRANSITION);
   }
 
-  // 3. LARGE_BATCH_THRESHOLD: Batch operating on more than 10 actions
   const eligibleCount = eligibleActions.length;
   const isLargeBatch = eligibleCount >= POLICY_THRESHOLDS_V1.LARGE_BATCH_MIN_ACTIONS;
   if (isLargeBatch) {
     policyFlags.push(GOVERNANCE_POLICY_FLAGS.LARGE_BATCH_THRESHOLD);
   }
 
-  // 4. CROSS_CONTRACT_MASS_TRIAGE: Actions spanning more than 3 distinct documents
   const distinctDocumentCount = documentIds.size;
   const isCrossContractMassTriage = distinctDocumentCount >= POLICY_THRESHOLDS_V1.MASS_TRIAGE_MIN_DOCS;
   if (isCrossContractMassTriage) {

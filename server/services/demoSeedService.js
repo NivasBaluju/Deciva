@@ -1,6 +1,6 @@
 /**
  * server/services/demoSeedService.js
- * Component 5: Curated Demo / Seed Showcase Environment
+ * Curated Demo / Seed Showcase Environment
  * Provides a controlled 5-contract demonstration dataset illustrating the complete
  * 5-to-10 minute Deciva lifecycle narrative:
  * Upload -> Evidence -> Risk -> What-If -> Decision -> Approval -> Governance -> Monitoring -> Audit
@@ -167,7 +167,6 @@ async function seedDemoDataset(userId) {
     throw new Error('No valid administrative user found in database to associate demo contracts.');
   }
 
-  // 1. Seed or Upsert the 5 canonical documents
   for (const doc of DEMO_CONTRACTS) {
     const docHash = sha256(Buffer.from(doc.extracted_text));
     await db.query(`
@@ -195,7 +194,6 @@ async function seedDemoDataset(userId) {
     ]);
   }
 
-  // 2. Seed High-Risk Contract Action for demo-doc-03-vendor
   await db.query(`
     INSERT INTO contract_actions (
       id, document_id, source_action_id, title, category, priority_score, status, decision,
@@ -221,7 +219,6 @@ async function seedDemoDataset(userId) {
       status = EXCLUDED.status
   `, [targetUser]);
 
-  // 3. Seed Monitoring Alert Event for demo-doc-04-saas
   await db.query(`
     INSERT INTO contract_monitoring_events (
       id, document_id, user_id, event_type, severity, priority_score, title, description,
@@ -247,7 +244,6 @@ async function seedDemoDataset(userId) {
       current_value = EXCLUDED.current_value
   `, [targetUser]);
 
-  // 4. Seed Dual-Signatory Approval Workflow for demo-doc-05-strategic-jda
   await db.query(`
     INSERT INTO contract_decision_workflows (
       id, tenant_id, document_id, decision_type, title, description, status,
@@ -267,7 +263,6 @@ async function seedDemoDataset(userId) {
       status = EXCLUDED.status
   `, [targetUser]);
 
-  // 5. Append Blockchain Audit Log
   await recordAudit(targetUser, 'DEMO_DATASET_SEEDED', {
     contracts_count: DEMO_CONTRACTS.length,
     contract_ids: DEMO_CONTRACTS.map(c => c.id),

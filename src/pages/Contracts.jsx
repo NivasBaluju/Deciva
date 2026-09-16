@@ -148,9 +148,6 @@ export const Contracts = () => {
         <Breadcrumb items={[{ label: 'Cockpit', href: '/dashboard' }, { label: 'Contract Generator' }]} />
 
         <div className="mb-20">
-          <span className="mono text-lo small" style={{ letterSpacing: '0.08em' }}>
-            [CRYPTOGRAPHIC_AGREEMENT_SYNTHESIS]
-          </span>
           <h1 className="page-title" style={{ marginTop: '2px', marginBottom: '4px' }}>
             Contract Generator
           </h1>
@@ -159,7 +156,6 @@ export const Contracts = () => {
           </p>
         </div>
 
-        {/* Generator Form Card */}
         <div className="card mb-24">
           <div className="card-title mb-16">
             <span className="dot dot-gold" />
@@ -224,7 +220,6 @@ export const Contracts = () => {
           </motion.button>
         </div>
 
-        {/* Active Contract Preview */}
         <AnimatePresence>
           {generatedContract && (
             <motion.div
@@ -282,11 +277,9 @@ export const Contracts = () => {
           )}
         </AnimatePresence>
 
-        {/* Historical Contracts Ledger */}
         <div className="card">
           <div className="flex-between mb-16 flex-wrap gap-2">
             <div>
-              <span className="mono text-lo small">[IMMUTABLE_CONTRACT_LEDGER]</span>
               <div className="card-title" style={{ marginTop: '2px', marginBottom: 0 }}>
                 Generated Contracts Ledger
               </div>

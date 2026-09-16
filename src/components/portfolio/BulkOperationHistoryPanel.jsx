@@ -6,8 +6,7 @@ import SkeletonLoader from '../common/SkeletonLoader';
 import EmptyState from '../common/EmptyState';
 
 /**
- * Phase 8.0 — Bulk Operation History Panel
- * Displays paginated auditable execution receipts for past bulk operations.
+ * Displays execution receipts for past bulk operations.
  */
 
 const STATUS_COLORS = {
@@ -109,7 +108,6 @@ export const BulkOperationHistoryPanel = () => {
                   background: 'var(--paper-dim)',
                 }}
               >
-                {/* Batch row */}
                 <button
                   onClick={() => setExpandedId(expandedId === batch.id ? null : batch.id)}
                   style={{
@@ -141,7 +139,6 @@ export const BulkOperationHistoryPanel = () => {
                   </div>
                 </button>
 
-                {/* Expanded receipt */}
                 <AnimatePresence>
                   {expandedId === batch.id && (
                     <motion.div
@@ -191,7 +188,6 @@ export const BulkOperationHistoryPanel = () => {
             ))}
           </AnimatePresence>
 
-          {/* Pagination */}
           {pagination.totalPages > 1 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
               <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>

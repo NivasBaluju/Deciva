@@ -48,21 +48,17 @@ export const ActionComments = ({ actionId, onCommentActivity }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // New root comment state
   const [newCommentBody, setNewCommentBody] = useState('');
   const [submittingRoot, setSubmittingRoot] = useState(false);
 
-  // Reply state: active parent comment ID being replied to
   const [replyingToId, setReplyingToId] = useState(null);
   const [replyBody, setReplyBody] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
 
-  // Edit state: active comment ID being edited
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editBody, setEditBody] = useState('');
   const [submittingEdit, setSubmittingEdit] = useState(false);
 
-  // Delete confirm state
   const [deletingCommentId, setDeletingCommentId] = useState(null);
   const [submittingDelete, setSubmittingDelete] = useState(false);
 
@@ -167,7 +163,6 @@ export const ActionComments = ({ actionId, onCommentActivity }) => {
     return user.id === commentAuthorId || user.role === 'admin';
   };
 
-  // Render a single comment card (used for both root comments and replies)
   const renderCommentCard = (comment, isReply = false) => {
     const isEditing = editingCommentId === comment.id;
     const isReplying = replyingToId === comment.id;
@@ -186,7 +181,6 @@ export const ActionComments = ({ actionId, onCommentActivity }) => {
           position: 'relative'
         }}
       >
-        {/* Comment Header */}
         <div className="flex-between mb-8" style={{ alignItems: 'flex-start' }}>
           <div className="flex gap-10" style={{ alignItems: 'center' }}>
             <UserAvatar name={comment.author?.name} size={isReply ? 26 : 30} />
@@ -221,7 +215,6 @@ export const ActionComments = ({ actionId, onCommentActivity }) => {
             </div>
           </div>
 
-          {/* Action Menu (Reply, Edit, Delete) */}
           {!comment.isDeleted && !isEditing && (
             <div className="flex gap-6">
               {!isReply && (
@@ -265,7 +258,6 @@ export const ActionComments = ({ actionId, onCommentActivity }) => {
           )}
         </div>
 
-        {/* Comment Body / Edit Form / Delete Confirmation */}
         {isEditing ? (
           <div style={{ marginTop: '8px' }}>
             <textarea
@@ -356,7 +348,6 @@ export const ActionComments = ({ actionId, onCommentActivity }) => {
           </div>
         )}
 
-        {/* Inline Reply Composer */}
         {isReplying && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
@@ -408,7 +399,6 @@ export const ActionComments = ({ actionId, onCommentActivity }) => {
           </motion.div>
         )}
 
-        {/* Nested Replies (1-Level Threading) */}
         {comment.replies && comment.replies.length > 0 && (
           <div
             style={{
@@ -426,7 +416,6 @@ export const ActionComments = ({ actionId, onCommentActivity }) => {
 
   return (
     <div className="action-comments-section" style={{ marginTop: '8px' }}>
-      {/* Header Info Banner */}
       <div
         className="p-12 mb-16"
         style={{
@@ -444,7 +433,6 @@ export const ActionComments = ({ actionId, onCommentActivity }) => {
         </div>
       </div>
 
-      {/* New Root Comment Composer */}
       <form onSubmit={handlePostRootComment} className="mb-20">
         <div
           style={{
@@ -506,7 +494,6 @@ export const ActionComments = ({ actionId, onCommentActivity }) => {
         </div>
       </form>
 
-      {/* Comment List / States */}
       {loading ? (
         <div style={{ padding: '24px 0', textAlign: 'center', color: '#71717A' }}>
           <Icon.refresh width={20} height={20} className="spin mb-8" />

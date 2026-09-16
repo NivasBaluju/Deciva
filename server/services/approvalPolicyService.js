@@ -47,7 +47,6 @@ function evaluateApprovalPolicy(context = {}, customPolicy = {}) {
   let requiresApproval = false;
   let requiresIndependentApproval = false;
 
-  // 1. High Risk Score Trigger
   if (riskScore >= policy.HIGH_RISK_THRESHOLD) {
     requiresApproval = true;
     rulesTriggered.push(`Risk score (${riskScore}) meets or exceeds organizational high-risk threshold (${policy.HIGH_RISK_THRESHOLD}).`);
@@ -57,14 +56,12 @@ function evaluateApprovalPolicy(context = {}, customPolicy = {}) {
     }
   }
 
-  // 2. High Liability Exposure Trigger
   if (liabilityExposure >= policy.LIABILITY_THRESHOLD) {
     requiresApproval = true;
     requiresIndependentApproval = true;
     rulesTriggered.push(`Aggregate liability exposure ($${liabilityExposure.toLocaleString('en-US')}) meets or exceeds liability threshold ($${policy.LIABILITY_THRESHOLD.toLocaleString('en-US')}). Independent approval required.`);
   }
 
-  // 3. Priority Trigger
   if (priority === 'CRITICAL') {
     requiresApproval = true;
     if (policy.CRITICAL_PRIORITY_TRIGGERS_INDEPENDENT) {
@@ -76,7 +73,6 @@ function evaluateApprovalPolicy(context = {}, customPolicy = {}) {
     rulesTriggered.push('High attention priority requires formal reviewer verification.');
   }
 
-  // 4. Decision Type Trigger
   if (policy.HIGH_RISK_DECISION_TYPES.includes(decisionType)) {
     requiresApproval = true;
     rulesTriggered.push(`Decision type '${decisionType}' is classified as material contractual modification requiring review.`);

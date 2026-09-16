@@ -6,8 +6,20 @@ from typing import Dict, Any, List
 
 try:
     from backend.services.retrieval_service import retrieve_relevant_segments
+    from backend.services.ai_provenance import (
+        get_active_gemini_model,
+        get_gemini_api_key,
+        create_hybrid_provenance,
+        create_deterministic_provenance
+    )
 except ImportError:
     from services.retrieval_service import retrieve_relevant_segments
+    from services.ai_provenance import (
+        get_active_gemini_model,
+        get_gemini_api_key,
+        create_hybrid_provenance,
+        create_deterministic_provenance
+    )
 
 UNGROUNDED_RESPONSE = "I could not find sufficient information in this document to answer that question."
 
@@ -43,11 +55,12 @@ USER QUESTION:
 
 GROUNDED ANSWER:"""
 
-def call_gemini_api(prompt: str, api_key: str) -> str:
+def call_gemini_api(prompt: str, api_key: str, model: str = None) -> str:
     """
     Calls Google Gemini REST API using standard urllib.
     """
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    active_model = model or get_active_gemini_model()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{active_model}:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [{
@@ -77,18 +90,35 @@ def synthesize_extractive_answer(question: str, sources: List[Dict[str, Any]]) -
     if not sources:
         return UNGROUNDED_RESPONSE
 
+    import re
+    q_lower = (question or "").lower()
+    stop_words = {'what', 'are', 'the', 'is', 'a', 'an', 'in', 'of', 'for', 'to', 'this', 'document', 'and', 'does', 'do', 'any', 'how', 'when', 'who', 'where', 'which'}
+    q_words = set(re.findall(r'\w+', q_lower)) - stop_words
+
+    # Collect sentences from all retrieved sources
+    candidates = []
+    for s in sources:
+        sec = s.get("section", "the document")
+        raw = s.get("fullText") or s.get("excerpt") or ""
+        splits = re.split(r'[\r\n]+|(?<=[.!?])\s+', raw)
+        for sp in splits:
+            clean = sp.strip()
+            if len(clean) >= 10:
+                sent_words = set(re.findall(r'\w+', clean.lower()))
+                overlap = len(q_words & sent_words)
+                candidates.append((overlap, clean, sec))
+
+    if candidates:
+        candidates.sort(key=lambda x: x[0], reverse=True)
+        if candidates[0][0] > 0:
+            top_sents = [c[1] for c in candidates if c[0] == candidates[0][0]][:2]
+            sec = candidates[0][2]
+            return f"According to {sec}: " + " ".join(top_sents)
+
     top_source = sources[0]
     section = top_source.get("section", "the document")
     full_text = top_source.get("fullText", top_source.get("excerpt", "")).strip()
-
-    # Extract clean sentence summaries
-    sentences = [s.strip() for s in full_text.split(".") if len(s.strip()) > 15]
-    if sentences:
-        core_summary = ". ".join(sentences[:3]) + "."
-    else:
-        core_summary = full_text[:250] + "..."
-
-    return f"According to {section}, {core_summary}"
+    return f"According to {section}: {full_text[:300]}"
 
 def answer_document_question(document_id: str, question: str) -> Dict[str, Any]:
     """
@@ -100,25 +130,53 @@ def answer_document_question(document_id: str, question: str) -> Dict[str, Any]:
     """
     q = (question or "").strip()
     if not q:
+        prov = create_deterministic_provenance(
+            methodology="insufficient_evidence",
+            evidence=[]
+        )
         return {
             "documentId": document_id,
             "answer": "Please provide a valid question.",
             "grounded": False,
-            "confidence": 0.0,
-            "sources": []
+            "answer_status": "insufficient_evidence",
+            "engine": "deterministic",
+            "provider": None,
+            "model": None,
+            "confidence": {
+                "score": None,
+                "methodology": "insufficient_evidence"
+            },
+            "confidenceScore": None,
+            "retrieval_score": None,
+            "retrieval_methodology": None,
+            "sources": [],
+            "provenance": prov
         }
 
-    # Step 1: Retrieval
     sources, meta = retrieve_relevant_segments(document_id, q)
 
-    # Step 2: Grounding Guard 🛡️
     if not meta.get("grounded") or not sources:
+        prov = create_deterministic_provenance(
+            methodology="insufficient_evidence",
+            evidence=[]
+        )
         return {
             "documentId": document_id,
             "answer": UNGROUNDED_RESPONSE,
             "grounded": False,
-            "confidence": 0.0,
-            "sources": []
+            "answer_status": "insufficient_evidence",
+            "engine": "deterministic",
+            "provider": None,
+            "model": None,
+            "confidence": {
+                "score": None,
+                "methodology": "insufficient_evidence"
+            },
+            "confidenceScore": None,
+            "retrieval_score": None,
+            "retrieval_methodology": None,
+            "sources": [],
+            "provenance": prov
         }
 
     # Prepare sanitized source citations (remove fullText for network compactness)
@@ -134,33 +192,88 @@ def answer_document_question(document_id: str, question: str) -> Dict[str, Any]:
         for s in sources
     ]
 
-    # Step 3: Bounded Generation
-    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    gemini_key = get_gemini_api_key()
+    active_model = get_active_gemini_model()
     answer_text = ""
+    llm_used = False
 
     if gemini_key:
         try:
             prompt = format_grounded_prompt(q, sources)
-            answer_text = call_gemini_api(prompt, gemini_key)
+            answer_text = call_gemini_api(prompt, gemini_key, active_model)
+            if answer_text:
+                llm_used = True
         except Exception as e:
             # Fallback to deterministic synthesis if API quota or network error occurs
             answer_text = synthesize_extractive_answer(q, sources)
+            llm_used = False
     else:
         answer_text = synthesize_extractive_answer(q, sources)
+        llm_used = False
 
     if not answer_text or answer_text.strip() == UNGROUNDED_RESPONSE:
+        prov = create_deterministic_provenance(
+            methodology="insufficient_evidence",
+            evidence=[]
+        )
         return {
             "documentId": document_id,
             "answer": UNGROUNDED_RESPONSE,
             "grounded": False,
-            "confidence": 0.0,
-            "sources": []
+            "answer_status": "insufficient_evidence",
+            "engine": "deterministic",
+            "provider": None,
+            "model": None,
+            "confidence": {
+                "score": None,
+                "methodology": "insufficient_evidence"
+            },
+            "confidenceScore": None,
+            "retrieval_score": None,
+            "retrieval_methodology": None,
+            "sources": [],
+            "provenance": prov
         }
+
+    raw_top = meta.get("topScore")
+    retrieval_score = round(float(raw_top), 3) if raw_top is not None else None
+    retrieval_methodology = "cosine_similarity" if retrieval_score is not None else None
+
+    if llm_used:
+        prov = create_hybrid_provenance(
+            provider="gemini",
+            model=active_model,
+            grounded=True,
+            evidence=clean_sources,
+            confidence_score=None,
+            methodology="not_available",
+            retrieval_score=retrieval_score,
+            retrieval_methodology=retrieval_methodology,
+            fallback=False
+        )
+    else:
+        prov = create_deterministic_provenance(
+            methodology="deterministic_extractive",
+            evidence=clean_sources,
+            fallback=True,
+            retrieval_score=retrieval_score,
+            retrieval_methodology=retrieval_methodology
+        )
 
     return {
         "documentId": document_id,
         "answer": answer_text,
         "grounded": True,
-        "confidence": meta.get("topScore", 0.0),
-        "sources": clean_sources
+        "engine": prov["engine"],
+        "provider": prov["provider"],
+        "model": prov["model"],
+        "confidence": {
+            "score": None,
+            "methodology": prov["confidence"]["methodology"]
+        },
+        "confidenceScore": None,
+        "retrieval_score": retrieval_score,
+        "retrieval_methodology": retrieval_methodology,
+        "sources": clean_sources,
+        "provenance": prov
     }

@@ -37,7 +37,8 @@ async function getTransporter() {
 async function sendOtpEmail(toEmail, code) {
   const mailer = await getTransporter();
   if (!mailer) {
-    console.log(`[DEV MODE] OTP for ${toEmail}: ${code} (no SMTP configured — set SMTP_USER & SMTP_PASS in .env to send real emails)`);
+    // [SECURITY] OTP must NOT be logged. Configure SMTP_USER & SMTP_PASS to deliver codes.
+    console.warn(`[DEV MODE] Email OTP generated for ${toEmail} — SMTP not configured. Set SMTP_USER & SMTP_PASS in .env to deliver codes via email.`);
     return { devMode: true };
   }
 
@@ -68,8 +69,8 @@ async function sendOtpEmail(toEmail, code) {
     });
     return { devMode: false, success: true };
   } catch (err) {
-    console.error('[SMTP ERROR] Email Delivery Failure:', err.message);
-    console.log(`[CONTINUITY PASSCODE] Emergency login OTP for ${toEmail}: ${code}`);
+    console.error('[SMTP ERROR] Email delivery failure for', toEmail, '—', err.message);
+    // [SECURITY] OTP must NOT be logged even on SMTP failure. User must retry or use TOTP.
     return { devMode: false, deliveryFailed: true, error: err.message };
   }
 }

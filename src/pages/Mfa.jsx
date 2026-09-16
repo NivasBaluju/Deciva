@@ -7,11 +7,6 @@ import Button from '../components/ui/Button';
 import AuthThresholdModal from '../components/common/AuthThresholdModal';
 import MetalFx from '../components/ui/MetalFx';
 
-/**
- * Mfa — The Threshold Crossing Entry
- * Incorporates the Paper & Ink editorial design system and the
- * AuthThresholdModal transition upon successful OTP verification.
- */
 export function Mfa() {
   const [otpCode, setOtpCode] = useState('');
   const [otpError, setOtpError] = useState('');
@@ -20,7 +15,6 @@ export function Mfa() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [backupPass, setBackupPass] = useState(() => sessionStorage.getItem('backupPass') || '');
 
-  // Threshold modal states
   const [thresholdOpen, setThresholdOpen] = useState(false);
   const [thresholdStatus, setThresholdStatus] = useState('validating');
   const [authPayload, setAuthPayload] = useState(null);
@@ -225,7 +219,6 @@ export function Mfa() {
         </form>
       </div>
 
-      {/* The Threshold Transition Modal */}
       <AuthThresholdModal
         isOpen={thresholdOpen}
         status={thresholdStatus}

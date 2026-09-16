@@ -1,5 +1,5 @@
 /**
- * Deciva — Enterprise Policy, Compliance & Governance Control Engine (Phase 13)
+ * Deciva — Enterprise Policy, Compliance & Governance Control Engine
  * ---------------------------------------------------------------------------
  * Enforces deterministic organizational contract policies, controls, exact clause
  * evidence quotes, explainable compliance scoring, dry-runs, and exception governance
@@ -133,7 +133,6 @@ function extractContractFacts(text = '', intelligence = {}) {
   const evidenceSnippets = {};
   const lowerText = text.toLowerCase();
 
-  // 1. Liability Cap
   let uncappedMatch = false;
   if (/liability\s+(?:shall\s+be\s+|is\s+)?unlimited|uncapped\s+liability|without\s+limitation\s+of\s+liability/i.test(text)) {
     uncappedMatch = true;
@@ -160,7 +159,6 @@ function extractContractFacts(text = '', intelligence = {}) {
     }
   }
 
-  // 2. Governing Law / Jurisdiction
   const lawRegex = /(?:governed\s+by|laws\s+of|jurisdiction\s+of)\s*(?:the\s+(?:State|Commonwealth)\s+of\s+)?([A-Za-z\s]+?)(?:,|\.|\sand\s|without|courts)/i;
   const lawMatch = text.match(lawRegex);
   const knownJurisdictions = ['Delaware', 'New York', 'California', 'England and Wales', 'Texas', 'Illinois', 'Washington', 'Florida'];
@@ -197,7 +195,6 @@ function extractContractFacts(text = '', intelligence = {}) {
     }
   }
 
-  // 3. Notice Days
   const noticeRegex = /([0-9]+)\s*(?:calendar\s*|business\s*)?days(?:\s+(?:prior|written|advance))*?\s+(?:written\s+)?notice/i;
   const noticeMatch = text.match(noticeRegex);
   if (noticeMatch && noticeMatch[1]) {
@@ -211,7 +208,6 @@ function extractContractFacts(text = '', intelligence = {}) {
     }
   }
 
-  // 4. Payment Term Days
   const paymentRegex = /(?:net\s*([0-9]+)|within\s*([0-9]+)\s*days\s*of\s*invoice)/i;
   const payMatch = text.match(paymentRegex);
   if (payMatch) {
@@ -225,7 +221,6 @@ function extractContractFacts(text = '', intelligence = {}) {
     }
   }
 
-  // 5. Indemnification Protection
   const indemRegex = /indemnif(?:y|ication|ied)|defend\s+and\s+hold\s+harmless/i;
   const indemMatch = text.match(indemRegex);
   if (indemMatch) {
@@ -240,7 +235,6 @@ function extractContractFacts(text = '', intelligence = {}) {
     facts.indemnity_present = false;
   }
 
-  // 6. Data Protection / Privacy
   const dataRegex = /gdpr|ccpa|data\s+protection|personal\s+data|confidential\s+information|information\s+security/i;
   const dataMatch = text.match(dataRegex);
   if (dataMatch) {
@@ -255,7 +249,6 @@ function extractContractFacts(text = '', intelligence = {}) {
     facts.data_protection_present = false;
   }
 
-  // 7. Termination for Convenience
   const termConvRegex = /terminate.*?for\s+convenience|without\s+cause/i;
   const termConvMatch = text.match(termConvRegex);
   if (termConvMatch) {
@@ -268,7 +261,6 @@ function extractContractFacts(text = '', intelligence = {}) {
     facts.termination_for_convenience = false;
   }
 
-  // 8. Audit Rights
   const auditRegex = /right\s+to\s+audit|inspect\s+(?:the\s+)?books\s+and\s+records/i;
   const auditMatch = text.match(auditRegex);
   if (auditMatch) {
@@ -754,7 +746,6 @@ async function updateControl(tenantId, controlId, controlData) {
 async function evaluateDocumentCompliance(tenantId, documentId, userId, options = {}) {
   const isDryRun = Boolean(options.is_dry_run);
 
-  // 1. Authorize document and fetch text
   const docRes = await db.query(
     'SELECT id, user_id, original_name, filename, extracted_text FROM documents WHERE id = $1',
     [documentId]
@@ -774,7 +765,6 @@ async function evaluateDocumentCompliance(tenantId, documentId, userId, options 
     }
   }
 
-  // 2. Resolve Policy
   let policy = null;
   if (options.policy_id) {
     const pRes = await db.query(
@@ -810,7 +800,6 @@ async function evaluateDocumentCompliance(tenantId, documentId, userId, options 
     };
   }
 
-  // 3. Fetch Policy Controls
   const controlsRes = await db.query(
     'SELECT * FROM contract_governance_controls WHERE policy_id = $1 ORDER BY control_code ASC',
     [policy.id]
@@ -833,11 +822,9 @@ async function evaluateDocumentCompliance(tenantId, documentId, userId, options 
     };
   }
 
-  // 4. Extract Contract Facts and Evidence
   const text = doc.extracted_text || '';
   const { facts, evidenceSnippets } = extractContractFacts(text);
 
-  // 5. Evaluate Each Control
   let compliantCount = 0;
   let partialCount = 0;
   let nonCompliantCount = 0;
@@ -895,7 +882,6 @@ async function evaluateDocumentCompliance(tenantId, documentId, userId, options 
     });
   }
 
-  // 6. Explainable Compliance Score Calculation Formula
   // Score = round(((Compliant * 1.0 + Partially_Compliant * 0.5) / Evaluated_Controls) * 100)
   const evaluatedCount = compliantCount + partialCount + nonCompliantCount;
   const complianceScore = evaluatedCount > 0
@@ -940,7 +926,6 @@ async function evaluateDocumentCompliance(tenantId, documentId, userId, options 
     return evaluationResult;
   }
 
-  // 7. Persist Evaluation and Findings
   const evalInsert = await db.query(
     `INSERT INTO contract_compliance_evaluations (
       id, tenant_id, document_id, policy_id, policy_version, evaluation_status,
@@ -993,7 +978,6 @@ async function evaluateDocumentCompliance(tenantId, documentId, userId, options 
     );
   }
 
-  // 8. Phase 11 Monitoring Bridge: emit monitoring event on non-compliant or score drop
   try {
     if (overallStatus === 'NON_COMPLIANT' || hasBlockingFailure) {
       const dedupKey = `GOVERNANCE_COMPLIANCE_${documentId}_${policy.id}_${policy.version}`;
@@ -1024,7 +1008,6 @@ async function evaluateDocumentCompliance(tenantId, documentId, userId, options 
     logger.warn('Phase 11 Monitoring bridge error:', bridgeErr.message);
   }
 
-  // 9. Action Center Bridge: create high-priority action if blocking finding exists
   try {
     if (hasBlockingFailure) {
       const dedupKey = `ACTION_GOV_BLOCK_${documentId}_${policy.id}`;
@@ -1049,7 +1032,6 @@ async function evaluateDocumentCompliance(tenantId, documentId, userId, options 
     logger.warn('Action Center bridge error:', actionErr.message);
   }
 
-  // 10. Cryptographic Audit Log in blockchain_audit
   await recordAudit(userId, 'GOVERNANCE_POLICY_EVALUATED', {
     evaluationId: evaluationResult.id,
     documentId,
@@ -1060,7 +1042,6 @@ async function evaluateDocumentCompliance(tenantId, documentId, userId, options 
     blocking: hasBlockingFailure
   });
 
-  // 11. AI Telemetry
   await recordAiTelemetry({
     userId,
     documentId,

@@ -25,9 +25,6 @@ function tokenize(text) {
   return (text.toLowerCase().match(/[a-z0-9]+/g) || []).filter(w => !STOPWORDS.has(w) && w.length > 1);
 }
 
-// ---------------------------------------------------------------------------
-// 1. CLAUSE EXTRACTION
-// ---------------------------------------------------------------------------
 const CLAUSE_PATTERNS = {
   parties: /\b(this agreement is (made|entered into)\s+(between|by and between)|the parties?)\b[^.]{0,300}/i,
   dates: /\b(effective date|dated|commencing on|entered into on)\b[^.]{0,150}/i,
@@ -73,9 +70,6 @@ function extractClauses(text) {
   return clauses;
 }
 
-// ---------------------------------------------------------------------------
-// 2. PLAIN-LANGUAGE SIMPLIFICATION
-// ---------------------------------------------------------------------------
 const JARGON_MAP = [
   [/\bheretofore\b/gi, 'before now'],
   [/\bhereinafter\b/gi, 'from now on'],
@@ -109,50 +103,106 @@ function simplifyText(text) {
   return simplified;
 }
 
-// ---------------------------------------------------------------------------
-// 3. RAG-STYLE Q&A (TF-IDF-ish sentence retrieval)
-// ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
-// 3. RAG-STYLE Q&A (Intent-Aware + Sentence Retrieval Engine)
-// ---------------------------------------------------------------------------
+const { createDeterministicProvenance } = require('./aiProvenance');
+
 function ragAnswer(question, docText) {
   const q = (question || '').trim();
   const qLower = q.toLowerCase();
 
-  // 1. Conversational Greetings & AI Info
   if (/^(hey|hello|hi|greetings|good morning|good afternoon|good evening|hey there|hola|sup)\b/i.test(qLower)) {
+    const prov = createDeterministicProvenance({
+      methodology: 'conversational_pattern',
+      evidence: []
+    });
     return {
       answer: "Hello! I am Deciva, your intelligent legal copilot. I have analyzed this document and am ready to answer your questions. You can ask me about the contracting parties, payment terms, termination clauses, governing law, risks, or any specific provision!",
-      confidence: 1.0,
+      engine: 'deterministic',
+      provider: null,
+      model: null,
+      confidence: {
+        score: null,
+        methodology: 'conversational_pattern'
+      },
+      confidenceScore: null,
       grounded: true,
       groundingStatus: 'CONVERSATIONAL',
-      sources: [{ text: "Deciva Assistant", pageRef: "General" }]
+      sources: [{ text: "Deciva Assistant", pageRef: "General" }],
+      provenance: prov
     };
   }
 
   if (/^(who are you|what can you do|help|what is your name)\b/i.test(qLower)) {
+    const prov = createDeterministicProvenance({
+      methodology: 'conversational_pattern',
+      evidence: []
+    });
     return {
       answer: "I am Deciva, an enterprise-grade AI legal copilot. I analyze contracts, extract key clauses, identify risk exposure, evaluate compliance, and answer natural language questions about your legal documents.",
-      confidence: 1.0,
+      engine: 'deterministic',
+      provider: null,
+      model: null,
+      confidence: {
+        score: null,
+        methodology: 'conversational_pattern'
+      },
+      confidenceScore: null,
       grounded: true,
       groundingStatus: 'CONVERSATIONAL',
-      sources: [{ text: "Deciva Assistant", pageRef: "General" }]
+      sources: [{ text: "Deciva Assistant", pageRef: "General" }],
+      provenance: prov
     };
   }
 
   if (!docText || !docText.trim()) {
+    const prov = createDeterministicProvenance({
+      methodology: 'insufficient_evidence',
+      evidence: []
+    });
     return {
       answer: "This document appears to have no extractable text. Please ensure you have uploaded a valid PDF, DOCX, or text file.",
-      confidence: 0,
+      engine: 'deterministic',
+      provider: null,
+      model: null,
+      confidence: {
+        score: null,
+        methodology: 'insufficient_evidence'
+      },
+      confidenceScore: null,
       grounded: false,
       groundingStatus: 'NO_DOCUMENT_TEXT',
-      sources: []
+      answer_status: 'insufficient_evidence',
+      sources: [],
+      provenance: prov
     };
   }
 
   const sentences = splitSentences(docText);
 
-  // 2. Intent-Based Legal Clause Retrieval
+  // Helper for deterministic rule-based match returns
+  function makeRuleMatch(answer, matches, defaultSource) {
+    const sources = matches.length > 0
+      ? matches.slice(0, 2).map((s, idx) => ({ text: s.slice(0, 60) + '…', pageRef: `¶${idx + 1}` }))
+      : [defaultSource];
+    const prov = createDeterministicProvenance({
+      methodology: 'deterministic_rule_based',
+      evidence: sources
+    });
+    return {
+      answer,
+      engine: 'deterministic',
+      provider: null,
+      model: null,
+      confidence: {
+        score: null,
+        methodology: 'deterministic_rule_based'
+      },
+      confidenceScore: null,
+      grounded: true,
+      groundingStatus: 'GROUNDED',
+      sources,
+      provenance: prov
+    };
+  }
 
   // A. Parties / Who is involved
   if (/\b(part(?:y|ies)|who (?:is|are)|contracting|between|employer|employee|client|vendor|contractor|signed by)\b/i.test(qLower)) {
@@ -161,13 +211,7 @@ function ragAnswer(question, docText) {
     );
     if (partyMatches.length > 0) {
       const excerpt = partyMatches.slice(0, 3).join(' ');
-      return {
-        answer: `According to the document, the contracting parties and preamble details are:\n\n"${excerpt}"`,
-        confidence: 0.92,
-        grounded: true,
-        groundingStatus: 'GROUNDED',
-        sources: partyMatches.slice(0, 2).map((s, idx) => ({ text: s.slice(0, 60) + '…', pageRef: `¶${idx + 1}` }))
-      };
+      return makeRuleMatch(`According to the document, the contracting parties and preamble details are:\n\n"${excerpt}"`, partyMatches);
     }
   }
 
@@ -178,13 +222,7 @@ function ragAnswer(question, docText) {
     );
     if (paymentMatches.length > 0) {
       const excerpt = paymentMatches.slice(0, 3).join(' ');
-      return {
-        answer: `The payment terms and financial provisions stated in the document are:\n\n"${excerpt}"`,
-        confidence: 0.90,
-        grounded: true,
-        groundingStatus: 'GROUNDED',
-        sources: paymentMatches.slice(0, 2).map((s, idx) => ({ text: s.slice(0, 60) + '…', pageRef: `¶${idx + 1}` }))
-      };
+      return makeRuleMatch(`The payment terms and financial provisions stated in the document are:\n\n"${excerpt}"`, paymentMatches);
     }
   }
 
@@ -195,13 +233,7 @@ function ragAnswer(question, docText) {
     );
     if (termMatches.length > 0) {
       const excerpt = termMatches.slice(0, 3).join(' ');
-      return {
-        answer: `The termination and contract duration provisions are:\n\n"${excerpt}"`,
-        confidence: 0.90,
-        grounded: true,
-        groundingStatus: 'GROUNDED',
-        sources: termMatches.slice(0, 2).map((s, idx) => ({ text: s.slice(0, 60) + '…', pageRef: `¶${idx + 1}` }))
-      };
+      return makeRuleMatch(`The termination and contract duration provisions are:\n\n"${excerpt}"`, termMatches);
     }
   }
 
@@ -212,13 +244,7 @@ function ragAnswer(question, docText) {
     );
     if (lawMatches.length > 0) {
       const excerpt = lawMatches.slice(0, 2).join(' ');
-      return {
-        answer: `The governing law and jurisdiction clause specifies:\n\n"${excerpt}"`,
-        confidence: 0.92,
-        grounded: true,
-        groundingStatus: 'GROUNDED',
-        sources: lawMatches.slice(0, 2).map((s, idx) => ({ text: s.slice(0, 60) + '…', pageRef: `¶${idx + 1}` }))
-      };
+      return makeRuleMatch(`The governing law and jurisdiction clause specifies:\n\n"${excerpt}"`, lawMatches);
     }
   }
 
@@ -237,13 +263,7 @@ function ragAnswer(question, docText) {
       responseText += `\n\nKey Risk Provisions Identified:\n"${riskSentences.slice(0, 3).join(' ')}"`;
     }
 
-    return {
-      answer: responseText,
-      confidence: 0.94,
-      grounded: true,
-      groundingStatus: 'GROUNDED',
-      sources: [{ text: `Risk Assessment (${riskData.overall}% score)`, pageRef: 'Risk Module' }]
-    };
+    return makeRuleMatch(responseText, riskSentences, { text: `Risk Assessment (${riskData.overall}% score)`, pageRef: 'Risk Module' });
   }
 
   // F. Deadlines & Important Dates
@@ -251,12 +271,25 @@ function ragAnswer(question, docText) {
     const deadlines = extractDeadlines(docText);
     if (deadlines.length > 0) {
       const list = deadlines.map(d => `• ${d.type.toUpperCase()}: ${d.text} (${d.dateStr || 'Specified in text'})`).join('\n');
+      const sources = deadlines.map(d => ({ text: d.text.slice(0, 60), pageRef: 'Deadlines' }));
+      const prov = createDeterministicProvenance({
+        methodology: 'deterministic_rule_based',
+        evidence: sources
+      });
       return {
         answer: `Important dates and deadlines detected in this document:\n\n${list}`,
-        confidence: 0.92,
+        engine: 'deterministic',
+        provider: null,
+        model: null,
+        confidence: {
+          score: null,
+          methodology: 'deterministic_rule_based'
+        },
+        confidenceScore: null,
         grounded: true,
         groundingStatus: 'GROUNDED',
-        sources: deadlines.map(d => ({ text: d.text.slice(0, 60), pageRef: 'Deadlines' }))
+        sources,
+        provenance: prov
       };
     }
   }
@@ -266,12 +299,25 @@ function ragAnswer(question, docText) {
     const suggestions = negotiationSuggestions(docText);
     if (suggestions.length > 0) {
       const text = suggestions.map(s => `• Issue: ${s.issue}\n  Risk: ${s.risk.toUpperCase()}\n  Recommendation: ${s.recommendation}`).join('\n\n');
+      const sources = [{ text: "Negotiation Engine", pageRef: "Analysis" }];
+      const prov = createDeterministicProvenance({
+        methodology: 'deterministic_rule_based',
+        evidence: sources
+      });
       return {
         answer: `Negotiation Recommendations for this document:\n\n${text}`,
-        confidence: 0.93,
+        engine: 'deterministic',
+        provider: null,
+        model: null,
+        confidence: {
+          score: null,
+          methodology: 'deterministic_rule_based'
+        },
+        confidenceScore: null,
         grounded: true,
         groundingStatus: 'GROUNDED',
-        sources: [{ text: "Negotiation Engine", pageRef: "Analysis" }]
+        sources,
+        provenance: prov
       };
     }
   }
@@ -280,12 +326,25 @@ function ragAnswer(question, docText) {
   if (/\b(complian(?:ce|t)|gdpr|hipaa|soc2|ccpa|regulation[s]?|framework[s]?|legal standards)\b/i.test(qLower)) {
     const compliance = complianceCheck(docText);
     const items = Object.entries(compliance).map(([fw, data]) => `• ${fw.toUpperCase()}: ${data.status === 'compliant' ? 'Compliant' : 'Needs Review'} — ${data.notes || ''}`).join('\n');
+    const sources = [{ text: "Compliance Checker", pageRef: "Audit" }];
+    const prov = createDeterministicProvenance({
+      methodology: 'deterministic_rule_based',
+      evidence: sources
+    });
     return {
       answer: `Compliance Assessment against legal frameworks:\n\n${items}`,
-      confidence: 0.91,
+      engine: 'deterministic',
+      provider: null,
+      model: null,
+      confidence: {
+        score: null,
+        methodology: 'deterministic_rule_based'
+      },
+      confidenceScore: null,
       grounded: true,
       groundingStatus: 'GROUNDED',
-      sources: [{ text: "Compliance Checker", pageRef: "Audit" }]
+      sources,
+      provenance: prov
     };
   }
 
@@ -294,20 +353,46 @@ function ragAnswer(question, docText) {
     const piiItems = detectPII(docText);
     if (piiItems.length > 0) {
       const summary = piiItems.map(p => `• ${p.type.toUpperCase()}: ${p.value}`).join('\n');
+      const sources = [{ text: `${piiItems.length} PII items detected`, pageRef: "Privacy Engine" }];
+      const prov = createDeterministicProvenance({
+        methodology: 'deterministic_rule_based',
+        evidence: sources
+      });
       return {
         answer: `Detected PII and sensitive data items in this document:\n\n${summary}`,
-        confidence: 0.95,
+        engine: 'deterministic',
+        provider: null,
+        model: null,
+        confidence: {
+          score: null,
+          methodology: 'deterministic_rule_based'
+        },
+        confidenceScore: null,
         grounded: true,
         groundingStatus: 'GROUNDED',
-        sources: [{ text: `${piiItems.length} PII items detected`, pageRef: "Privacy Engine" }]
+        sources,
+        provenance: prov
       };
     } else {
+      const sources = [{ text: "PII Scanner", pageRef: "Privacy Engine" }];
+      const prov = createDeterministicProvenance({
+        methodology: 'deterministic_rule_based',
+        evidence: sources
+      });
       return {
         answer: "No obvious PII (Personally Identifiable Information) like SSNs, emails, or credit card numbers were detected in this document text.",
-        confidence: 0.90,
+        engine: 'deterministic',
+        provider: null,
+        model: null,
+        confidence: {
+          score: null,
+          methodology: 'deterministic_rule_based'
+        },
+        confidenceScore: null,
         grounded: true,
         groundingStatus: 'GROUNDED',
-        sources: [{ text: "PII Scanner", pageRef: "Privacy Engine" }]
+        sources,
+        provenance: prov
       };
     }
   }
@@ -315,16 +400,28 @@ function ragAnswer(question, docText) {
   // J. Document Summary / Overview
   if (/\b(summar(?:y|ize)|overview|explain|what is this|about)\b/i.test(qLower)) {
     const firstFew = sentences.slice(0, 4).join(' ');
+    const sources = [{ text: "Document Summary", pageRef: "Preamble" }];
+    const prov = createDeterministicProvenance({
+      methodology: 'deterministic_rule_based',
+      evidence: sources
+    });
     return {
       answer: `Here is a summary of the document based on its initial sections:\n\n"${firstFew}"\n\nFor deeper analysis, ask about specific areas such as parties, payment terms, risk evaluation, or termination clauses.`,
-      confidence: 0.88,
+      engine: 'deterministic',
+      provider: null,
+      model: null,
+      confidence: {
+        score: null,
+        methodology: 'deterministic_rule_based'
+      },
+      confidenceScore: null,
       grounded: true,
       groundingStatus: 'GROUNDED',
-      sources: [{ text: "Document Summary", pageRef: "Preamble" }]
+      sources,
+      provenance: prov
     };
   }
 
-  // 3. TF-IDF & Keyword Retrieval Engine
   const qTokens = new Set(tokenize(question));
   if (qTokens.size > 0 && sentences.length > 0) {
     const scored = sentences.map((s, i) => {
@@ -338,32 +435,63 @@ function ragAnswer(question, docText) {
     const top = scored.slice(0, 3);
 
     if (top.length > 0) {
-      const maxPossible = qTokens.size;
-      const confidence = Math.min(0.95, 0.45 + (top[0].overlap / maxPossible) * 0.5);
+      const retrievalScore = Number(Math.min(1.0, top[0].score).toFixed(3));
       const answer = top.map(t => t.text).join(' ');
+      const sources = top.map(t => ({
+        text: t.text.slice(0, 60) + '…',
+        sentenceIndex: t.index,
+        pageRef: `¶${Math.floor(t.index / 4) + 1}`,
+        similarity: Number(t.score.toFixed(3))
+      }));
+      const prov = createDeterministicProvenance({
+        methodology: 'deterministic_token_retrieval',
+        retrievalScore,
+        retrievalMethodology: 'token_overlap',
+        evidence: sources
+      });
       return {
         answer: `Based on your query, here is the relevant provision found in the document:\n\n"${answer}"`,
-        confidence: Number(confidence.toFixed(2)),
+        engine: 'deterministic',
+        provider: null,
+        model: null,
+        confidence: {
+          score: null,
+          methodology: 'deterministic_token_retrieval'
+        },
+        confidenceScore: null,
+        retrieval_score: retrievalScore,
+        retrieval_methodology: 'token_overlap',
         grounded: true,
         groundingStatus: 'GROUNDED',
-        sources: top.map(t => ({ text: t.text.slice(0, 60) + '…', sentenceIndex: t.index, pageRef: `¶${Math.floor(t.index / 4) + 1}` }))
+        sources,
+        provenance: prov
       };
     }
   }
 
-  // 4. Grounded Refusal when no supporting context exists
+  const prov = createDeterministicProvenance({
+    methodology: 'insufficient_evidence',
+    evidence: []
+  });
   return {
     answer: `Insufficient grounded evidence: The document does not contain provisions or clauses addressing "${question}". No supporting text was located to ground a contractual assertion.`,
-    confidence: 0.0,
+    engine: 'deterministic',
+    provider: null,
+    model: null,
+    confidence: {
+      score: null,
+      methodology: 'insufficient_evidence'
+    },
+    confidenceScore: null,
+    retrieval_score: null,
     grounded: false,
     groundingStatus: 'INSUFFICIENT_EVIDENCE',
-    sources: []
+    answer_status: 'insufficient_evidence',
+    sources: [],
+    provenance: prov
   };
 }
 
-// ---------------------------------------------------------------------------
-// 4. RISK SCORING
-// ---------------------------------------------------------------------------
 const RISK_SIGNALS = {
   termination: [/sole discretion/i, /without cause/i, /immediate(ly)? terminat/i, /no notice/i],
   liability: [/unlimited liability/i, /no limitation of liability/i, /indemnif(y|ication)/i, /consequential damages/i],
@@ -404,7 +532,7 @@ function riskScore(text) {
  */
 const CANONICAL_HAZARD_PATTERNS = [
   {
-    pattern: /(unlimited\s+liability|no\s+cap\s+on\s+liability)/i,
+    pattern: /(unlimited\s+liability|no\s+cap\s+on\s+liability|liability\s+(?:is\s+)?unlimited)/i,
     type: 'CONFIRMED_HAZARD_UNLIMITED_LIABILITY',
     severity: 'HIGH',
     points: 20,
@@ -425,18 +553,25 @@ const CANONICAL_HAZARD_PATTERNS = [
     reason: 'Unilateral modification rights granting one party unchecked discretion.'
   },
   {
-    pattern: /(non-refundable|waives?\s+all\s+(?:rights|claims|warranties))/i,
+    pattern: /(non-refundable|waives?\s+all\s+(?:rights|claims|warranties)|non-?compete.{0,30}(?:years|globally))/i,
     type: 'CONFIRMED_HAZARD_RIGHTS_WAIVER',
     severity: 'MEDIUM',
     points: 10,
-    reason: 'Broad waiver of claims or statutory warranty protections.'
+    reason: 'Broad waiver of claims, onerous non-compete, or statutory warranty protections.'
   },
   {
-    pattern: /(immediate\s+termination\s+without\s+(?:cause|notice))/i,
+    pattern: /(immediate\s+termination|terminat(?:es?|ion)\s+immediately|without\s+(?:cause|notice))/i,
     type: 'CONFIRMED_HAZARD_ARBITRARY_TERMINATION',
     severity: 'HIGH',
     points: 15,
     reason: 'Immediate termination without cure period or required default notice.'
+  },
+  {
+    pattern: /(indemnif(?:y|ies|ication)\s+.*?\bwithout\s+limitation|all\s+claims\s+without\s+limitation)/i,
+    type: 'CONFIRMED_HAZARD_UNLIMITED_INDEMNITY',
+    severity: 'HIGH',
+    points: 20,
+    reason: 'Uncapped indemnification obligations exposing organization to unlimited third-party claims.'
   }
 ];
 
@@ -496,9 +631,6 @@ function calculateCalibratedDocumentRisk(fullText, missingClauses = []) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// 5. NEGOTIATION ASSISTANT
-// ---------------------------------------------------------------------------
 const NEGOTIATION_RULES = [
   {
     test: /sole discretion/i,
@@ -577,9 +709,6 @@ function negotiationSuggestions(text) {
   return suggestions;
 }
 
-// ---------------------------------------------------------------------------
-// 6. COMPLIANCE CHECKER
-// ---------------------------------------------------------------------------
 const COMPLIANCE_FRAMEWORKS = {
   indian_contract_act: {
     label: 'Indian Contract Act, 1872',
@@ -634,9 +763,6 @@ function complianceCheck(text) {
   return results;
 }
 
-// ---------------------------------------------------------------------------
-// 7. DEADLINE / DATE EXTRACTION
-// ---------------------------------------------------------------------------
 const DATE_REGEX = /\b(?:(\d{1,2})(?:st|nd|rd|th)?\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})|(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})|(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4}))\b/gi;
 
 const DEADLINE_CONTEXT = {
@@ -672,9 +798,6 @@ function extractDeadlines(text) {
   return deadlines;
 }
 
-// ---------------------------------------------------------------------------
-// 8. PII DETECTION & REDACTION
-// ---------------------------------------------------------------------------
 function luhnCheck(numStr) {
   const digits = numStr.replace(/\D/g, '');
   let sum = 0, alt = false;
@@ -724,9 +847,6 @@ function redactPII(text, customTerms = []) {
   return { redacted, itemsFound: found.length, items: found };
 }
 
-// ---------------------------------------------------------------------------
-// 9. DOCUMENT DIFF / VERSION COMPARISON
-// ---------------------------------------------------------------------------
 const { diffWords } = require('diff');
 
 function classifySection(text) {

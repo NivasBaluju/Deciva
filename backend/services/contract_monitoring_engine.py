@@ -50,7 +50,6 @@ MAGNITUDE_WEIGHTS = {
     "MINOR": 25        # Formatting, non-material clarification, risk delta < 10
 }
 
-
 def calculate_attention_priority(
     severity_level: str = "MEDIUM",
     relevance_level: str = "MEDIUM",
@@ -92,7 +91,6 @@ def calculate_attention_priority(
         "formula": "round(0.35 * S + 0.25 * R + 0.25 * U + 0.15 * M)"
     }
 
-
 def calculate_risk_delta(
     previous_score: Optional[int],
     current_score: Optional[int],
@@ -126,7 +124,6 @@ def calculate_risk_delta(
         "status": "CALCULATED"
     }
 
-
 def extract_numeric_liability_cap(text: str) -> Optional[Tuple[float, str]]:
     """
     Extracts the primary liability cap dollar amount and exact quote.
@@ -150,7 +147,6 @@ def extract_numeric_liability_cap(text: str) -> Optional[Tuple[float, str]]:
                 pass
     return None
 
-
 def extract_governing_law(text: str) -> Optional[Tuple[str, str]]:
     """
     Extracts governing jurisdiction and surrounding quote.
@@ -164,7 +160,6 @@ def extract_governing_law(text: str) -> Optional[Tuple[str, str]]:
         return jurisdiction, text[start:end].strip()
     return None
 
-
 def extract_payment_terms(text: str) -> Optional[Tuple[str, str]]:
     """
     Extracts payment term (e.g. Net 30, Net 60, within 45 days) and quote.
@@ -176,7 +171,6 @@ def extract_payment_terms(text: str) -> Optional[Tuple[str, str]]:
         end = min(len(text), m.end() + 20)
         return term, text[start:end].strip()
     return None
-
 
 def extract_notice_period_days(text: str) -> Optional[Tuple[int, str]]:
     """
@@ -199,7 +193,6 @@ def extract_notice_period_days(text: str) -> Optional[Tuple[int, str]]:
                 pass
     return None
 
-
 def extract_cure_period_days(text: str) -> Optional[Tuple[int, str]]:
     """
     Extracts cure period in days for material breach.
@@ -220,7 +213,6 @@ def extract_cure_period_days(text: str) -> Optional[Tuple[int, str]]:
             except ValueError:
                 pass
     return None
-
 
 def detect_contract_changes(
     prev_text: Optional[str],
@@ -243,7 +235,6 @@ def detect_contract_changes(
     prev_t = prev_text or ""
     curr_t = curr_text or ""
 
-    # 1. Liability Cap Changes
     prev_cap_info = extract_numeric_liability_cap(prev_t)
     curr_cap_info = extract_numeric_liability_cap(curr_t)
     if prev_cap_info and curr_cap_info:
@@ -301,7 +292,6 @@ def detect_contract_changes(
             "deduplication_key": "change_liability_cap_removed"
         })
 
-    # 2. Governing Law / Jurisdiction Changes
     prev_law = extract_governing_law(prev_t)
     curr_law = extract_governing_law(curr_t)
     if prev_law and curr_law:
@@ -323,7 +313,6 @@ def detect_contract_changes(
                 "deduplication_key": f"change_gov_law_{p_jur.lower()}_{c_jur.lower()}"
             })
 
-    # 3. Payment Terms Changes
     prev_pay = extract_payment_terms(prev_t)
     curr_pay = extract_payment_terms(curr_t)
     if prev_pay and curr_pay:
@@ -345,7 +334,6 @@ def detect_contract_changes(
                 "deduplication_key": f"change_payment_{p_term.lower()}_{c_term.lower()}"
             })
 
-    # 4. Notice Period Changes
     prev_notice = extract_notice_period_days(prev_t)
     curr_notice = extract_notice_period_days(curr_t)
     if prev_notice and curr_notice:
@@ -370,7 +358,6 @@ def detect_contract_changes(
                 "deduplication_key": f"change_notice_days_{p_days}_{c_days}"
             })
 
-    # 5. Material Risk Score Shift from Stored Intelligence
     if prev_intelligence and curr_intelligence:
         prev_exp = (
             prev_intelligence.get("exposure_score") or
@@ -405,7 +392,6 @@ def detect_contract_changes(
             })
 
     return changes
-
 
 def evaluate_lifecycle_events(
     document_id: str,

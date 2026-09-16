@@ -2,11 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ==========================================================================
-   DOCUGUARD AI — MONOCHROME EDITORIAL DESIGN TOKENS ("PAPER & INK")
-   Strict 8-Color Palette, Fraunces & Public Sans Typography, 0px Radius, No Shadows
-   ========================================================================== */
-
 :root {
   /* Color Tokens — Inverted for Black Background & White Text ("Vice Versa") */
   --ink: #FFFFFF;
@@ -124,7 +119,6 @@ img {
   }
 }
 
-/* Exceptions for circular buttons per Part 4.5 */
 button.btn-circle,
 .btn-circle {
   border-radius: 50% !important;
@@ -175,7 +169,6 @@ main#app {
   flex-direction: column;
 }
 
-/* Reduced Motion Compliance — Part 12.3 */
 @media (prefers-reduced-motion: reduce) {
 
   *,
@@ -188,7 +181,6 @@ main#app {
   }
 }
 
-/* Keyboard Focus Ring — Part 12.2 */
 :focus-visible {
   outline: 2px solid var(--focus) !important;
   outline-offset: 2px !important;
@@ -198,10 +190,6 @@ main#app {
   outline: 2px solid #FFFFFF !important;
   outline-offset: 2px !important;
 }
-
-/* ==========================================================================
-   LAYOUT PRIMITIVES & CONTAINERS — Part 7
-   ========================================================================== */
 
 .container-wide {
   width: 100%;
@@ -230,7 +218,7 @@ main#app {
 
 .measure-body {
   max-width: 38rem;
-  /* ~608px — Part 5.3 */
+  
 }
 
 /* Asymmetric 12-Column Grid */
@@ -240,7 +228,6 @@ main#app {
   gap: var(--space-5);
 }
 
-/* Vertical Rhythm Classes — Part 7.3 */
 .section-pad-hero {
   padding-top: var(--space-10);
   padding-bottom: var(--space-10);
@@ -291,7 +278,6 @@ main#app {
   }
 }
 
-/* Section Inversion (Ink Section) — Part 7.4 */
 .section-ink {
   background-color: #000000 !important;
   color: #FFFFFF !important;
@@ -306,10 +292,6 @@ main#app {
 .section-ink .text-soft {
   color: var(--ink-section-caption) !important;
 }
-
-/* ==========================================================================
-   TYPOGRAPHY UTILITIES — Part 5
-   ========================================================================== */
 
 .font-display {
   font-family: var(--font-display);
@@ -472,10 +454,6 @@ main#app {
   letter-spacing: 0.01em;
 }
 
-/* ==========================================================================
-   BUTTONS & LINKS — Part 8.4 - 8.7
-   ========================================================================== */
-
 .btn {
   display: inline-flex;
   align-items: center;
@@ -538,7 +516,6 @@ main#app {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Inline Link — Part 8.4 */
 a.editorial-link,
 .editorial-link {
   color: var(--ink);
@@ -557,10 +534,6 @@ a.editorial-link:hover,
 .section-ink .editorial-link {
   color: #FFFFFF !important;
 }
-
-/* ==========================================================================
-   FORMS (UNDERLINE INPUT STYLE) — Part 8.9
-   ========================================================================== */
 
 .form-group {
   margin-bottom: var(--space-5);
@@ -593,10 +566,6 @@ a.editorial-link:hover,
   border-bottom: 2px solid var(--ink) !important;
   padding-bottom: calc(var(--space-3) - 1px);
 }
-
-/* ==========================================================================
-   CARDS, TABLES & STRUCTURAL ELEMENTS (MONOCHROME REFINEMENT)
-   ========================================================================== */
 
 .card,
 .panel {
@@ -671,7 +640,6 @@ a.editorial-link:hover,
   background-color: var(--ink);
 }
 
-/* Badge (Monochrome & Signal System) — Part 7.3 */
 .badge-editorial {
   display: inline-flex;
   align-items: center;
@@ -734,14 +702,9 @@ a.editorial-link:hover,
   color: var(--signal);
 }
 
-/* Metric Icon Wrapper Overrides — Part 7.4 */
 .metric-icon-wrap {
   display: none !important;
 }
-
-/* ==========================================================================
-   AUTHENTICATED PORTAL LAYOUT & CONTENT
-   ========================================================================== */
 
 .authenticated-layout {
   display: flex;
@@ -854,11 +817,6 @@ a.editorial-link:hover,
   padding-top: 6px;
   border-top: 1px solid var(--rule);
 }
-
-/* ==========================================================================
-   PORTAL COMPONENT SUITE (PAPER & INK MONOCHROME EDITORIAL)
-   Cards, Badges, Buttons, Tabs, Inputs & Layout Grids
-   ========================================================================== */
 
 .card {
   background-color: rgba(10, 10, 14, 0.85);
@@ -1320,9 +1278,6 @@ a.editorial-link:hover,
   font-family: 'Public Sans', monospace;
 }
 
-/* ============================================================
-   STATUS DOTS & BADGES
-   ============================================================ */
 .dot {
   width: 6px;
   height: 6px;
@@ -1343,9 +1298,6 @@ a.editorial-link:hover,
   background: #DC2626;
 }
 
-/* ============================================================
-   ZERO-TRUST SECURITY OBSERVATORY & SCIENTIFIC INSTRUMENT
-   ============================================================ */
 .security-page-header {
   margin-bottom: 24px;
 }
@@ -1577,9 +1529,6 @@ a.editorial-link:hover,
   pointer-events: none;
 }
 
-/* ============================================================
-   CONTEXTUAL DETAIL PANEL
-   ============================================================ */
 .observatory-detail-panel {
   max-width: 860px;
   margin: 16px auto 0;
@@ -1782,9 +1731,6 @@ a.editorial-link:hover,
   word-break: break-all;
 }
 
-/* ============================================================
-   SECURITY SIGNALS STRIP
-   ============================================================ */
 .security-signals-strip {
   max-width: 860px;
   margin: 16px auto 0;
@@ -1853,9 +1799,6 @@ a.editorial-link:hover,
   font-weight: 500;
 }
 
-/* ============================================================
-   ADMIN SPECIAL WATCHTOWER & RISKY USERS RADAR
-   ============================================================ */
 .admin-watchtower-wrapper {
   max-width: 860px;
   margin: 24px auto 0;
@@ -1990,9 +1933,6 @@ a.editorial-link:hover,
   color: var(--ink);
 }
 
-/* ============================================================
-   DOCUMENTS & UPLOAD UTILITIES
-   ============================================================ */
 .doc-row {
   display: flex;
   align-items: center;
@@ -2067,9 +2007,6 @@ a.editorial-link:hover,
   font-size: 12px;
 }
 
-/* ============================================================
-   RESPONSIVE OVERRIDES
-   ============================================================ */
 @media (max-width: 768px) {
   .observatory-container {
     height: auto;
@@ -2108,10 +2045,6 @@ a.editorial-link:hover,
   }
 }
 
-/* ==========================================================================
-   SYSTEM GUIDE MODAL DEDICATED VISIBLE SCROLLBAR
-   ========================================================================== */
-
 .guide-scrollable {
   overflow-y: auto !important;
   overscroll-behavior: contain !important;
@@ -2138,10 +2071,6 @@ a.editorial-link:hover,
 .guide-scrollable::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.65);
 }
-
-/* ==========================================================================
-   GLOBAL ACCESSIBILITY & CONTRAST (PREVENT BLACK-ON-BLACK TEXT)
-   ========================================================================== */
 
 select,
 option {

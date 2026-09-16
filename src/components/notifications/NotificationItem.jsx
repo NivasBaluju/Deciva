@@ -115,7 +115,6 @@ export const NotificationItem = ({
       }}
       onClick={handleClick}
     >
-      {/* Unread Accent Left Border */}
       {!notification.isRead && (
         <div
           style={{
@@ -132,7 +131,6 @@ export const NotificationItem = ({
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* Severity Badge */}
           <span
             style={{
               fontSize: '10.5px',
@@ -149,7 +147,6 @@ export const NotificationItem = ({
             {sev.label}
           </span>
 
-          {/* Type Tag */}
           <span
             style={{
               fontSize: '10.5px',
@@ -163,13 +160,11 @@ export const NotificationItem = ({
             {typeLabel}
           </span>
 
-          {/* Timestamp */}
           <span style={{ fontSize: '11px', color: '#71717A' }}>
             {timeStr}
           </span>
         </div>
 
-        {/* Mark Read Action Button */}
         {!notification.isRead && (
           <motion.button
             {...buttonMotion}
@@ -191,7 +186,6 @@ export const NotificationItem = ({
         )}
       </div>
 
-      {/* Title */}
       <h4
         style={{
           margin: '8px 0 4px 0',
@@ -204,7 +198,6 @@ export const NotificationItem = ({
         {notification.title}
       </h4>
 
-      {/* Message */}
       <p
         style={{
           margin: 0,
@@ -216,7 +209,6 @@ export const NotificationItem = ({
         {notification.message}
       </p>
 
-      {/* Footer link hint if navigable */}
       {(notification.actionId || notification.documentId) && (
         <div
           style={{

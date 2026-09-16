@@ -7,12 +7,6 @@ import ThinkingLoader from '../components/common/ThinkingLoader';
 import Button from '../components/ui/Button';
 import Breadcrumb from '../components/ui/Breadcrumb';
 
-/**
- * Upload — The Intake Chamber (Idea #2)
- * Clean, full-width paper-dim intake surface framed by a 1px hairline rule.
- * Features ThinkingOrb during ingestion and structural clause extraction,
- * preserving all Api.upload endpoints and file validation.
- */
 export function Upload() {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -87,8 +81,8 @@ export function Upload() {
         />
 
         <div className="max-w-3xl mb-12">
-          <span className="font-body text-label text-ink-soft mb-2 block select-none">
-            [DOCUMENT INTAKE]
+          <span className="font-body text-label text-ink-soft mb-2 block select-none uppercase tracking-wider">
+            Document Intake
           </span>
           <h1 className="display-02 text-ink tracking-tight mb-4">
             Deposit document for examination.

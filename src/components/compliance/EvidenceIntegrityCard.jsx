@@ -109,7 +109,6 @@ export const EvidenceIntegrityCard = ({ manifest, evidence, onVerificationResult
         </div>
       </div>
 
-      {/* Hash display container */}
       <div
         style={{
           background: 'rgba(2, 6, 23, 0.85)',
@@ -145,7 +144,6 @@ export const EvidenceIntegrityCard = ({ manifest, evidence, onVerificationResult
         </button>
       </div>
 
-      {/* Verification status feedback */}
       {verificationResult && (
         <div
           style={{
@@ -170,7 +168,6 @@ export const EvidenceIntegrityCard = ({ manifest, evidence, onVerificationResult
         </div>
       )}
 
-      {/* Manifest attributes */}
       <div
         style={{
           display: 'grid',

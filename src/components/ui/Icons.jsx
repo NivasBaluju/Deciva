@@ -1,11 +1,5 @@
 import React from 'react';
 
-/**
- * Icons — Part 8.14
- * Hand-drawn inline SVG icons, 1.5px stroke weight, no fill, 24x24 viewBox.
- * Exactly 7 shapes permitted in the Paper & Ink design vocabulary.
- */
-
 export function IconMenu({ className = 'w-5 h-5', strokeWidth = 1.5 }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={className} aria-hidden="true">

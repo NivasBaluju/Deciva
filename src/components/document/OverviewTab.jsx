@@ -35,14 +35,12 @@ export const OverviewTab = ({ doc, analysisData, loadingAnalysis }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Contract Command Center (Decision Summary & Ground Truth Breadcrumbs) */}
       <ContractCommandCenter
         doc={doc}
         analysisData={analysisData}
         onNavigateTab={(targetTab) => navigate(`/document/${doc.id}/${targetTab}`)}
       />
 
-      {/* High-Value Executive KPI Summary */}
       <div className="grid grid-4" style={{ gap: '14px' }}>
         <div className="card" style={{ padding: '16px', margin: 0 }}>
           <div className="text-mid small">Calculated Risk</div>
@@ -81,7 +79,6 @@ export const OverviewTab = ({ doc, analysisData, loadingAnalysis }) => {
         </div>
       </div>
 
-      {/* Main Document Viewer & Summary */}
       <div className="split">
         <div className="card">
           <div className="flex-between mb-12">
@@ -129,7 +126,6 @@ export const OverviewTab = ({ doc, analysisData, loadingAnalysis }) => {
           </AnimatePresence>
         </div>
 
-        {/* Quick Intelligence Sidebar */}
         <div className="card">
           <div className="card-title">
             <span className="dot dot-emerald" />

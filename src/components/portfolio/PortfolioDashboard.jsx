@@ -21,7 +21,7 @@ export const PortfolioDashboard = () => {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('MONITORING');
-  const [viewMode, setViewMode] = useState('EXECUTIVE'); // 'EXECUTIVE' | 'DENSE'
+  const [viewMode, setViewMode] = useState('EXECUTIVE');
   const { toast } = useToast();
 
   const tabParam = searchParams.get('tab');
@@ -122,10 +122,8 @@ export const PortfolioDashboard = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '1280px', margin: '0 auto' }}>
-      {/* 1. Executive Summary Cards Header */}
       <PortfolioSummaryCards summary={summary} />
 
-      {/* Dual Mode Switcher: Rich Executive vs Dense Operational */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.12)', paddingBottom: '12px' }}>
         <div>
           <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#A1A1AA' }}>
@@ -177,7 +175,6 @@ export const PortfolioDashboard = () => {
         <CompactPortfolioTableView />
       ) : (
         <>
-          {/* 2. Structured Section Navigator (Divided into 5 distinct focused views) */}
       <div className="bg-paper-dim border border-rule p-2">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           {sections.map((s) => {
@@ -216,7 +213,6 @@ export const PortfolioDashboard = () => {
         </div>
       </div>
 
-      {/* Section Header Description */}
       <div className="border-b border-rule pb-3 flex items-center justify-between">
         <div>
           <span className="font-body text-micro text-ink-soft block uppercase tracking-wider">
@@ -231,16 +227,12 @@ export const PortfolioDashboard = () => {
         </p>
       </div>
 
-      {/* 3. Section Content Panels */}
-
-      {/* SECTION 01: Pulse & Continuous Monitoring */}
       {activeSection === 'MONITORING' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <PortfolioMonitoring />
         </div>
       )}
 
-      {/* SECTION 02: Contract Health Rankings & Risk Distribution */}
       {activeSection === 'CONTRACTS' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <BusinessRoiCard />
@@ -251,7 +243,6 @@ export const PortfolioDashboard = () => {
         </div>
       )}
 
-      {/* SECTION 03: Executive Attention Queue & Deadlines */}
       {activeSection === 'ATTENTION' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <PortfolioAttentionQueue />
@@ -266,7 +257,6 @@ export const PortfolioDashboard = () => {
         </div>
       )}
 
-      {/* SECTION 04: Governed Approvals & Bulk Operations */}
       {activeSection === 'APPROVALS' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <PendingApprovalsQueue onDecided={fetchSummary} />
@@ -293,7 +283,6 @@ export const PortfolioDashboard = () => {
         </div>
       )}
 
-      {/* SECTION 05: Compliance & Export Audit */}
       {activeSection === 'AUDIT' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <PortfolioCompliancePanel />

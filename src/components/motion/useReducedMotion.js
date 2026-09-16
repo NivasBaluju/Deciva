@@ -1,11 +1,5 @@
 import { useState, useEffect } from 'react';
 
-/**
- * useReducedMotion — Part 12.3 Accessibility Requirement
- * Detects whether the user has requested reduced motion at the OS level.
- * When true, all orchestrated GSAP timelines, redaction bars, and Lenis smooth scroll
- * immediately resolve to their final resting states.
- */
 export function useReducedMotion() {
   const [reduced, setReduced] = useState(() => {
     if (typeof window === 'undefined') return false;

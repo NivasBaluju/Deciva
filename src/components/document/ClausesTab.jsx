@@ -57,7 +57,6 @@ export const ClausesTab = ({ doc, refreshTrigger }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Header & Filter Controls */}
       <div className="flex-between" style={{ flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h3 style={{ margin: 0, color: 'var(--navy)' }}>Detected Contract Clauses</h3>
@@ -80,7 +79,6 @@ export const ClausesTab = ({ doc, refreshTrigger }) => {
         </div>
       </div>
 
-      {/* Detected Clauses List */}
       {filteredDetected.length === 0 ? (
         <div className="card">
           <EmptyState
@@ -123,7 +121,6 @@ export const ClausesTab = ({ doc, refreshTrigger }) => {
                   </div>
                 </div>
 
-                {/* Explainable Dual-System Attribution Box if Disputed */}
                 {isDisputed && clause.rulePrediction && clause.modelPrediction && (
                   <div
                     style={{
@@ -156,7 +153,6 @@ export const ClausesTab = ({ doc, refreshTrigger }) => {
                   </div>
                 )}
 
-                {/* Clause Snippet */}
                 {clause.snippet && (
                   <div
                     style={{
@@ -186,7 +182,6 @@ export const ClausesTab = ({ doc, refreshTrigger }) => {
         </div>
       )}
 
-      {/* Institutional Checklist Missing Clauses */}
       {missing.length > 0 && (
         <div className="card mt-16" style={{ borderColor: 'var(--border)' }}>
           <div className="card-title">

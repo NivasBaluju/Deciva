@@ -5,7 +5,7 @@
 ## 1. Prerequisites & System Requirements
 
 * **Node.js:** v18.0.0+ LTS (Tested on v22.13.0)
-* **Python:** 3.10+ (Tested on Python 3.12 with PyTorch / HuggingFace Transformers)
+* **Python:** 3.10+ (Tested on Python 3.12 with scikit-learn / PyMuPDF)
 * **PostgreSQL:** 15.0+ (Neon DB or standard enterprise PostgreSQL)
 * **Storage:** 50GB+ persistent block storage for `storage/backups` and `storage/exports`
 * **Network:** TCP 5000 (Node API Server), TCP 5001 (Flask AI Microservice)

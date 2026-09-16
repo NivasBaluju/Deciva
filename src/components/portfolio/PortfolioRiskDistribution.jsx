@@ -62,9 +62,7 @@ export const PortfolioRiskDistribution = () => {
         </div>
       </div>
 
-      {/* Progress Bars */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '12px' }}>
-        {/* Critical */}
         <div>
           <div className="flex-between" style={{ fontSize: '12px', marginBottom: '4px' }}>
             <span style={{ color: '#EF4444', fontWeight: 700 }}>Critical (80–100)</span>
@@ -77,7 +75,6 @@ export const PortfolioRiskDistribution = () => {
           </div>
         </div>
 
-        {/* High */}
         <div>
           <div className="flex-between" style={{ fontSize: '12px', marginBottom: '4px' }}>
             <span style={{ color: '#F59E0B', fontWeight: 700 }}>High (70–79)</span>
@@ -90,7 +87,6 @@ export const PortfolioRiskDistribution = () => {
           </div>
         </div>
 
-        {/* Medium */}
         <div>
           <div className="flex-between" style={{ fontSize: '12px', marginBottom: '4px' }}>
             <span style={{ color: '#60A5FA', fontWeight: 700 }}>Medium (40–69)</span>
@@ -103,7 +99,6 @@ export const PortfolioRiskDistribution = () => {
           </div>
         </div>
 
-        {/* Low */}
         <div>
           <div className="flex-between" style={{ fontSize: '12px', marginBottom: '4px' }}>
             <span style={{ color: 'var(--ink-soft)', fontWeight: 700 }}>Low (0–39)</span>

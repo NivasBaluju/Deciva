@@ -9,6 +9,16 @@ try:
 except ImportError:
     SKLEARN_AVAILABLE = False
 
+# CLASSIFIER_NOTE
+# This module provides a lightweight in-memory clause-type classifier that acts as
+# a secondary signal in the hybrid clause intelligence engine (see analyzer.py).
+# The model is a scikit-learn Pipeline(TfidfVectorizer + LogisticRegression) fitted
+# at service startup on 41 hardcoded seed examples spanning 9 legal clause categories.
+# It is NOT trained on an external enterprise legal dataset.
+# It is NOT a PyTorch, HuggingFace, or embedding-based model.
+# It is NOT used as the primary document risk-scoring engine.
+# Risk scoring is performed exclusively by the Deterministic Calibrated Risk Engine
+# in backend/services/analysis/risk_scoring.py (regex patterns + fixed point values).
 
 # Comprehensive Legal Clause Training Dataset
 TRAINING_DATA = [
@@ -28,7 +38,6 @@ TRAINING_DATA = [
     ("Termination of this Agreement shall not relieve either party of obligations accrued prior to termination.", "TERMINATION"),
     ("Either party may terminate with 30 days written notice prior to annual renewal.", "TERMINATION"),
 
-    # PAYMENT
     ("Client shall pay all invoices net 30 days from date of receipt via wire transfer or ACH.", "PAYMENT"),
     ("The total compensation and purchase price shall be paid in monthly installments plus applicable taxes.", "PAYMENT"),
     ("Late payments shall accrue interest at the rate of one and one-half percent (1.5%) per month.", "PAYMENT"),
@@ -36,7 +45,6 @@ TRAINING_DATA = [
     ("Vendor shall submit itemized invoices detailing hourly billing rates and approved expenses.", "PAYMENT"),
     ("Client shall remit payment within thirty (30) business days following receipt of correct invoice.", "PAYMENT"),
 
-    # LIABILITY
     ("In no event shall either party be liable for any indirect, incidental, special, or consequential damages.", "LIABILITY"),
     ("The aggregate liability of the provider under this agreement shall not exceed the fees paid in the preceding 12 months.", "LIABILITY"),
     ("Neither party excludes or limits its liability for death, personal injury, fraud, or gross negligence.", "LIABILITY"),
@@ -76,8 +84,17 @@ TRAINING_DATA = [
 
 class LegalClauseMLClassifier:
     """
-    Supervised Machine Learning Legal Clause Classifier.
-    Trained on legal contract taxonomy with calibrated class probabilities.
+    Lightweight In-Memory Clause-Type Classifier (Secondary Signal).
+
+    Uses a scikit-learn Pipeline(TfidfVectorizer + LogisticRegression) fitted at
+    application startup on 41 hardcoded seed examples across 9 legal clause
+    categories (CONFIDENTIALITY, TERMINATION, PAYMENT, LIABILITY, INDEMNIFICATION,
+    GOVERNING_LAW, DISPUTE_RESOLUTION, INTELLECTUAL_PROPERTY, FORCE_MAJEURE,
+    DATA_PRIVACY).
+
+    This is a secondary classification signal used alongside the rule-based clause
+    detector in the hybrid consensus engine. It is not an externally trained legal
+    corpus model. It is not used for deterministic contract risk scoring.
     """
     _instance = None
 

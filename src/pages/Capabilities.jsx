@@ -3,18 +3,12 @@ import { Link } from 'react-router-dom';
 import capabilitiesData from '../content/capabilities.json';
 import Breadcrumb from '../components/ui/Breadcrumb';
 
-/**
- * Capabilities — Part 10.3
- * Table-of-contents stacked list of enterprise capabilities.
- * Full-width rows separated by hairline rules.
- */
 export function Capabilities() {
   return (
     <div className="w-full bg-paper py-20 sm:py-28">
       <div className="container-wide">
         <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Capabilities' }]} />
 
-        {/* Hero */}
         <div className="max-w-3xl mb-20 sm:mb-28">
           <h1 className="display-02 text-ink tracking-tight mb-6">
             Capabilities
@@ -24,7 +18,6 @@ export function Capabilities() {
           </p>
         </div>
 
-        {/* Stacked Table of Contents List */}
         <div className="border-t border-rule">
           {capabilitiesData.map((cap, index) => (
             <Link

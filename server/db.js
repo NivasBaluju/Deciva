@@ -2,11 +2,18 @@ const { Pool } = require("pg");
 require("dotenv").config();
 
 // Strip parameters that are unsupported by pg on Vercel's Node runtime
+// and normalize sslmode for Node.js pg client (SEC-21)
 function sanitizeDbUrl(url) {
   if (!url) return url;
   try {
     const u = new URL(url);
     u.searchParams.delete('channel_binding');
+    // SEC-21: Normalize sslmode=require to sslmode=verify-full for Node's pg client
+    // to prevent pg v8/v9 deprecation alias warning while retaining strict TLS verification.
+    // Does not touch shared .env or Python's psycopg2 connection.
+    if (u.searchParams.get('sslmode') === 'require') {
+      u.searchParams.set('sslmode', 'verify-full');
+    }
     return u.toString();
   } catch {
     return url;
@@ -875,6 +882,116 @@ const MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS idx_feedback_doc ON contract_decision_feedback(document_id);
       CREATE INDEX IF NOT EXISTS idx_feedback_disagreement ON contract_decision_feedback(disagreement_type);
     `
+  },
+  {
+    version: '20260906_015_upload_idempotency',
+    name: 'Phase 2 Task 2: Upload Idempotency and Dual-Write Prevention',
+    sql: `
+      CREATE TABLE IF NOT EXISTS upload_idempotency (
+        id VARCHAR(36) PRIMARY KEY,
+        user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        idempotency_key VARCHAR(255) NOT NULL,
+        request_hash VARCHAR(64) NOT NULL,
+        document_id VARCHAR(36) NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'PROCESSING',
+        response_payload JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT upload_idempotency_user_key_unique UNIQUE (user_id, idempotency_key)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_upload_idempotency_user_hash ON upload_idempotency(user_id, request_hash);
+      CREATE INDEX IF NOT EXISTS idx_upload_idempotency_doc ON upload_idempotency(document_id);
+    `
+  },
+  {
+    version: '20260916_016_simulation_engine_hardening',
+    name: 'Phase 2 Task 4: Simulation Engine Risk Recalculation & Scenario Integrity',
+    sql: `
+      ALTER TABLE contract_simulations ADD COLUMN IF NOT EXISTS clause_id VARCHAR(100);
+      ALTER TABLE contract_simulations ADD COLUMN IF NOT EXISTS original_clause TEXT;
+      ALTER TABLE contract_simulations ADD COLUMN IF NOT EXISTS proposed_clause TEXT;
+      ALTER TABLE contract_simulations ADD COLUMN IF NOT EXISTS before_score INTEGER;
+      ALTER TABLE contract_simulations ADD COLUMN IF NOT EXISTS after_score INTEGER;
+      ALTER TABLE contract_simulations ADD COLUMN IF NOT EXISTS risk_delta INTEGER DEFAULT 0;
+      ALTER TABLE contract_simulations ADD COLUMN IF NOT EXISTS risk_direction VARCHAR(20) DEFAULT 'UNCHANGED';
+      ALTER TABLE contract_simulations ADD COLUMN IF NOT EXISTS risk_findings JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE contract_simulations ADD COLUMN IF NOT EXISTS provenance JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE contract_simulations ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(255);
+      ALTER TABLE contract_simulations ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'COMPLETED';
+
+      CREATE INDEX IF NOT EXISTS idx_simulations_doc_created ON contract_simulations(document_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_simulations_user_idemp ON contract_simulations(user_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
+    `
+  },
+  {
+    version: '20260916_017_negotiation_risk_recalculation',
+    name: 'Phase 2 Task 5: Negotiation Engine Post-Redline Risk Recalculation & Audit Persistence',
+    sql: `
+      CREATE TABLE IF NOT EXISTS contract_negotiations (
+        id VARCHAR(36) PRIMARY KEY,
+        document_id VARCHAR(36) NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+        user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        clause_id VARCHAR(100),
+        clause_type VARCHAR(100),
+        mode VARCHAR(30) NOT NULL DEFAULT 'balanced',
+        original_clause TEXT NOT NULL,
+        proposed_clause TEXT NOT NULL,
+        before_score INTEGER NOT NULL,
+        after_score INTEGER NOT NULL,
+        risk_delta INTEGER NOT NULL DEFAULT 0,
+        risk_direction VARCHAR(20) NOT NULL DEFAULT 'UNCHANGED',
+        risk_findings JSONB DEFAULT '{}'::jsonb,
+        redline JSONB DEFAULT '{}'::jsonb,
+        strategy TEXT,
+        identified_imbalance TEXT,
+        provenance JSONB DEFAULT '{}'::jsonb,
+        idempotency_key VARCHAR(255),
+        status VARCHAR(30) DEFAULT 'ACTIVE',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_negotiations_doc_created ON contract_negotiations(document_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_negotiations_user_idemp ON contract_negotiations(user_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
+    `
+  },
+  {
+    version: '20260916_018_admin_role_governance',
+    name: 'Phase 2 Task 6: Controlled Admin Role Governance & Invariant Enforcement',
+    sql: `
+      -- Normalize any legacy/unrecognized roles to 'user' before adding CHECK constraint
+      UPDATE users SET role = 'user' WHERE role IS NULL OR role NOT IN ('admin', 'legal_counsel', 'compliance_officer', 'auditor', 'user');
+
+      -- Enforce valid roles at schema level
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'chk_users_valid_role'
+        ) THEN
+          ALTER TABLE users ADD CONSTRAINT chk_users_valid_role 
+            CHECK (role IN ('admin', 'legal_counsel', 'compliance_officer', 'auditor', 'user'));
+        END IF;
+      END $$;
+
+      CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+    `
+  },
+  {
+    version: '20260916_019_cryptographic_audit_ledger_view',
+    name: 'Create cryptographic_audit_ledger view for truthful terminology parity',
+    sql: `
+      CREATE OR REPLACE VIEW cryptographic_audit_ledger AS
+      SELECT
+        id,
+        block_index,
+        user_id,
+        action,
+        details_json,
+        prev_hash,
+        hash,
+        created_at
+      FROM blockchain_audit;
+    `
   }
 ];
 
@@ -945,5 +1062,6 @@ pool.connect()
   .catch(err => console.error("❌ PostgreSQL Connection Error:", err));
 
 pool.initDb = initDb;
+pool.sanitizeDbUrl = sanitizeDbUrl;
 
 module.exports = pool;

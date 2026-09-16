@@ -1,11 +1,6 @@
 import React from 'react';
 import Breadcrumb from '../components/ui/Breadcrumb';
 
-/**
- * Privacy Policy — Part 10.10
- * Plain, authoritative document-style legal page.
- * Constrained to container-text width, no imagery, purely functional.
- */
 export function Privacy() {
   return (
     <div className="w-full bg-paper py-20 sm:py-28">

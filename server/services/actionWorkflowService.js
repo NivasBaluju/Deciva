@@ -62,7 +62,6 @@ async function transitionActionStatus(actionId, targetStatus, payload = {}, user
   try {
     await client.query('BEGIN');
 
-    // 1. Lock and load action + document owner
     const { rows } = await client.query(
       `SELECT a.*, d.user_id AS doc_owner_id
        FROM contract_actions a
@@ -79,7 +78,6 @@ async function transitionActionStatus(actionId, targetStatus, payload = {}, user
 
     const action = rows[0];
 
-    // 2. Authorization check
     if (action.doc_owner_id !== user.id && user.role !== 'admin') {
       await client.query('ROLLBACK');
       return { errorStatus: 403, errorMessage: 'Unauthorized access to action' };
@@ -87,7 +85,6 @@ async function transitionActionStatus(actionId, targetStatus, payload = {}, user
 
     const currentStatus = action.status;
 
-    // 3. Validate state transition
     if (!isValidTransition(currentStatus, targetStatus)) {
       await client.query('ROLLBACK');
       return {
@@ -96,7 +93,6 @@ async function transitionActionStatus(actionId, targetStatus, payload = {}, user
       };
     }
 
-    // 4. Validate transition-specific requirements
     let resolvedAtUpdate = action.resolved_at;
     let resolutionNotesUpdate = action.resolution_notes;
     let decisionReasonUpdate = action.decision_reason;
@@ -145,7 +141,6 @@ async function transitionActionStatus(actionId, targetStatus, payload = {}, user
       activityMetadata.reason = reason ? reason.trim() : 'Reopened to open status';
     }
 
-    // 5. Update contract_actions (clear active escalation if resolved or dismissed)
     const shouldClearEscalation = targetStatus === WORKFLOW_STATES.RESOLVED || targetStatus === WORKFLOW_STATES.DISMISSED;
     const { rows: updatedRows } = await client.query(
       `UPDATE contract_actions
@@ -176,7 +171,6 @@ async function transitionActionStatus(actionId, targetStatus, payload = {}, user
     );
     const updatedAction = updatedRows[0];
 
-    // 6. Record append-only entry in contract_action_decisions
     const decisionId = uuidv4();
     await client.query(
       `INSERT INTO contract_action_decisions (
@@ -193,7 +187,6 @@ async function transitionActionStatus(actionId, targetStatus, payload = {}, user
       ]
     );
 
-    // 7. Record append-only activity audit in contract_action_activity
     const activityId = uuidv4();
     await client.query(
       `INSERT INTO contract_action_activity (
@@ -208,7 +201,6 @@ async function transitionActionStatus(actionId, targetStatus, payload = {}, user
       ]
     );
 
-    // Phase 7.6: Trigger notifications within transaction
     try {
       const notificationService = require('./notificationService');
       if (targetStatus === WORKFLOW_STATES.RESOLVED) {
@@ -444,7 +436,6 @@ async function assignActionOwner(actionId, ownerId, user) {
       ]
     );
 
-    // Phase 7.6: Dispatch assignment notification within transaction
     if (targetOwnerId && targetOwnerId !== user.id) {
       try {
         const notificationService = require('./notificationService');

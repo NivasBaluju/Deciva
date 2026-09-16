@@ -103,7 +103,6 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
 
   return (
     <div className="workflow-analytics-dashboard" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* SECTION 1: Operational Health Score Banner */}
       <div
         className="card"
         style={{
@@ -172,7 +171,6 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
           </div>
         </div>
 
-        {/* 5-Component Breakdown Pills */}
         <div
           style={{
             marginTop: '18px',
@@ -218,7 +216,6 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
         </div>
       </div>
 
-      {/* SECTION 2: Overview Metric Cards */}
       <div>
         <h3 style={{ margin: '0 0 12px 0', fontSize: '15px', fontWeight: 600, color: '#FFF' }}>
           Workflow Status Overview
@@ -247,9 +244,7 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
         </div>
       </div>
 
-      {/* SECTION 3 & 4: Resolution Performance & Priority Distribution */}
       <div className="grid grid-2 gap-16">
-        {/* Resolution Performance */}
         <div className="card" style={{ padding: '20px' }}>
           <h3 style={{ margin: '0 0 14px 0', fontSize: '15px', fontWeight: 600, color: '#FFF' }}>
             Resolution Performance
@@ -288,13 +283,11 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
           )}
         </div>
 
-        {/* Priority & Risk Distribution */}
         <div className="card" style={{ padding: '20px' }}>
           <h3 style={{ margin: '0 0 14px 0', fontSize: '15px', fontWeight: 600, color: '#FFF' }}>
             Risk & Priority Distribution
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {/* Critical Band */}
             <div>
               <div className="flex-between" style={{ fontSize: '12px', marginBottom: '4px' }}>
                 <span style={{ color: '#EF4444', fontWeight: 600 }}>Critical (80–100)</span>
@@ -311,7 +304,6 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
               </div>
             </div>
 
-            {/* High Band */}
             <div>
               <div className="flex-between" style={{ fontSize: '12px', marginBottom: '4px' }}>
                 <span style={{ color: '#F59E0B', fontWeight: 600 }}>High (70–79)</span>
@@ -328,7 +320,6 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
               </div>
             </div>
 
-            {/* Medium Band */}
             <div>
               <div className="flex-between" style={{ fontSize: '12px', marginBottom: '4px' }}>
                 <span style={{ color: '#60A5FA', fontWeight: 600 }}>Medium (40–69)</span>
@@ -345,7 +336,6 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
               </div>
             </div>
 
-            {/* Low Band */}
             <div>
               <div className="flex-between" style={{ fontSize: '12px', marginBottom: '4px' }}>
                 <span style={{ color: '#94A3B8', fontWeight: 600 }}>Low (0–39)</span>
@@ -370,9 +360,7 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
         </div>
       </div>
 
-      {/* SECTION 5 & 6: Deadline Performance & Decision Ledger Trends */}
       <div className="grid grid-2 gap-16">
-        {/* Deadline Performance */}
         <div className="card" style={{ padding: '20px' }}>
           <h3 style={{ margin: '0 0 14px 0', fontSize: '15px', fontWeight: 600, color: '#FFF' }}>
             Deadline Adherence
@@ -405,7 +393,6 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
           </div>
         </div>
 
-        {/* Decision Ledger Trends */}
         <div className="card" style={{ padding: '20px' }}>
           <h3 style={{ margin: '0 0 14px 0', fontSize: '15px', fontWeight: 600, color: '#FFF' }}>
             Decision Ledger Trends
@@ -435,9 +422,7 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
         </div>
       </div>
 
-      {/* SECTION 7: Owner Workload & Reopen Analytics */}
       <div className="grid grid-2 gap-16">
-        {/* Owner Workload */}
         <div className="card" style={{ padding: '20px' }}>
           <div className="flex-between" style={{ marginBottom: '14px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#FFF' }}>
@@ -483,7 +468,6 @@ export const WorkflowAnalyticsDashboard = ({ documentId }) => {
           )}
         </div>
 
-        {/* Reopen Analysis & Collaboration */}
         <div className="card" style={{ padding: '20px' }}>
           <h3 style={{ margin: '0 0 14px 0', fontSize: '15px', fontWeight: 600, color: '#FFF' }}>
             Reopen Rates & Collaboration

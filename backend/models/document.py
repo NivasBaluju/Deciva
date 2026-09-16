@@ -117,6 +117,23 @@ class DocumentModel:
                     page_count, character_count, analysis_status, processed_at
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, true, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                ON CONFLICT (id) DO UPDATE SET
+                    extracted_text = CASE
+                        WHEN documents.extracted_text IS NOT NULL AND length(documents.extracted_text) > 0 THEN documents.extracted_text
+                        ELSE EXCLUDED.extracted_text
+                    END,
+                    extraction_status = CASE
+                        WHEN documents.extraction_status = 'COMPLETED' THEN 'COMPLETED'
+                        WHEN EXCLUDED.extraction_status = 'COMPLETED' THEN 'COMPLETED'
+                        ELSE documents.extraction_status
+                    END,
+                    analysis_status = CASE
+                        WHEN documents.analysis_status = 'COMPLETED' THEN 'COMPLETED'
+                        WHEN EXCLUDED.analysis_status = 'COMPLETED' THEN 'COMPLETED'
+                        ELSE documents.analysis_status
+                    END,
+                    ocr_confidence = COALESCE(documents.ocr_confidence, EXCLUDED.ocr_confidence),
+                    risk_score = COALESCE(documents.risk_score, EXCLUDED.risk_score)
                 RETURNING id, original_name, filename, size, sha256, extraction_status, extraction_method, ocr_confidence, page_count, character_count, risk_score, analysis_status, created_at;
             """, (
                 doc_id, user_id, filename, original_name, mime_type,

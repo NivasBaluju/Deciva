@@ -9,7 +9,6 @@ import SkeletonLoader from '../components/common/SkeletonLoader';
 import { fmtBytes } from '../utils/formatters';
 import { buttonMotion, EASE_OUT, DURATIONS } from '../styles/motion';
 
-// Lazy-loaded tab components to keep initial bundle ultra-lean
 const OverviewTab = lazy(() => import('../components/document/OverviewTab'));
 const ClausesTab = lazy(() => import('../components/document/ClausesTab'));
 const RiskTab = lazy(() => import('../components/document/RiskTab'));
@@ -144,7 +143,6 @@ export const DocumentDetail = () => {
 
   return (
     <PageTransition>
-      {/* Header Bar */}
       <div className="flex-between mb-16" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div className="truncate" style={{ maxWidth: '65%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -187,7 +185,6 @@ export const DocumentDetail = () => {
         </div>
       </div>
 
-      {/* STATE 5.10: FAILED + hasPreviousAnalysis Notification Banner */}
       {analysisStatus === 'FAILED' && hasPrevious && (
         <div
           className="card mb-16"
@@ -216,7 +213,6 @@ export const DocumentDetail = () => {
         </div>
       )}
 
-      {/* First-time Failed State with no previous data */}
       {analysisStatus === 'FAILED' && !hasPrevious && (
         <div
           className="card mb-16"
@@ -235,7 +231,6 @@ export const DocumentDetail = () => {
         </div>
       )}
 
-      {/* Tabs Header with Animated Indicator */}
       <div className="tab-bar">
         {DOC_TABS.map((t) => {
           const isActive = t.id === activeTab;
@@ -266,7 +261,6 @@ export const DocumentDetail = () => {
         })}
       </div>
 
-      {/* Tab Contents */}
       <div id="docTabContent" className="mt-16">
         <Suspense fallback={<SkeletonLoader.Card count={2} height="160px" />}>
           <AnimatePresence mode="wait">

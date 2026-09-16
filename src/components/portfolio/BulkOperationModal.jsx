@@ -5,14 +5,7 @@ import { PortfolioOperationsApi } from '../../services/portfolioOperationsApi';
 import { useToast } from '../../context/ToastContext';
 
 /**
- * Phase 8.0 — Bulk Operation Modal
- *
- * 5-step controlled flow:
- *   Step 1  CONFIGURE  — Operation type, mode, payload
- *   Step 2  PREVIEW    — Pre-flight validation result (eligible / blocked)
- *   Step 3  CONFIRM    — Explicit user acknowledgement
- *   Step 4  EXECUTE    — Progress indicator
- *   Step 5  RECEIPT    — Auditable execution receipt
+ * Modal workflow for configuring and executing bulk portfolio operations.
  */
 
 const STEPS = { CONFIGURE: 1, PREVIEW: 2, CONFIRM: 3, EXECUTE: 4, RECEIPT: 5 };
@@ -47,16 +40,14 @@ const BLOCK_REASON_LABELS = {
 
 export const BulkOperationModal = ({
   selectedActionIds = [],
-  actionItems = [],          // [{ actionId, title, status, category }]
+  actionItems = [],
   onClose,
-  onComplete,                // called after COMPLETED receipt, triggers queue refresh
+  onComplete,
 }) => {
   const { toast } = useToast();
 
-  // Step state
   const [step, setStep] = useState(STEPS.CONFIGURE);
 
-  // Configure
   const [operation, setOperation]         = useState('BULK_ASSIGN');
   const [mode, setMode]                   = useState('STRICT');
   const [ownerId, setOwnerId]             = useState('');
@@ -66,11 +57,9 @@ export const BulkOperationModal = ({
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [dismissReason, setDismissReason] = useState('');
 
-  // Preview result
   const [preview, setPreview]   = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
-  // Execute result
   const [receipt, setReceipt]   = useState(null);
   const [idempotencyKey]        = useState(() => uuidv4());
 
@@ -90,7 +79,6 @@ export const BulkOperationModal = ({
     return {};
   }, [operation, ownerId, dueDate, clearDueDate, targetStatus, resolutionNotes, dismissReason]);
 
-  // Compute all possible target statuses across selected actions
   const commonTargetStatuses = useCallback(() => {
     const selected = actionItems.filter(a => selectedActionIds.includes(a.actionId));
     const allAllowed = new Set(['OPEN', 'IN_REVIEW', 'RESOLVED', 'DISMISSED']);
@@ -151,8 +139,6 @@ export const BulkOperationModal = ({
     }
     return true;
   };
-
-  // ── Render ────────────────────────────────────────────────────────────────
 
   const styles = {
     overlay: {
@@ -249,12 +235,10 @@ export const BulkOperationModal = ({
     </div>
   );
 
-  // STEP 1: Configure
   const renderConfigure = () => {
     const possibleTargets = commonTargetStatuses();
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-        {/* Operation Type */}
         <div>
           <div style={styles.label}>Operation Type</div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -279,7 +263,6 @@ export const BulkOperationModal = ({
           </div>
         </div>
 
-        {/* Mode */}
         <div>
           <div style={styles.label}>Atomicity Mode</div>
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -301,7 +284,6 @@ export const BulkOperationModal = ({
           </div>
         </div>
 
-        {/* Operation-specific payload */}
         {operation === 'BULK_ASSIGN' && (
           <div>
             <div style={styles.label}>Target Owner User ID <span style={{ color: 'rgba(255,255,255,0.35)' }}>(leave blank to unassign)</span></div>
@@ -374,7 +356,6 @@ export const BulkOperationModal = ({
           </div>
         )}
 
-        {/* Selection summary */}
         <div style={{
           padding: '12px 16px', borderRadius: '8px',
           background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)',
@@ -386,13 +367,11 @@ export const BulkOperationModal = ({
     );
   };
 
-  // STEP 2: Preview
   const renderPreview = () => {
     if (!preview) return null;
     const isExecutable = preview.executable && preview.previewId;
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {/* Summary bar */}
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           {[
             { label: 'Requested', value: preview.requested, color: '#6366F1' },
@@ -459,7 +438,6 @@ export const BulkOperationModal = ({
           </div>
         )}
 
-        {/* Blocked reasons */}
         {preview.blockedReasons?.length > 0 && (
           <div>
             <div style={{ fontSize: '12px', fontWeight: 600, color: '#EF4444', marginBottom: '8px' }}>
@@ -484,7 +462,6 @@ export const BulkOperationModal = ({
           </div>
         )}
 
-        {/* Expected changes */}
         {preview.expectedChanges?.length > 0 && (
           <div>
             <div style={{ fontSize: '12px', fontWeight: 600, color: '#10B981', marginBottom: '8px' }}>
@@ -509,7 +486,6 @@ export const BulkOperationModal = ({
     );
   };
 
-  // STEP 3: Confirm
   const renderConfirm = () => {
     if (!preview) return null;
     const opInfo = OPERATION_LABELS[operation];
@@ -544,7 +520,6 @@ export const BulkOperationModal = ({
     );
   };
 
-  // STEP 4: Executing
   const renderExecuting = () => (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '20px 0' }}>
       <motion.div
@@ -563,7 +538,6 @@ export const BulkOperationModal = ({
     </div>
   );
 
-  // STEP 5: Receipt
   const renderReceipt = () => {
     if (!receipt) return null;
     return (
@@ -576,7 +550,6 @@ export const BulkOperationModal = ({
           </div>
         </div>
 
-        {/* Receipt card */}
         <div style={{
           padding: '20px', borderRadius: '12px',
           background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)',
@@ -625,7 +598,6 @@ export const BulkOperationModal = ({
         transition={{ duration: 0.2 }}
         style={styles.modal}
       >
-        {/* Header */}
         <div style={styles.header}>
           <div>
             <div style={{ fontSize: '17px', fontWeight: 700, color: '#FFF' }}>
@@ -640,7 +612,6 @@ export const BulkOperationModal = ({
           )}
         </div>
 
-        {/* Body */}
         <div style={styles.body}>
           {renderStepDots()}
           <AnimatePresence mode="wait">
@@ -660,7 +631,6 @@ export const BulkOperationModal = ({
           </AnimatePresence>
         </div>
 
-        {/* Footer */}
         <div style={styles.footer}>
           {step === STEPS.CONFIGURE && (
             <>

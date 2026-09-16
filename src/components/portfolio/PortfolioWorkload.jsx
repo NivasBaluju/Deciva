@@ -54,7 +54,6 @@ export const PortfolioWorkload = () => {
         </div>
       </div>
 
-      {/* Unassigned Workload Warning Banner if any */}
       {unassigned.unassignedActions > 0 && (
         <div
           style={{
@@ -85,7 +84,6 @@ export const PortfolioWorkload = () => {
         </div>
       )}
 
-      {/* Owner Workload List */}
       {owners.length === 0 ? (
         <p className="text-muted small" style={{ margin: '8px 0' }}>
           No actions are currently assigned to team members.

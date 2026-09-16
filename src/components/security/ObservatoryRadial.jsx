@@ -31,7 +31,6 @@ export const ObservatoryRadial = ({
     { key: 'Today', day: 'Current Cycle', auth: currentAuth, docs: currentDocs, total: currentAuth + currentDocs }
   ];
 
-  // 6 security nodes configuration
   const nodes = [
     {
       id: 'identity',
@@ -40,7 +39,7 @@ export const ObservatoryRadial = ({
       statusText: mfaEnabled ? 'Healthy' : 'Configurable',
       status: mfaEnabled ? 'ok' : 'warn',
       icon: 'shield',
-      angle: -90, // Top
+      angle: -90,
       x: 380,
       y: 76
     },
@@ -51,18 +50,18 @@ export const ObservatoryRadial = ({
       statusText: 'Healthy',
       status: 'ok',
       icon: 'lock',
-      angle: -30, // Top-Right
+      angle: -30,
       x: 554,
       y: 172
     },
     {
       id: 'integrity',
       title: 'INTEGRITY',
-      metric: isAuditValid ? 'MERKLE VALID' : 'AUDIT WARNING',
+      metric: isAuditValid ? 'LEDGER VALID' : 'AUDIT WARNING',
       statusText: isAuditValid ? 'Healthy' : 'Anomaly',
       status: isAuditValid ? 'ok' : 'danger',
       icon: 'check',
-      angle: 30, // Bottom-Right
+      angle: 30,
       x: 554,
       y: 368
     },
@@ -73,7 +72,7 @@ export const ObservatoryRadial = ({
       statusText: isAuditValid ? 'VALID' : 'TAMPERED',
       status: isAuditValid ? 'ok' : 'danger',
       icon: 'document',
-      angle: 90, // Bottom
+      angle: 90,
       x: 380,
       y: 464
     },
@@ -84,7 +83,7 @@ export const ObservatoryRadial = ({
       statusText: threatsCount > 0 ? 'Active Monitoring' : 'Guarded',
       status: threatsCount > 0 ? 'warn' : 'ok',
       icon: 'alert',
-      angle: 150, // Bottom-Left
+      angle: 150,
       x: 206,
       y: 368
     },
@@ -95,7 +94,7 @@ export const ObservatoryRadial = ({
       statusText: clampedScore >= 80 ? 'Trust Verified' : 'Fingerprint Shift',
       status: clampedScore >= 80 ? 'ok' : 'warn',
       icon: 'settings',
-      angle: 210, // Top-Left
+      angle: 210,
       x: 206,
       y: 172
     }
@@ -108,14 +107,12 @@ export const ObservatoryRadial = ({
 
   return (
     <div className="observatory-container">
-      {/* Outer SVG Astrolabe / Instrument Canvas */}
       <svg
         className="observatory-svg"
         viewBox="0 0 760 540"
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
-          {/* Subtle Radial Glows */}
           <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor={scoreColor} stopOpacity="0.14" />
             <stop offset="60%" stopColor={scoreColor} stopOpacity="0.04" />
@@ -127,14 +124,12 @@ export const ObservatoryRadial = ({
           </radialGradient>
         </defs>
 
-        {/* 1. Background Geometry Rings (Scientific Instrument feel) */}
         <circle cx={centerX} cy={centerY} r="260" fill="none" stroke="var(--rule)" strokeWidth="1" strokeOpacity="0.6" />
         <circle cx={centerX} cy={centerY} r={activityRingRadius} fill="none" stroke="var(--rule)" strokeWidth="1" strokeDasharray="3 6" />
         <circle cx={centerX} cy={centerY} r="200" fill="none" stroke="var(--rule)" strokeWidth="1" strokeOpacity="0.8" />
         <circle cx={centerX} cy={centerY} r="140" fill="none" stroke="var(--rule)" strokeWidth="1" strokeDasharray="2 4" strokeOpacity="0.8" />
         <circle cx={centerX} cy={centerY} r="100" fill="none" stroke="var(--rule)" strokeWidth="1" />
 
-        {/* 2. Central Hub Glow & Pulsing Ring */}
         <circle cx={centerX} cy={centerY} r="110" fill="url(#centerGlow)" />
         <circle
           cx={centerX}
@@ -154,7 +149,6 @@ export const ObservatoryRadial = ({
           strokeOpacity="0.45"
         />
 
-        {/* 3. Connecting Spoke Lines to 6 Nodes */}
         {nodes.map((n) => {
           const isSelected = selectedNode === n.id;
           const strokeColor = isSelected ? 'var(--ink)' : 'var(--rule)';
@@ -185,12 +179,10 @@ export const ObservatoryRadial = ({
           );
         })}
 
-        {/* 4. Outer 7-Day Activity Ring Segments */}
         {activityDays.map((ad, idx) => {
-          // Calculate angle segment for each day (evenly spread around circle)
           const angleStep = 360 / 7;
           const startAngle = idx * angleStep - 90;
-          const endAngle = (idx + 1) * angleStep - 90 - 4; // 4 deg gap
+          const endAngle = (idx + 1) * angleStep - 90 - 4;
 
           const toRad = (a) => (a * Math.PI) / 180;
           const r = activityRingRadius;
@@ -216,7 +208,6 @@ export const ObservatoryRadial = ({
               onMouseLeave={() => setHoveredDay(null)}
               style={{ cursor: 'pointer' }}
             >
-              {/* Arc Path */}
               <path
                 d={`M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`}
                 fill="none"
@@ -225,7 +216,6 @@ export const ObservatoryRadial = ({
                 strokeLinecap="round"
                 style={{ transition: 'all 0.2s ease' }}
               />
-              {/* Day Label */}
               <text
                 x={lx}
                 y={ly + 3}
@@ -242,9 +232,8 @@ export const ObservatoryRadial = ({
         })}
       </svg>
 
-      {/* 5. Center Hub Content (HTML Overlay) */}
       <div className="observatory-center-hub" style={{ borderColor: scoreColor }}>
-        <span className="hub-tag mono">[ZERO-TRUST]</span>
+        <span className="hub-tag mono">ZERO-TRUST</span>
         <div className="hub-score-wrap">
           <span className="hub-score-number" style={{ color: scoreColor }}>{clampedScore}</span>
           <span className="hub-score-max">/ 100</span>
@@ -253,7 +242,6 @@ export const ObservatoryRadial = ({
         <span className="hub-status-sub">ALL SAFEGUARDS VERIFIED</span>
       </div>
 
-      {/* 6. Activity Hover Tooltip */}
       {hoveredDay && (
         <motion.div
           className="observatory-activity-tooltip"
@@ -269,13 +257,11 @@ export const ObservatoryRadial = ({
         </motion.div>
       )}
 
-      {/* 7. Six Orbital Interactive Nodes (HTML positioning over SVG coordinates) */}
       <div className="observatory-nodes-container">
         {nodes.map((n) => {
           const isSelected = selectedNode === n.id;
           const statusDotClass = n.status === 'ok' ? 'dot-emerald' : n.status === 'warn' ? 'dot-gold' : 'dot-danger';
 
-          // Mapping icons dynamically
           const renderIcon = () => {
             if (n.icon === 'shield') return <Icon.shield width={13} height={13} />;
             if (n.icon === 'lock') return <Icon.lock width={13} height={13} />;

@@ -1,12 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-/**
- * ContentCard — Part 8.8
- * Content block for capabilities, legal engines, and insights.
- * Separated by whitespace and a hairline rule that thickens on hover.
- * Zero box-shadow, zero card boundary.
- */
 export function ContentCard({
   href,
   title,

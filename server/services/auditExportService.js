@@ -62,7 +62,6 @@ async function generateCryptographicAuditExport({ documentId = null, tenantId = 
   const exportId = crypto.randomUUID();
   const exportBundle = {};
 
-  // 1. Contract Identity & Executive Summary
   let docRecord = null;
   if (documentId) {
     const { rows: docs } = await db.query('SELECT * FROM documents WHERE id = $1', [documentId]);
@@ -84,7 +83,6 @@ async function generateCryptographicAuditExport({ documentId = null, tenantId = 
     confidentiality_notice: 'Deciva Authoritative Evidence-Backed Audit Package'
   };
 
-  // 2. Decision Timeline
   const { rows: workflows } = documentId
     ? await db.query('SELECT * FROM contract_decision_workflows WHERE document_id = $1 ORDER BY created_at ASC', [documentId])
     : await db.query('SELECT * FROM contract_decision_workflows ORDER BY created_at ASC LIMIT 100');
@@ -102,7 +100,6 @@ async function generateCryptographicAuditExport({ documentId = null, tenantId = 
     comments: scrubSensitiveData(comments)
   };
 
-  // 3. Risk Register
   let riskFactors = [];
   try {
     const { rows: rf } = documentId
@@ -119,7 +116,6 @@ async function generateCryptographicAuditExport({ documentId = null, tenantId = 
     risk_factors: scrubSensitiveData(riskFactors)
   };
 
-  // 4. Evidence References & Extracted Clauses
   let clauses = [];
   try {
     const { rows: cl } = documentId
@@ -135,7 +131,6 @@ async function generateCryptographicAuditExport({ documentId = null, tenantId = 
     grounded_clauses: scrubSensitiveData(clauses)
   };
 
-  // 5. Governance Findings & Policy Evaluations
   let findings = [];
   try {
     const { rows: fd } = documentId
@@ -151,7 +146,6 @@ async function generateCryptographicAuditExport({ documentId = null, tenantId = 
     findings: scrubSensitiveData(findings)
   };
 
-  // 6. Approval History
   let actions = [];
   try {
     const { rows: ac } = documentId
@@ -167,7 +161,6 @@ async function generateCryptographicAuditExport({ documentId = null, tenantId = 
     actions: scrubSensitiveData(actions)
   };
 
-  // 7. Monitoring Events
   let monEvents = [];
   try {
     const { rows: me } = documentId
@@ -183,7 +176,6 @@ async function generateCryptographicAuditExport({ documentId = null, tenantId = 
     events: scrubSensitiveData(monEvents)
   };
 
-  // 8. Integration Events
   let intQuery = 'SELECT * FROM integration_event_outbox WHERE 1=1';
   const intParams = [];
   if (tenantId) {
@@ -197,7 +189,6 @@ async function generateCryptographicAuditExport({ documentId = null, tenantId = 
     outbox_events: scrubSensitiveData(outbox)
   };
 
-  // 9. Blockchain Audit Ledger Verification
   const { rows: auditBlocks } = await db.query(
     'SELECT block_index, action, details_json, prev_hash, hash, created_at FROM blockchain_audit ORDER BY block_index DESC LIMIT 50'
   );
@@ -212,14 +203,15 @@ async function generateCryptographicAuditExport({ documentId = null, tenantId = 
     }
   }
 
-  exportBundle['blockchain_ledger_verification'] = {
+  const ledgerVerification = {
     chain_valid: chainIntegrityValid,
     blocks_inspected: auditBlocks.length,
     latest_block: auditBlocks[0] || null,
     hash_algorithm: 'SHA-256'
   };
+  exportBundle['cryptographic_audit_ledger_verification'] = ledgerVerification;
+  exportBundle['blockchain_ledger_verification'] = ledgerVerification; // backward-compatible deprecated alias
 
-  // 10. Generate Manifest & Cryptographic SHA-256 Checksums for Every Section
   const manifest = {
     export_id: exportId,
     generated_at: new Date().toISOString(),

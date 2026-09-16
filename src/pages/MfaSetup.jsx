@@ -126,9 +126,6 @@ export const MfaSetup = () => {
         />
 
         <div className="mb-20">
-          <span className="mono text-lo small" style={{ letterSpacing: '0.08em' }}>
-            [ZERO-TRUST_IDENTITY_ENCLAVE]
-          </span>
           <h1 className="page-title" style={{ marginTop: '2px', marginBottom: '4px' }}>
             Authenticator Setup
           </h1>

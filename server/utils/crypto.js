@@ -2,25 +2,9 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-// --- AES-256-GCM master key management -------------------------------------
-const DEFAULT_KEY_FALLBACK = 'deciva-secret-encryption-key-32-bytes!!';
-let rawKey = process.env.ENCRYPTION_KEY || process.env.AES_MASTER_KEY;
+const { getEncryptionKey } = require('../services/productionConfigService');
 
-if (!rawKey || rawKey === DEFAULT_KEY_FALLBACK) {
-  if (process.env.JWT_SECRET && process.env.JWT_SECRET !== 'dev_insecure_secret_change_me') {
-    // Deterministically derive a cryptographically secure 256-bit AES key from configured JWT_SECRET
-    rawKey = crypto.createHmac('sha256', 'deciva-encryption-salt-v1').update(process.env.JWT_SECRET).digest('hex');
-    console.log('[SECURITY] Safely derived AES master key from configured JWT_SECRET.');
-  } else {
-    rawKey = DEFAULT_KEY_FALLBACK;
-    if (process.env.NODE_ENV === 'production') {
-      console.warn('[SECURITY WARNING] ENCRYPTION_KEY or AES_MASTER_KEY is not configured in production. Using derived fallback key. Set ENCRYPTION_KEY in your hosting environment variables for maximum isolation.');
-    } else {
-      console.warn('[SECURITY WARNING] Using default fallback AES encryption key. Set ENCRYPTION_KEY in .env before deploying to production.');
-    }
-  }
-}
-
+const rawKey = getEncryptionKey();
 const MASTER_KEY = crypto.createHash('sha256').update(rawKey).digest();
 
 /** Encrypt a buffer with AES-256-GCM. Returns: [iv(12)][ciphertext][authTag(16)]. */
@@ -67,20 +51,19 @@ function sha256(bufferOrString) {
   return crypto.createHash('sha256').update(bufferOrString).digest('hex');
 }
 
-// --- RSA keypair for digital signature verification demo -------------------
 // On Vercel, use RSA_PRIVATE_KEY / RSA_PUBLIC_KEY env vars (PEM strings).
 // Locally, falls back to files in data/db/.
 
 function loadOrCreateSigningKeys() {
-  // 1. Prefer env vars (Vercel / production)
   if (process.env.RSA_PRIVATE_KEY && process.env.RSA_PUBLIC_KEY) {
     return {
-      privateKey: process.env.RSA_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      publicKey: process.env.RSA_PUBLIC_KEY.replace(/\\n/g, '\n')
+      privateKey: process.env.RSA_PRIVATE_KEY.replace(/\\n/g, '\n').trim(),
+      publicKey: process.env.RSA_PUBLIC_KEY.replace(/\\n/g, '\n').trim(),
+      source: 'env',
+      ephemeral: false
     };
   }
 
-  // 2. Try reading from files (local dev)
   const rsaKeyDir = path.join(__dirname, '..', '..', 'data', 'db');
   const privKeyPath = path.join(rsaKeyDir, 'signing_private.pem');
   const pubKeyPath = path.join(rsaKeyDir, 'signing_public.pem');
@@ -89,10 +72,11 @@ function loadOrCreateSigningKeys() {
     if (fs.existsSync(privKeyPath) && fs.existsSync(pubKeyPath)) {
       return {
         privateKey: fs.readFileSync(privKeyPath, 'utf8'),
-        publicKey: fs.readFileSync(pubKeyPath, 'utf8')
+        publicKey: fs.readFileSync(pubKeyPath, 'utf8'),
+        source: 'filesystem',
+        ephemeral: false
       };
     }
-    // 3. Generate and save locally
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength: 2048,
       publicKeyEncoding: { type: 'spki', format: 'pem' },
@@ -101,16 +85,24 @@ function loadOrCreateSigningKeys() {
     fs.mkdirSync(rsaKeyDir, { recursive: true });
     fs.writeFileSync(privKeyPath, privateKey);
     fs.writeFileSync(pubKeyPath, publicKey);
-    return { publicKey, privateKey };
-  } catch {
-    // 4. Vercel / read-only: generate ephemeral keys
+    return { publicKey, privateKey, source: 'filesystem', ephemeral: false };
+  } catch (err) {
+    // SEC-05: Ephemeral key generation telemetry event (zero secret/key material logged)
+    const telemetryEvent = {
+      event: 'SECURITY_RSA_FALLBACK_ACTIVATED',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      reason: 'filesystem_read_only_or_missing_keys',
+      ephemeral: true
+    };
+    console.warn('[SECURITY TELEMETRY]', JSON.stringify(telemetryEvent));
     console.warn('[crypto] Filesystem read-only — generating ephemeral RSA keys. Set RSA_PRIVATE_KEY and RSA_PUBLIC_KEY in Vercel env vars for persistence.');
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength: 2048,
       publicKeyEncoding: { type: 'spki', format: 'pem' },
       privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
     });
-    return { publicKey, privateKey };
+    return { publicKey, privateKey, source: 'ephemeral', ephemeral: true };
   }
 }
 
@@ -138,6 +130,17 @@ function randomToken(bytes = 24) {
   return crypto.randomBytes(bytes).toString('hex');
 }
 
+function getSigningKeyMetadata() {
+  return {
+    source: SIGNING_KEYS.source || (process.env.RSA_PRIVATE_KEY ? 'env' : 'filesystem'),
+    algorithm: 'RSA-SHA256',
+    modulusLength: 2048,
+    ephemeral: Boolean(SIGNING_KEYS.ephemeral),
+    hasPublicKey: Boolean(SIGNING_KEYS.publicKey),
+    hasPrivateKey: Boolean(SIGNING_KEYS.privateKey)
+  };
+}
+
 module.exports = {
   MASTER_KEY,
   encryptBuffer,
@@ -148,5 +151,6 @@ module.exports = {
   signData,
   verifySignature,
   randomToken,
-  publicSigningKey: SIGNING_KEYS.publicKey
+  publicSigningKey: SIGNING_KEYS.publicKey,
+  getSigningKeyMetadata
 };

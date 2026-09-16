@@ -15,7 +15,6 @@ export const SecurityGauge = ({ score = 100, mfaEnabled = false, auditValid = tr
     <div className="card security-gauge-card">
       <div className="security-gauge-header">
         <div>
-          <span className="mono text-lo small" style={{ letterSpacing: '0.08em' }}>[SOC_METRIC_01]</span>
           <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#FFFFFF', margin: '2px 0 0' }}>
             Zero-Trust Enclave Posture
           </h3>
@@ -26,7 +25,6 @@ export const SecurityGauge = ({ score = 100, mfaEnabled = false, auditValid = tr
       </div>
 
       <div className="security-gauge-body">
-        {/* Radial SVG Gauge */}
         <div className="gauge-circle-container">
           <svg className="gauge-svg" viewBox="0 0 140 140">
             <circle
@@ -61,7 +59,6 @@ export const SecurityGauge = ({ score = 100, mfaEnabled = false, auditValid = tr
           </div>
         </div>
 
-        {/* Security Health Pillars */}
         <div className="gauge-pillars-list">
           <div className="gauge-pillar-item">
             <div className="gauge-pillar-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10B981' }}>
@@ -69,7 +66,7 @@ export const SecurityGauge = ({ score = 100, mfaEnabled = false, auditValid = tr
             </div>
             <div className="gauge-pillar-text">
               <strong>Cryptographic Non-Repudiation</strong>
-              <p>{auditValid ? 'Immutable SHA-256 Merkle chain intact' : 'Chain integrity warning'}</p>
+              <p>{auditValid ? 'SHA-256 cryptographic hash chain intact' : 'Chain integrity warning'}</p>
             </div>
             <span className={`badge ${auditValid ? 'badge-ok' : 'badge-danger'}`} style={{ fontSize: '11px' }}>
               {auditValid ? 'VERIFIED' : 'TAMPERED'}

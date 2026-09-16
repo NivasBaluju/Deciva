@@ -1,7 +1,6 @@
 import Api from './api';
 
 export const GovernanceApi = {
-  // Organization overview & policies
   getOverview: async () => {
     return Api.get('/api/governance/overview');
   },
@@ -28,7 +27,6 @@ export const GovernanceApi = {
     return Api.post(`/api/governance/policies/${policyId}/dry-run`, { document_id: documentId });
   },
 
-  // Document compliance evaluations
   getDocumentCompliance: async (documentId) => {
     return Api.get(`/api/documents/${documentId}/compliance-governance`);
   },
@@ -39,7 +37,6 @@ export const GovernanceApi = {
     return Api.get(`/api/documents/${documentId}/compliance-governance/findings`);
   },
 
-  // Exception governance
   requestException: async (documentId, findingId, reason) => {
     return Api.post(`/api/documents/${documentId}/compliance-governance/findings/${findingId}/exception`, { reason });
   },

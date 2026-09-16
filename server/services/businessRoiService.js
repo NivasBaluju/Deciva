@@ -28,7 +28,6 @@ async function getBusinessRoiAnalytics({ tenantId, assumptions = {} }) {
   const tenantClause = tenantId ? 'WHERE tenant_id = $1' : 'WHERE 1=1';
   const tenantParams = tenantId ? [tenantId] : [];
 
-  // 1. OBSERVED: Contracts Processed
   let docQuery = 'SELECT COUNT(*)::int as count FROM documents WHERE analysis_status = $1';
   const docParams = ['COMPLETED'];
   if (tenantId) {
@@ -38,19 +37,16 @@ async function getBusinessRoiAnalytics({ tenantId, assumptions = {} }) {
   const { rows: docRows } = await db.query(docQuery, docParams);
   const contractsProcessed = docRows[0]?.count || 0;
 
-  // 2. OBSERVED: Total Documents in system
   let allDocsQuery = 'SELECT COUNT(*)::int as count FROM documents';
   if (tenantId) allDocsQuery += ' WHERE tenant_id = $1';
   const { rows: allDocsRows } = await db.query(allDocsQuery, tenantParams);
   const totalContracts = allDocsRows[0]?.count || 0;
 
-  // 3. OBSERVED: Risks Discovered (High/Medium risk items from documents with risk_score >= 30)
   let riskQuery = 'SELECT COUNT(*)::int as count FROM documents WHERE risk_score >= 30';
   if (tenantId) riskQuery += ' AND tenant_id = $1';
   const { rows: riskRows } = await db.query(riskQuery, tenantParams);
   const elevatedRisksDiscovered = riskRows[0]?.count || 0;
 
-  // 4. OBSERVED: Deadlines & Renewals from Monitoring Events
   let monQuery = "SELECT COUNT(*)::int as count FROM contract_monitoring_events m";
   const monParams = [];
   if (tenantId) {
@@ -62,19 +58,16 @@ async function getBusinessRoiAnalytics({ tenantId, assumptions = {} }) {
   const { rows: monRows } = await db.query(monQuery, monParams);
   const deadlinesDetected = monRows[0]?.count || 0;
 
-  // 5. OBSERVED: Policy Violations Detected from Governance Findings
   let findQuery = "SELECT COUNT(*)::int as count FROM contract_compliance_findings WHERE finding_status = 'NON_COMPLIANT'";
   if (tenantId) findQuery += ' AND tenant_id = $1';
   const { rows: findRows } = await db.query(findQuery, tenantParams);
   const policyViolationsDetected = findRows[0]?.count || 0;
 
-  // 6. OBSERVED: Human Interventions Recorded
   let feedbackQuery = 'SELECT COUNT(*)::int as count FROM contract_decision_feedback';
   if (tenantId) feedbackQuery += ' WHERE tenant_id = $1';
   const { rows: fbRows } = await db.query(feedbackQuery, tenantParams);
   const humanInterventions = fbRows[0]?.count || 0;
 
-  // 7. CALCULATED: Measured Review Cycle Time (Hours from upload to completion)
   let cycleQuery = `
     SELECT AVG(EXTRACT(EPOCH FROM (processed_at - created_at)) / 3600)::numeric(10,1) as avg_hours
     FROM documents
@@ -84,7 +77,6 @@ async function getBusinessRoiAnalytics({ tenantId, assumptions = {} }) {
   const { rows: cycleRows } = await db.query(cycleQuery, tenantParams);
   const avgReviewCycleTimeHours = cycleRows[0]?.avg_hours ? Number(cycleRows[0].avg_hours) : 0.4;
 
-  // 8. CONFIGURED ASSUMPTIONS: Estimated Review Hours Saved
   const baselineManualHours = (contractsProcessed * assumedMinutesPerContract) / 60;
   const estimatedHoursSaved = Math.round(baselineManualHours * assumedEfficiencyGainRatio);
   const estimatedCostAvoidanceUsd = Math.round(estimatedHoursSaved * assumedHourlyRate);

@@ -56,7 +56,6 @@ def _evaluate_hybrid_consensus(rule_clauses: List[Dict[str, Any]], segments: Lis
 
         # When both detectors have a signal:
         if rule_type and ml_type:
-            # STEP 1: Different labels?
             if rule_type != ml_type:
                 primary_clause = rule_type if rule_conf >= ml_conf else ml_type
                 lead_source = "RULE_ENGINE" if rule_conf >= ml_conf else "ML_MODEL"
@@ -82,7 +81,6 @@ def _evaluate_hybrid_consensus(rule_clauses: List[Dict[str, Any]], segments: Lis
                     "snippet": seg_text[:250].strip() + ("..." if len(seg_text) > 250 else "")
                 })
 
-            # STEP 2: Both weak? (< 0.50)
             elif rule_conf < 0.50 and ml_conf < 0.50:
                 eff_conf = max(rule_conf, ml_conf)
                 consensus_clauses.append({
@@ -104,7 +102,6 @@ def _evaluate_hybrid_consensus(rule_clauses: List[Dict[str, Any]], segments: Lis
                     "snippet": seg_text[:250].strip() + ("..." if len(seg_text) > 250 else "")
                 })
 
-            # STEP 3: Both strong and same label? (Rule >= 0.80, ML >= 0.70)
             elif rule_conf >= 0.80 and ml_conf >= 0.70:
                 eff_conf = round((rule_conf + ml_conf) / 2, 2)
                 consensus_clauses.append({
@@ -126,7 +123,6 @@ def _evaluate_hybrid_consensus(rule_clauses: List[Dict[str, Any]], segments: Lis
                     "snippet": seg_text[:250].strip() + ("..." if len(seg_text) > 250 else "")
                 })
 
-            # STEP 4: Rule strong, ML sub-threshold? (Rule >= 0.80, ML < 0.70)
             elif rule_conf >= 0.80 and ml_conf < 0.70:
                 consensus_clauses.append({
                     "segmentId": seg_id,
@@ -147,7 +143,6 @@ def _evaluate_hybrid_consensus(rule_clauses: List[Dict[str, Any]], segments: Lis
                     "snippet": seg_text[:250].strip() + ("..." if len(seg_text) > 250 else "")
                 })
 
-            # STEP 5: ML strong, Rule sub-threshold? (ML >= 0.70, Rule < 0.80)
             elif ml_conf >= 0.70 and rule_conf < 0.80:
                 consensus_clauses.append({
                     "segmentId": seg_id,
@@ -168,7 +163,6 @@ def _evaluate_hybrid_consensus(rule_clauses: List[Dict[str, Any]], segments: Lis
                     "snippet": seg_text[:250].strip() + ("..." if len(seg_text) > 250 else "")
                 })
 
-            # STEP 6: Everything else (Grey Zone)
             else:
                 eff_conf = round((rule_conf + ml_conf) / 2, 2)
                 consensus_clauses.append({
@@ -234,7 +228,6 @@ def _evaluate_hybrid_consensus(rule_clauses: List[Dict[str, Any]], segments: Lis
 
     return consensus_clauses
 
-
 def set_document_processing_status(doc_id: str, status: str, safe_error: str = None, internal_error: str = None, max_retries: int = 3):
     """
     Updates the analysis status of a document in PostgreSQL using a fresh, independent connection.
@@ -270,7 +263,6 @@ def set_document_processing_status(doc_id: str, status: str, safe_error: str = N
                 except Exception:
                     pass
 
-
 def get_persisted_analysis_from_db(doc_id: str) -> Dict[str, Any]:
     """
     Fetches the existing persisted analysis results for a document from PostgreSQL.
@@ -283,13 +275,11 @@ def get_persisted_analysis_from_db(doc_id: str) -> Dict[str, Any]:
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # 1. Fetch document metadata
         cur.execute("SELECT risk_score, analysis_status, analysis_error FROM documents WHERE id = %s;", (doc_id,))
         doc_row = cur.fetchone()
         if not doc_row:
             return None
             
-        # 2. Fetch clauses
         cur.execute("""
             SELECT 
                 clause_type, confidence, detection_method, extracted_snippet, 
@@ -303,7 +293,6 @@ def get_persisted_analysis_from_db(doc_id: str) -> Dict[str, Any]:
         if not clause_rows:
             return None
             
-        # 3. Fetch deadlines
         cur.execute("""
             SELECT deadline_date, relative_deadline, deadline_type, source_text, confidence
             FROM document_deadlines
@@ -311,7 +300,6 @@ def get_persisted_analysis_from_db(doc_id: str) -> Dict[str, Any]:
         """, (doc_id,))
         deadline_rows = cur.fetchall()
         
-        # 4. Fetch risk factors
         cur.execute("""
             SELECT risk_type, severity, reason, risk_points
             FROM document_risk_factors
@@ -319,7 +307,6 @@ def get_persisted_analysis_from_db(doc_id: str) -> Dict[str, Any]:
         """, (doc_id,))
         risk_rows = cur.fetchall()
         
-        # 5. Fetch segments count
         cur.execute("SELECT COUNT(*) FROM document_segments WHERE document_id = %s;", (doc_id,))
         seg_count = cur.fetchone()['count']
         
@@ -348,7 +335,8 @@ def get_persisted_analysis_from_db(doc_id: str) -> Dict[str, Any]:
                 "relativeDeadline": d["relative_deadline"],
                 "deadlineType": d["deadline_type"],
                 "sourceText": d["source_text"],
-                "confidence": float(d["confidence"] or 0.90)
+                "confidence": float(d["confidence"]) if d["confidence"] is not None else None,
+                "confidenceMethodology": "calibrated_score" if d["confidence"] is not None else "deterministic_pattern_match"
             }
             for d in deadline_rows
         ]
@@ -387,7 +375,6 @@ def get_persisted_analysis_from_db(doc_id: str) -> Dict[str, Any]:
         if conn:
             conn.close()
 
-
 SAFE_ANALYSIS_ERROR_MESSAGE = "Document analysis could not be completed. Please ensure the file is valid and try again."
 
 def analyze_document(doc_id: str, document_text: str, persist_to_db: bool = True) -> Dict[str, Any]:
@@ -413,6 +400,9 @@ def analyze_document(doc_id: str, document_text: str, persist_to_db: bool = True
             "documentId": doc_id,
             "analysisStatus": "COMPLETED",
             "hasPreviousAnalysis": False,
+            "riskScore": 0,
+            "risk_score": 0,
+            "riskLevel": "LOW",
             "risk": {"score": 0, "level": "LOW", "summary": "Empty document"},
             "clauses": {"detected": [], "missing": []},
             "deadlines": [],
@@ -425,29 +415,22 @@ def analyze_document(doc_id: str, document_text: str, persist_to_db: bool = True
         if doc_id and persist_to_db:
             set_document_processing_status(doc_id, "PROCESSING")
 
-        # Step 1: Document Segmentation
         segments = segment_document(document_text)
 
-        # Step 2: Rule-Based Clause Detection
         rule_detected = detect_clauses_in_segments(segments)
 
-        # Step 3: 6-Step Consensus Engine
         detected_clauses = _evaluate_hybrid_consensus(rule_detected, segments)
 
-        # Step 4: Missing Clause Audit
         missing_clauses_info = detect_missing_clauses(detected_clauses)
 
-        # Step 5: Deadline Extraction
         deadlines = extract_deadlines_from_text(document_text)
 
-        # Step 6: Risk Scoring (Calibrated hazard vs omission)
         risk_analysis = calculate_document_risk(
             full_text=document_text,
             detected_clauses=detected_clauses,
             missing_clauses_info=missing_clauses_info
         )
 
-        # Step 7: High-Performance PostgreSQL Batch Persistence
         if persist_to_db and doc_id:
             _persist_analysis_to_postgres(
                 doc_id=doc_id,
@@ -459,12 +442,16 @@ def analyze_document(doc_id: str, document_text: str, persist_to_db: bool = True
 
         elapsed_ms = round((time.time() - start_time) * 1000)
 
+        risk_score_val = risk_analysis["score"]
         return {
             "documentId": doc_id,
             "analysisStatus": "COMPLETED",
             "hasPreviousAnalysis": True,
+            "riskScore": risk_score_val,
+            "risk_score": risk_score_val,
+            "riskLevel": risk_analysis["level"],
             "risk": {
-                "score": risk_analysis["score"],
+                "score": risk_score_val,
                 "level": risk_analysis["level"],
                 "totalRiskPoints": risk_analysis["totalRiskPoints"],
                 "hazardPoints": risk_analysis.get("hazardPoints", 0),
@@ -528,7 +515,6 @@ def analyze_document(doc_id: str, document_text: str, persist_to_db: bool = True
             "processingTimeMs": round((time.time() - start_time) * 1000)
         }
 
-
 def _persist_analysis_to_postgres(doc_id: str, segments: list, clauses: list, deadlines: list, risk_analysis: dict):
     """
     Saves segmentation, clauses, deadlines, and risk factors in PostgreSQL using high-efficiency batch inserts.
@@ -539,7 +525,6 @@ def _persist_analysis_to_postgres(doc_id: str, segments: list, clauses: list, de
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # 1. Update documents table with analyzed risk_score & COMPLETED status, reset errors
         cur.execute("""
             UPDATE documents 
             SET risk_score = %s, 
@@ -550,13 +535,11 @@ def _persist_analysis_to_postgres(doc_id: str, segments: list, clauses: list, de
             WHERE id = %s;
         """, (risk_analysis["score"], doc_id))
 
-        # 2. Idempotent cleanup: Delete previous records for this document_id
         cur.execute("DELETE FROM document_clauses WHERE document_id = %s;", (doc_id,))
         cur.execute("DELETE FROM document_deadlines WHERE document_id = %s;", (doc_id,))
         cur.execute("DELETE FROM document_risk_factors WHERE document_id = %s;", (doc_id,))
         cur.execute("DELETE FROM document_segments WHERE document_id = %s;", (doc_id,))
 
-        # 3. Batch Insert Segments
         seg_records = [
             (seg["id"], doc_id, seg["title"], seg["text"], seg["position"])
             for seg in segments[:MAX_SEGMENTS_CAP]
@@ -568,7 +551,6 @@ def _persist_analysis_to_postgres(doc_id: str, segments: list, clauses: list, de
                 seg_records
             )
 
-        # 4. Batch Insert Clauses
         clause_records = [
             (
                 str(uuid.uuid4()), doc_id, clause.get("segmentId"),
@@ -592,12 +574,11 @@ def _persist_analysis_to_postgres(doc_id: str, segments: list, clauses: list, de
                 clause_records
             )
 
-        # 5. Batch Insert Deadlines
         deadline_records = [
             (
                 str(uuid.uuid4()), doc_id, d.get("deadlineDate"),
                 d.get("relativeDeadline"), d["deadlineType"], d["sourceText"],
-                d.get("confidence", 0.90)
+                d.get("confidence")
             )
             for d in deadlines
         ]
@@ -610,7 +591,6 @@ def _persist_analysis_to_postgres(doc_id: str, segments: list, clauses: list, de
                 deadline_records
             )
 
-        # 6. Batch Insert Risk Factors
         risk_records = [
             (
                 str(uuid.uuid4()), doc_id, factor["riskType"],

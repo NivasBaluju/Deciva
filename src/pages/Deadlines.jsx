@@ -8,14 +8,12 @@ import SkeletonLoader from '../components/common/SkeletonLoader';
 import PageTransition from '../components/common/PageTransition';
 import { buttonMotion } from '../styles/motion';
 
-// Safe date parser for varied legal date formats
 function parseLegalDate(dateStr) {
   if (!dateStr) return new Date();
   const cleaned = String(dateStr).trim();
   const parsed = new Date(cleaned);
   if (!isNaN(parsed.getTime())) return parsed;
 
-  // Try parsing DD Month YYYY or DD-MM-YYYY
   const parts = cleaned.match(/(\d{1,2})[\s\-\/]([A-Za-z]+|\d{1,2})[\s\-\/](\d{4})/);
   if (parts) {
     const day = parseInt(parts[1], 10);
@@ -75,7 +73,6 @@ export const Deadlines = () => {
     };
   }, [toast]);
 
-  // Map only user-owned extracted deadlines
   const allDeadlines = useMemo(() => {
     if (!serverDeadlines || serverDeadlines.length === 0) return [];
     
@@ -95,22 +92,18 @@ export const Deadlines = () => {
       };
     });
 
-    // Sort chronologically ascending
     return list.sort((a, b) => a.rawDate.getTime() - b.rawDate.getTime());
   }, [serverDeadlines]);
 
-  // Unique documents count
   const trackedDocsCount = useMemo(() => {
     const set = new Set(allDeadlines.map(d => d.documentName));
     return set.size;
   }, [allDeadlines]);
 
-  // Nearest critical deadline
   const nextDeadline = allDeadlines[0] || null;
   const nextDateFormatted = nextDeadline ? formatTimelineDate(nextDeadline.rawDate) : null;
   const nextDaysRemaining = nextDeadline ? getDaysRemaining(nextDeadline.rawDate) : 0;
 
-  // Horizontal months distribution
   const monthsDistribution = useMemo(() => {
     const map = new Map();
     allDeadlines.forEach(d => {
@@ -121,7 +114,6 @@ export const Deadlines = () => {
     return Array.from(map.entries()).map(([month, count]) => ({ month, count }));
   }, [allDeadlines]);
 
-  // Filtered by selected month
   const visibleDeadlines = useMemo(() => {
     if (selectedMonth === 'ALL') return allDeadlines;
     return allDeadlines.filter(d => {
@@ -146,16 +138,11 @@ export const Deadlines = () => {
   return (
     <PageTransition>
       <div className="timeline-page-container">
-        {/* Landscape Ambient Background Artwork */}
         <div className="timeline-ambient-bg" />
         <div className="timeline-ambient-overlay" />
 
         <div className="timeline-content-wrapper">
-          {/* Header */}
           <div className="timeline-header-block mb-16">
-            <span className="mono text-lo small" style={{ letterSpacing: '0.08em' }}>
-              [TIMELINE_INTELLIGENCE]
-            </span>
             <h1 className="page-title" style={{ marginTop: '2px', marginBottom: '4px', letterSpacing: '-0.03em' }}>
               DEADLINES
             </h1>
@@ -164,7 +151,6 @@ export const Deadlines = () => {
             </p>
           </div>
 
-          {/* User-Specific Empty State */}
           {allDeadlines.length === 0 ? (
             <motion.div
               className="timeline-empty-card"
@@ -175,9 +161,6 @@ export const Deadlines = () => {
               <div className="timeline-empty-icon">
                 <Icon.calendar width={32} height={32} />
               </div>
-              <span className="mono text-lo small" style={{ letterSpacing: '0.06em' }}>
-                [INTELLIGENCE_STANDBY]
-              </span>
               <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#FFFFFF', margin: '6px 0' }}>
                 No Contract Deadlines Detected
               </h2>
@@ -190,7 +173,6 @@ export const Deadlines = () => {
             </motion.div>
           ) : (
             <>
-              {/* Inline Summary Metrics */}
               <div className="timeline-inline-metrics">
                 <div className="metric-inline-item">
                   <span className="metric-inline-label">UPCOMING</span>
@@ -210,7 +192,6 @@ export const Deadlines = () => {
                 </div>
               </div>
 
-              {/* Next Deadline Hero Focus Card */}
               {nextDeadline && (
                 <motion.div
                   className="next-deadline-hero"
@@ -219,7 +200,7 @@ export const Deadlines = () => {
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <div className="next-hero-top-row">
-                    <span className="next-hero-tag mono">[NEXT CRITICAL DATE]</span>
+                    <span className="next-hero-tag mono">NEXT CRITICAL DATE</span>
                     <span className="badge badge-warn" style={{ fontSize: '11px', padding: '3px 8px' }}>
                       {nextDaysRemaining <= 0 ? 'DUE TODAY' : `${nextDaysRemaining} DAYS REMAINING`}
                     </span>
@@ -246,7 +227,6 @@ export const Deadlines = () => {
                 </motion.div>
               )}
 
-              {/* Horizontal Time Distribution Overview */}
               {monthsDistribution.length > 1 && (
                 <div className="timeline-horizontal-overview">
                   <div className="month-tabs-track">
@@ -270,7 +250,6 @@ export const Deadlines = () => {
                 </div>
               )}
 
-              {/* Vertical Chronological Timeline */}
               <div className="timeline-vertical-wrapper">
                 <div className="timeline-vertical-spine" />
 
@@ -281,7 +260,6 @@ export const Deadlines = () => {
                     const isNearest = index === 0;
                     const isExpanded = expandedId === d.id;
 
-                    // Urgency status & colors
                     const urgency =
                       daysLeft <= 7
                         ? { label: `${daysLeft}d remaining`, color: '#EF4444', status: 'urgent' }
@@ -294,14 +272,12 @@ export const Deadlines = () => {
                         key={d.id}
                         className={`timeline-node-item ${isNearest ? 'nearest-event' : ''} ${isExpanded ? 'expanded' : ''}`}
                       >
-                        {/* Node Left: Prominent Date */}
                         <div className="timeline-node-date-col">
                           <strong className="timeline-date-day">{formatted.day}</strong>
                           <span className="timeline-date-month mono">{formatted.month}</span>
                           <span className="timeline-date-year text-lo">{formatted.year}</span>
                         </div>
 
-                        {/* Node Center: Glowing Circular Marker */}
                         <div className="timeline-marker-anchor">
                           <div
                             className="timeline-marker-circle"
@@ -317,7 +293,6 @@ export const Deadlines = () => {
                           </div>
                         </div>
 
-                        {/* Node Right: Event Card & Progressive Drawer */}
                         <div
                           className="timeline-node-card"
                           onClick={() => setExpandedId(isExpanded ? null : d.id)}
@@ -343,7 +318,6 @@ export const Deadlines = () => {
                             {d.context}
                           </p>
 
-                          {/* Progressive Disclosure Expandable Drawer */}
                           <AnimatePresence>
                             {isExpanded && (
                               <motion.div
@@ -357,7 +331,7 @@ export const Deadlines = () => {
                                 <div className="timeline-drawer-divider" />
                                 <div className="timeline-clause-box">
                                   <span className="mono text-lo small" style={{ display: 'block', marginBottom: '4px' }}>
-                                    [EXTRACTED_CLAUSE_EVIDENCE]
+                                    Clause Evidence
                                   </span>
                                   <p className="timeline-clause-text">
                                     "{d.clause || d.context}"

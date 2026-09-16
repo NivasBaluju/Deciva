@@ -3,22 +3,15 @@ import { Link, useLocation } from 'react-router-dom';
 import { IconClose } from '../ui/Icons';
 import { useReducedMotion } from '../motion/useReducedMotion';
 
-/**
- * MobileMenu — Part 8.2 & Part 6.4
- * Full-screen --ink background takeover wiping up from bottom.
- * Staggered display-03 links, circular 48px close button, quick-contact footer.
- */
 export function MobileMenu({ isOpen, onClose, navLinks = [], user = null, onOpenGuide = () => {} }) {
   const panelRef = useRef(null);
   const location = useLocation();
   const reduced = useReducedMotion();
 
-  // Close on route change
   useEffect(() => {
     onClose();
   }, [location.pathname]);
 
-  // Trap focus & lock body scroll when open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -44,7 +37,6 @@ export function MobileMenu({ isOpen, onClose, navLinks = [], user = null, onOpen
       aria-label="Navigation Menu"
       className="fixed inset-0 z-50 flex flex-col justify-between bg-[#0A0A0A] text-[#FAF9F6] p-6 sm:p-10 outline-none overflow-y-auto"
     >
-      {/* Top Bar: Wordmark & Circular Close Button */}
       <div className="flex items-center justify-between border-b border-neutral-800 pb-6">
         <Link
           to="/"
@@ -64,7 +56,6 @@ export function MobileMenu({ isOpen, onClose, navLinks = [], user = null, onOpen
         </button>
       </div>
 
-      {/* Primary Links */}
       <nav aria-label="Mobile Navigation" className="my-auto py-6">
         <div className="mb-6 pb-6 border-b border-neutral-800">
           <span className="text-micro font-mono uppercase tracking-widest text-neutral-400 block mb-3">
@@ -131,7 +122,6 @@ export function MobileMenu({ isOpen, onClose, navLinks = [], user = null, onOpen
         </ul>
       </nav>
 
-      {/* Quick Contact Footer within Menu */}
       <div className="border-t border-neutral-800 pt-6">
         <p className="font-body text-body-sm text-neutral-400">
           Executive Inquiries &amp; Zero-Trust Counsel

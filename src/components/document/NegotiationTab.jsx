@@ -26,7 +26,6 @@ export const NegotiationTab = ({ doc }) => {
   const [acceptedClauses, setAcceptedClauses] = useState({});
   const { toast } = useToast();
 
-  // 1. Fetch negotiation opportunities from document
   useEffect(() => {
     let isMounted = true;
     async function loadOpportunities() {
@@ -51,7 +50,6 @@ export const NegotiationTab = ({ doc }) => {
     };
   }, [doc.id, toast]);
 
-  // 2. Trigger negotiation generation when selected clause or mode changes
   useEffect(() => {
     if (!selectedClauseId) return;
 
@@ -126,7 +124,6 @@ export const NegotiationTab = ({ doc }) => {
         Select a contract clause to inspect legal imbalances, choose your strategic negotiation posture, and generate evidence-grounded redlines.
       </p>
 
-      {/* 1. Negotiation Posture Mode Selector */}
       <div className="mb-20">
         <div className="text-lo" style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
           Strategic Negotiation Posture
@@ -165,7 +162,6 @@ export const NegotiationTab = ({ doc }) => {
 
       <div className="divider" />
 
-      {/* 2. Clause Selector Pills */}
       <div className="mb-20">
         <div className="text-lo" style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
           Identified Clauses ({opportunities.length})
@@ -212,8 +208,6 @@ export const NegotiationTab = ({ doc }) => {
         </div>
       </div>
 
-      {/* 3. Negotiation Analysis & Redline Card */}
-      {/* Mode Selector */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginBottom: '20px' }}>
         {MODES.map((m) => (
           <button
@@ -231,7 +225,6 @@ export const NegotiationTab = ({ doc }) => {
         ))}
       </div>
 
-      {/* Clause Opportunity Tabs */}
       <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '16px', borderBottom: '1px solid var(--line)' }}>
         {opportunities.map((opp) => (
           <button
@@ -258,7 +251,6 @@ export const NegotiationTab = ({ doc }) => {
         <SkeletonLoader.Card count={2} height="120px" />
       ) : negotiationResult ? (
         <div style={{ display: 'grid', gap: '16px' }}>
-          {/* Card A: Original Document Evidence */}
           <div
             style={{
               background: 'rgba(255, 255, 255, 0.02)',
@@ -291,10 +283,9 @@ export const NegotiationTab = ({ doc }) => {
             </div>
           </div>
 
-          {/* Card C: Legal Side-by-Side Redline & Word-Level Diff View */}
           <LegalSideBySideRedline
-            originalText={negotiationResult.documentEvidence?.clause || ''}
-            proposedText={negotiationResult.aiRecommendation?.suggestedRevision || ''}
+            originalText={negotiationResult.documentEvidence?.clause || negotiationResult.originalClause || ''}
+            proposedText={negotiationResult.aiRecommendation?.suggestedRevision || negotiationResult.proposedClause || ''}
             diffOperations={negotiationResult.redline?.operations || []}
             clauseType={selectedOpp?.clauseType || 'Negotiated Provision'}
             clauseId={selectedClauseId || 'CL-01'}
@@ -305,6 +296,11 @@ export const NegotiationTab = ({ doc }) => {
             isAccepted={isAccepted}
             onExportDocx={handleExportDocx}
             exportingDocx={exportingDocx}
+            beforeScore={negotiationResult.beforeScore ?? negotiationResult.before_score}
+            afterScore={negotiationResult.afterScore ?? negotiationResult.after_score}
+            riskDelta={negotiationResult.riskDelta ?? negotiationResult.risk_delta}
+            riskDirection={negotiationResult.riskDirection ?? negotiationResult.risk_direction}
+            riskFindings={negotiationResult.riskFindings ?? negotiationResult.risk_findings}
           />
         </div>
       ) : null}

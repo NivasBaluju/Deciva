@@ -2,11 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { IconArrow } from './Icons';
 
-/**
- * TextLinkButton — Part 8.7
- * Borderless, label-sized typographic link with underline hover.
- * Optionally paired with a directional arrow.
- */
 export function TextLinkButton({
   href,
   children,

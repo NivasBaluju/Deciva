@@ -1,11 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-/**
- * Breadcrumb — Part 8.13
- * Separated by a single ' / ' character with spaces.
- * Ancestors are underlined editorial links; current page is ink and not linked.
- */
 export function Breadcrumb({ items = [], className = '' }) {
   if (!items || items.length === 0) return null;
 

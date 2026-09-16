@@ -45,7 +45,6 @@ const IntegrationNormalizationService = {
       ? String(rawPayload.external_version)
       : (rawPayload.version ? String(rawPayload.version) : '1');
 
-    // Dates
     let effectiveDate = null;
     if (rawPayload.effective_date) {
       const d = new Date(rawPayload.effective_date);

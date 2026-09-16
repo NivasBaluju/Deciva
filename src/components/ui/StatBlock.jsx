@@ -1,12 +1,6 @@
 import React from 'react';
 import { RedactionReveal } from '../motion/RedactionReveal';
 
-/**
- * StatBlock — Part 8.12
- * Large display numeral (Fraunces tabular figures) with body-sm label in ink-soft.
- * No decorative icon, no colored background chip.
- * Supports optional signature redaction reveal if designated.
- */
 export function StatBlock({
   value,
   label,

@@ -1,12 +1,11 @@
 const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
-const { verifyChain, recordAudit } = require('../utils/audit');
+const { verifyChain, verifyLedger, recordAudit } = require('../utils/audit');
 const { verifySignature, publicSigningKey } = require('../utils/crypto');
 
 const router = express.Router();
 
-// --- SOC dashboard summary ---------------------------------------------------
 router.get('/dashboard', requireAuth, async (req, res) => {
   try {
     const docRes = await db.query('SELECT COUNT(*) AS c FROM documents WHERE user_id = $1', [req.user.id]);
@@ -46,7 +45,6 @@ router.get('/dashboard', requireAuth, async (req, res) => {
   }
 });
 
-// --- Sessions manager ---------------------------------------------------
 router.get('/sessions', requireAuth, async (req, res) => {
   const { rows: sessions } = await db.query(`
     SELECT id, device_fingerprint, ip, trust_score, mfa_verified, created_at, last_seen, revoked
@@ -64,7 +62,6 @@ router.post('/sessions/:id/revoke', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-// --- Blockchain audit ledger ---------------------------------------------
 router.get('/audit', requireAuth, async (req, res) => {
   const limit = Math.min(200, Number(req.query.limit) || 50);
   const { rows: blocks } = await db.query(`
@@ -74,11 +71,15 @@ router.get('/audit', requireAuth, async (req, res) => {
   res.json({ blocks });
 });
 
-router.get('/audit/verify', requireAuth, async (req, res) => {
-  res.json(await verifyChain());
+router.get(['/audit/verify', '/chain-verify', '/ledger/verify'], requireAuth, async (req, res) => {
+  const result = await verifyLedger();
+  res.json({
+    ...result,
+    cryptographicAudit: { totalBlocks: result.totalBlocks, valid: result.valid },
+    blockchainAudit: { totalBlocks: result.totalBlocks, valid: result.valid } // backward-compatible deprecated alias
+  });
 });
 
-// --- Threat logs -----------------------------------------------------------
 router.get('/threats', requireAuth, async (req, res) => {
   const { rows: threats } = await db.query(
     'SELECT * FROM threat_logs WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100',
@@ -87,7 +88,6 @@ router.get('/threats', requireAuth, async (req, res) => {
   res.json({ threats });
 });
 
-// --- Digital signature verification -----------------------------------------
 router.get('/signing-key', requireAuth, (req, res) => {
   res.json({ publicKey: publicSigningKey });
 });
@@ -100,7 +100,6 @@ router.post('/verify-signature', requireAuth, (req, res) => {
   res.json({ valid });
 });
 
-// --- Zero trust status -------------------------------------------------------
 router.get('/zero-trust', requireAuth, (req, res) => {
   res.json({ score: req.trust.score, reasons: req.trust.reasons, mfaEnabled: !!req.user.mfa_enabled });
 });

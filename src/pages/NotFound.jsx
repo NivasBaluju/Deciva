@@ -1,11 +1,6 @@
 import React from 'react';
 import Button from '../components/ui/Button';
 
-/**
- * NotFound (404) — Part 10.11
- * Centered, .container-text, ink section.
- * "This page has been redacted."
- */
 export function NotFound() {
   return (
     <div
@@ -16,8 +11,8 @@ export function NotFound() {
       }}
     >
       <div className="container-text flex flex-col items-center">
-        <span className="font-body text-micro text-neutral-400 mb-4 select-none">
-          [CLASSIFICATION: RESTRICTED]
+        <span className="font-body text-micro text-neutral-400 mb-4 select-none uppercase tracking-wider">
+          Page Not Found
         </span>
 
         <h1 className="display-02 text-white tracking-tight mb-6">

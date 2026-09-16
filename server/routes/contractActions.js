@@ -104,7 +104,6 @@ async function syncDocumentActions(req, res) {
       return res.status(errorStatus).json({ error: errorMessage });
     }
 
-    // 1. Locate the latest valid contract_intelligence snapshot for this document
     const { rows: snapshotRows } = await db.query(
       `SELECT id, document_id, user_id, actions_json, created_at
        FROM contract_intelligence
@@ -225,7 +224,6 @@ async function syncDocumentActions(req, res) {
             ]
           );
 
-          // Phase 7.6: Dispatch high-priority notification within transaction if priority >= 70
           if (Math.round(priorityScore) >= 70) {
             try {
               const notificationService = require('../services/notificationService');
@@ -572,13 +570,11 @@ async function deleteActionComment(req, res) {
 router.get('/:actionId/history', requireAuth, getActionHistory);
 router.get('/:actionId', requireAuth, getActionById);
 
-// Phase 7.3: Human workflow state engine & decision endpoints
 router.patch('/:actionId/status', requireAuth, updateActionStatus);
 router.post('/:actionId/decision', requireAuth, postActionDecision);
 router.patch('/:actionId/owner', requireAuth, updateActionOwner);
 router.patch('/:actionId/due-date', requireAuth, updateActionDueDate);
 
-// Phase 7.5: Collaboration & Action Discussion endpoints
 router.get('/:actionId/comments', requireAuth, getActionComments);
 router.post('/:actionId/comments', requireAuth, createActionComment);
 router.patch('/:actionId/comments/:commentId', requireAuth, updateActionComment);

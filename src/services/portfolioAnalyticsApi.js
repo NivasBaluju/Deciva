@@ -64,7 +64,7 @@ export const PortfolioAnalyticsApi = {
   },
 
   /**
-   * Phase 11 Continuous Monitoring & Lifecycle Control
+   * Continuous Monitoring & Lifecycle Control
    */
   async getMonitoringEvents(params = {}) {
     const query = new URLSearchParams();

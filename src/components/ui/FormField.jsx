@@ -1,12 +1,6 @@
 import React from 'react';
 import { IconExclamation } from './Icons';
 
-/**
- * FormField — Part 8.9 & 21.4
- * Underline input style: 1px --rule bottom border at rest,
- * 2px --ink on focus, subtle --paper-dim fill.
- * Permanent label above field, inline error with exclamation icon.
- */
 export function FormField({
   id,
   label,

@@ -23,13 +23,14 @@ from typing import Dict, Any, List, Optional
 try:
     from backend.services.database import get_db_connection
     from backend.services.intelligence_service import compute_contract_intelligence
+    from backend.services.ai_provenance import create_deterministic_provenance
 except ImportError:
     from services.database import get_db_connection
     from services.intelligence_service import compute_contract_intelligence
+    from services.ai_provenance import create_deterministic_provenance
 
 DECISION_DISCLAIMER = "This decision intelligence brief is grounded in detected contract evidence and deterministic decision logic. It provides structured guidance and does not constitute formal legal counsel."
 CONFLICT_DISCLAIMER = "Potential conflict requiring review — not an absolute legal conclusion."
-
 
 def _extract_monetary_figures(text: str) -> List[Dict[str, Any]]:
     """Extract explicit monetary amounts from contract text without fabrication."""
@@ -58,7 +59,6 @@ def _extract_monetary_figures(text: str) -> List[Dict[str, Any]]:
             continue
     return figures
 
-
 def _compute_deterministic_exposure_model(
     document_text: str,
     clause_rows: List[Dict[str, Any]],
@@ -73,7 +73,6 @@ def _compute_deterministic_exposure_model(
     text_lower = (document_text or "").lower()
     dimensions = {}
 
-    # 1. LIABILITY EXPOSURE
     has_cap = bool(re.search(r'(?i)\b(aggregate\s+liability\s+(?:shall\s+not\s+exceed|capped\s+at)|maximum\s+cumulative\s+liability|limitation\s+of\s+liability)\b', text_lower))
     has_uncapped_indemnity = bool(re.search(r'(?i)\b(indemnif.*hold\s+harmless.*all\s+claims|unlimited\s+indemnif|without\s+limitation.*indemn)\b', text_lower))
     has_carveouts = bool(re.search(r'(?i)\b(excluding.*gross\s+negligence|excluding.*confidentiality|except\s+for.*indemnif)\b', text_lower))
@@ -99,11 +98,14 @@ def _compute_deterministic_exposure_model(
         "baseScore": liab_base,
         "contributors": liab_contribs,
         "calculation": f"Clamp({liab_base} + {' + '.join(str(c['weight']) for c in liab_contribs) if liab_contribs else '0'} = {liab_score}, 0, 100)",
-        "confidence": 0.94,
+        "confidence": {
+            "score": None,
+            "methodology": "deterministic_rule_based"
+        },
+        "confidenceScore": None,
         "evidenceCitation": "Limitation of Liability & Indemnification clauses"
     }
 
-    # 2. TERMINATION EXPOSURE
     has_unilateral_term = bool(re.search(r'(?i)\b(terminate\s+(?:immediately|at\s+any\s+time|without\s+cause\s+upon))\b', text_lower))
     short_cure_period = bool(re.search(r'(?i)\b(?:cure|remedy)\s+(?:period|within)\s+(?:of\s+)?([1-9]|1[0-4])\s*days\b', text_lower))
     auto_renewal_clause = bool(re.search(r'(?i)\b(automatically\s+renew|successive\s+(?:terms|periods)|auto-renewal)\b', text_lower))
@@ -127,11 +129,14 @@ def _compute_deterministic_exposure_model(
         "baseScore": term_base,
         "contributors": term_contribs,
         "calculation": f"Clamp({term_base} + {' + '.join(str(c['weight']) for c in term_contribs) if term_contribs else '0'} = {term_score}, 0, 100)",
-        "confidence": 0.91,
+        "confidence": {
+            "score": None,
+            "methodology": "deterministic_rule_based"
+        },
+        "confidenceScore": None,
         "evidenceCitation": "Term, Termination, and Breach provisions"
     }
 
-    # 3. FINANCIAL EXPOSURE
     fin_caps = [f for f in monetary_figures if f["contextType"] == 'LIABILITY_CAP']
     has_interest_late = bool(re.search(r'(?i)\b(late\s+payment\s+interest|1\.5%|2%\s+per\s+month|maximum\s+permitted\s+by\s+law)\b', text_lower))
     short_payment_terms = bool(re.search(r'(?i)\b(?:payable|due)\s+within\s+(?:10|15)\s*days\b', text_lower))
@@ -154,11 +159,14 @@ def _compute_deterministic_exposure_model(
         "baseScore": fin_base,
         "contributors": fin_contribs,
         "calculation": f"Clamp({fin_base} + {' + '.join(str(c['weight']) for c in fin_contribs) if fin_contribs else '0'} = {fin_score}, 0, 100)",
-        "confidence": 0.88,
+        "confidence": {
+            "score": None,
+            "methodology": "deterministic_rule_based"
+        },
+        "confidenceScore": None,
         "evidenceCitation": "Fees, Invoicing, and Payment clauses"
     }
 
-    # 4. OPERATIONAL EXPOSURE
     has_sla_suspension = bool(re.search(r'(?i)\b(suspend\s+(?:services|access|performance)|withhold\s+deliverables)\b', text_lower))
     has_audit_rights = bool(re.search(r'(?i)\b(audit\s+books|inspect\s+facilities|unannounced\s+audit)\b', text_lower))
     has_sla_credits = bool(re.search(r'(?i)\b(service\s+level\s+credit|liquidated\s+damages|sla\s+penalty)\b', text_lower))
@@ -181,11 +189,14 @@ def _compute_deterministic_exposure_model(
         "baseScore": op_base,
         "contributors": op_contribs,
         "calculation": f"Clamp({op_base} + {' + '.join(str(c['weight']) for c in op_contribs) if op_contribs else '0'} = {op_score}, 0, 100)",
-        "confidence": 0.89,
+        "confidence": {
+            "score": None,
+            "methodology": "deterministic_rule_based"
+        },
+        "confidenceScore": None,
         "evidenceCitation": "Service Delivery, Operational Performance, and SLA terms"
     }
 
-    # 5. LEGAL EXPOSURE
     has_foreign_jurisdiction = bool(re.search(r'(?i)\b(laws\s+of\s+england|laws\s+of\s+delaware|courts\s+of\s+new\s+york|singapore|arbitration)\b', text_lower))
     has_waiver_jury = bool(re.search(r'(?i)\b(waive.*jury\s+trial|class\s+action\s+waiver)\b', text_lower))
     has_warranty_disclaimer = bool(re.search(r'(?i)\b(as\s+is|without\s+warranty\s+of\s+any\s+kind|disclaim.*all\s+warranties)\b', text_lower))
@@ -208,11 +219,14 @@ def _compute_deterministic_exposure_model(
         "baseScore": leg_base,
         "contributors": leg_contribs,
         "calculation": f"Clamp({leg_base} + {' + '.join(str(c['weight']) for c in leg_contribs) if leg_contribs else '0'} = {leg_score}, 0, 100)",
-        "confidence": 0.92,
+        "confidence": {
+            "score": None,
+            "methodology": "deterministic_rule_based"
+        },
+        "confidenceScore": None,
         "evidenceCitation": "Governing Law, Jurisdiction, and Dispute Resolution"
     }
 
-    # 6. COMPLIANCE EXPOSURE
     missing_data_prot = not bool(re.search(r'(?i)\b(gdpr|ccpa|data\s+protection|personal\s+data|privacy)\b', text_lower))
     missing_confidentiality = not bool(re.search(r'(?i)\b(confidential\s+information|non-disclosure|proprietary)\b', text_lower))
     
@@ -234,11 +248,14 @@ def _compute_deterministic_exposure_model(
         "baseScore": comp_base,
         "contributors": comp_contribs,
         "calculation": f"Clamp({comp_base} + {' + '.join(str(c['weight']) for c in comp_contribs) if comp_contribs else '0'} = {comp_score}, 0, 100)",
-        "confidence": 0.95,
+        "confidence": {
+            "score": None,
+            "methodology": "deterministic_rule_based"
+        },
+        "confidenceScore": None,
         "evidenceCitation": "Regulatory, Privacy, and Confidentiality sections"
     }
 
-    # 7. DEADLINE EXPOSURE
     deadlines_count = len(deadline_rows)
     dead_base = 20
     dead_contribs = []
@@ -258,11 +275,14 @@ def _compute_deterministic_exposure_model(
         "baseScore": dead_base,
         "contributors": dead_contribs,
         "calculation": f"Clamp({dead_base} + {' + '.join(str(c['weight']) for c in dead_contribs) if dead_contribs else '0'} = {dead_score}, 0, 100)",
-        "confidence": 0.90,
+        "confidence": {
+            "score": None,
+            "methodology": "deterministic_rule_based"
+        },
+        "confidenceScore": None,
         "evidenceCitation": "Document milestone and notice schedules"
     }
 
-    # 8. CONCENTRATION EXPOSURE
     has_sole_source = bool(re.search(r'(?i)\b(exclusive\s+provider|sole\s+source|exclusivity|non-compete)\b', text_lower))
     conc_base = 15
     conc_contribs = []
@@ -278,11 +298,14 @@ def _compute_deterministic_exposure_model(
         "baseScore": conc_base,
         "contributors": conc_contribs,
         "calculation": f"Clamp({conc_base} + {' + '.join(str(c['weight']) for c in conc_contribs) if conc_contribs else '0'} = {conc_score}, 0, 100)",
-        "confidence": 0.87,
+        "confidence": {
+            "score": None,
+            "methodology": "deterministic_rule_based"
+        },
+        "confidenceScore": None,
         "evidenceCitation": "Exclusivity, Scope of Services, and Territory"
     }
 
-    # 9. OVERALL COMPOSITE
     # Weighted average of 8 sub-dimensions
     weights = {
         "liability": 0.20,
@@ -301,12 +324,15 @@ def _compute_deterministic_exposure_model(
         "baseScore": 0,
         "contributors": [{"factor": f"{k.title()} Dimension Contribution ({int(v*100)}%)", "weight": round(dimensions[k]["score"] * v), "type": "RISK" if dimensions[k]["score"] >= 50 else "MITIGATION", "description": f"Score {dimensions[k]['score']}/100"} for k, v in weights.items()],
         "calculation": "Sum(Dimension_Score * Weight)",
-        "confidence": 0.93,
+        "confidence": {
+            "score": None,
+            "methodology": "deterministic_rule_based"
+        },
+        "confidenceScore": None,
         "evidenceCitation": "Weighted composite across all 8 contract risk dimensions"
     }
 
     return dimensions
-
 
 def _build_primary_dependency_chain(document_text: str, segments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
@@ -316,7 +342,6 @@ def _build_primary_dependency_chain(document_text: str, segments: List[Dict[str,
     """
     text_lower = (document_text or "").lower()
 
-    # Step 1: Base clause
     c_match = re.search(r'(?i)(?:section\s+\d+|clause\s+\d+)?\s*(?:default|payment|breach|cure|late\s+payment)', text_lower)
     clause_title = "Payment & Performance Provision" if not c_match else "Payment Terms & Invoice Default"
     clause_excerpt = "Invoices must be satisfied within standard stated remittance windows."
@@ -325,22 +350,18 @@ def _build_primary_dependency_chain(document_text: str, segments: List[Dict[str,
         if m:
             clause_excerpt = m.group(1).strip()[:180]
 
-    # Step 2: Notice window
     n_match = re.search(r'(\d{1,3})\s*days?[\'\"]?\s*(?:prior\s*)?written\s+notice', text_lower)
     notice_days = n_match.group(1) if n_match else "30"
     notice_desc = f"{notice_days}-Day Written Notice Requirement"
     notice_excerpt = f"Formal written notice must be dispatched at least {notice_days} days prior to asserting breach."
 
-    # Step 3: Deadline
     deadline_desc = f"Day {notice_days} Cure Expiration Threshold"
     deadline_excerpt = f"Upon lapse of the {notice_days}-day period, uncured defaults mature into actionable non-compliance."
 
-    # Step 4: Operational Consequence
     susp_match = bool(re.search(r'(?i)(suspend|withhold|freeze|interest|penalty)', text_lower))
     conseq_title = "Operational Suspension & Immediate Remedies" if susp_match else "Contract Default & Liquidated Damages"
     conseq_excerpt = "Counterparty retains unilateral rights to withhold deliverables, halt SLA commitments, and assess remedies."
 
-    # Step 5: Escalation Pathway
     escl_title = "Executive Dispute Resolution & Formal Arbitration"
     escl_excerpt = "Unresolved defaults trigger mandatory escalation to General Counsel and binding dispute proceedings."
 
@@ -388,7 +409,6 @@ def _build_primary_dependency_chain(document_text: str, segments: List[Dict[str,
     ]
     return chain
 
-
 def _detect_cross_clause_conflicts(document_text: str, segments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Evidence-first contradiction detector requiring BOTH excerpts side-by-side
@@ -397,7 +417,6 @@ def _detect_cross_clause_conflicts(document_text: str, segments: List[Dict[str, 
     conflicts = []
     text_lower = (document_text or "").lower()
 
-    # 1. Notice periods conflict
     notice_matches = []
     for s in segments:
         s_text = s.get("segment_text") or ""
@@ -436,7 +455,6 @@ def _detect_cross_clause_conflicts(document_text: str, segments: List[Dict[str, 
                 "disclaimer": CONFLICT_DISCLAIMER
             })
 
-    # 2. Payment terms discrepancy
     pay_matches = []
     for s in segments:
         s_text = s.get("segment_text") or ""
@@ -474,7 +492,6 @@ def _detect_cross_clause_conflicts(document_text: str, segments: List[Dict[str, 
             "disclaimer": CONFLICT_DISCLAIMER
         })
 
-    # 3. Liability cap vs broad indemnification tension
     has_cap = bool(re.search(r'(?i)\b(aggregate\s+liability\s+(?:shall\s+not\s+exceed|capped\s+at)|limitation\s+of\s+liability)\b', text_lower))
     has_indemnity = bool(re.search(r'(?i)\b(indemnif.*hold\s+harmless.*all\s+claims|unlimited\s+indemnif)\b', text_lower))
     has_carveout = bool(re.search(r'(?i)\b(indemnif.*shall\s+not\s+be\s+subject\s+to|except\s+for.*indemnif)\b', text_lower))
@@ -501,7 +518,6 @@ def _detect_cross_clause_conflicts(document_text: str, segments: List[Dict[str, 
         })
 
     return conflicts
-
 
 def _build_what_if_scenarios(
     current_overall_score: int,
@@ -615,7 +631,6 @@ def _build_what_if_scenarios(
         }
     ]
 
-
 def _build_executive_decision_brief(
     doc_title: str,
     overall_health: int,
@@ -641,7 +656,6 @@ def _build_executive_decision_brief(
         "q9_target_deadline": "Within 5 business days, prior to contract execution."
     }
     return brief
-
 
 def compute_contract_decision_intelligence(document_id: str) -> Dict[str, Any]:
     """
@@ -686,13 +700,11 @@ def compute_contract_decision_intelligence(document_id: str) -> Dict[str, Any]:
         cur.execute("SELECT id, deadline_date, relative_deadline, deadline_type, source_text, confidence FROM document_deadlines WHERE document_id = %s ORDER BY deadline_date ASC NULLS LAST;", (document_id,))
         deadline_rows = cur.fetchall()
 
-        # 1. Monetary Figures Extraction
         monetary_figures = _extract_monetary_figures(doc_text)
 
         # 2. 9-Dimension Deterministic Exposure Model
         exposure_model = _compute_deterministic_exposure_model(doc_text, clause_rows, risk_rows, deadline_rows, monetary_figures)
 
-        # 3. Determine Primary Deterioration Driver
         dimension_ranks = [
             (dim, data["score"]) for dim, data in exposure_model.items() if dim != "overall"
         ]
@@ -700,16 +712,12 @@ def compute_contract_decision_intelligence(document_id: str) -> Dict[str, Any]:
         primary_driver_key = dimension_ranks[0][0] if dimension_ranks else "liability"
         primary_driver_label = f"{primary_driver_key.replace('_', ' ').title()} Exposure"
 
-        # 4. Primary Linear Dependency Chain
         primary_dependency_chain = _build_primary_dependency_chain(doc_text, segment_rows)
 
-        # 5. Dual-Evidence Cross-Clause Conflicts
         reconciled_conflicts = _detect_cross_clause_conflicts(doc_text, segment_rows)
 
-        # 6. What-If Multi-Scenario Matrix
         scenarios = _build_what_if_scenarios(exposure_model["overall"]["score"], exposure_model, monetary_figures)
 
-        # 7. Explainable Contract Health Breakdown
         # Health score is inverse of exposure: Health = max(5, min(100, 100 - exposure_score))
         contract_health_score = max(5, min(100, 100 - round(exposure_model["overall"]["score"] * 0.7)))
         health_breakdown = {
@@ -726,7 +734,6 @@ def compute_contract_decision_intelligence(document_id: str) -> Dict[str, Any]:
             ]
         }
 
-        # 8. Executive Decision Brief (9 Critical Questions)
         decision_brief = _build_executive_decision_brief(
             doc_title,
             contract_health_score,
@@ -736,7 +743,6 @@ def compute_contract_decision_intelligence(document_id: str) -> Dict[str, Any]:
             reconciled_conflicts
         )
 
-        # 9. Two-Tier Forward Risk & Anomaly Detector
         # Tier 1: Evidence-Derived Forward Risk (Deterministic)
         forward_risk_signals = []
         if any("renew" in (d.get("source_text") or "").lower() for d in deadline_rows) or "renew" in doc_text.lower():
@@ -794,11 +800,11 @@ def compute_contract_decision_intelligence(document_id: str) -> Dict[str, Any]:
                 "figuresDetected": len(monetary_figures),
                 "figures": monetary_figures
             },
-            "provenance": {
-                "generatedAt": datetime.utcnow().isoformat() + "Z",
-                "engine": "deterministic_decision_intelligence_v1",
-                "deterministicRepeatable": True
-            },
+            "provenance": create_deterministic_provenance(
+                methodology="deterministic_rule_based",
+                evidence=[{"text": f["formatted"], "segment_id": f["contextType"]} for f in monetary_figures],
+                fallback=False
+            ),
             "disclaimer": DECISION_DISCLAIMER
         }
 

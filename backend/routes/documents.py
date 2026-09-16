@@ -1,4 +1,5 @@
 import os
+import threading
 import uuid
 from flask import Blueprint, jsonify, request
 try:
@@ -18,9 +19,6 @@ documents_bp = Blueprint('documents', __name__, url_prefix='/api/documents')
 
 UPLOADS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'uploads'))
 
-# -------------------------------------------------------------
-# 1. List Documents
-# -------------------------------------------------------------
 @documents_bp.route('', methods=['GET'])
 @documents_bp.route('/', methods=['GET'])
 def get_documents():
@@ -37,9 +35,6 @@ def get_documents():
     docs = DocumentModel.get_all(user_id=user_id.strip())
     return jsonify(docs), 200
 
-# -------------------------------------------------------------
-# 2. Upload Document
-# -------------------------------------------------------------
 @documents_bp.route('/upload', methods=['POST'])
 def upload_document():
     """
@@ -55,7 +50,6 @@ def upload_document():
       8. Trigger initial AI analysis
     """
     try:
-        # Step 1: Validate file presence
         if 'file' not in request.files:
             return jsonify({"error": "No file uploaded in request"}), 400
 
@@ -70,14 +64,12 @@ def upload_document():
         if file_size == 0:
             return jsonify({"error": "Uploaded file is empty"}), 400
 
-        # Step 2: Generate unique Document UUID
-        doc_id = str(uuid.uuid4())
+        doc_id = (request.form.get('document_id') or request.form.get('doc_id') or str(uuid.uuid4())).strip()
         stored_filename = f"{doc_id}.enc"
+        tmp_filename = f"{doc_id}.tmp"
 
-        # Step 3: Compute SHA-256 integrity hash of original raw content
         file_hash = sha256_buffer(file_bytes)
 
-        # Step 4: Extract text using format-aware parser on original plaintext
         extraction = extract_text_from_file(
             file_bytes=file_bytes,
             filename=original_name,
@@ -90,38 +82,54 @@ def upload_document():
         page_count = extraction.get("pageCount", 1)
         character_count = extraction.get("characterCount", len(extracted_text))
 
-        # Step 5: Encrypt original file with AES-256-GCM
         encrypted_bytes = encrypt_buffer(file_bytes)
 
-        # Step 6: Store encrypted document on disk
         os.makedirs(UPLOADS_DIR, exist_ok=True)
         file_path = os.path.join(UPLOADS_DIR, stored_filename)
-        with open(file_path, 'wb') as f:
+        tmp_file_path = os.path.join(UPLOADS_DIR, tmp_filename)
+
+        with open(tmp_file_path, 'wb') as f:
             f.write(encrypted_bytes)
 
-        # Step 7: Persist full metadata & extracted data to PostgreSQL
         user_id = request.form.get('user_id') or request.form.get('userId') or None
-        created = DocumentModel.create_document(
-            doc_id=doc_id,
-            user_id=user_id,
-            filename=stored_filename,
-            original_name=original_name,
-            mime_type=file.content_type or 'application/pdf',
-            size=file_size,
-            sha256=file_hash,
-            extracted_text=extracted_text,
-            storage_path=file_path,
-            extraction_status=extraction_status,
-            extraction_method=extraction_method,
-            ocr_confidence=ocr_confidence,
-            page_count=page_count,
-            character_count=character_count,
-            risk_score=5
-        )
+        try:
+            created = DocumentModel.create_document(
+                doc_id=doc_id,
+                user_id=user_id,
+                filename=stored_filename,
+                original_name=original_name,
+                mime_type=file.content_type or 'application/pdf',
+                size=file_size,
+                sha256=file_hash,
+                extracted_text=extracted_text,
+                storage_path=file_path,
+                extraction_status=extraction_status,
+                extraction_method=extraction_method,
+                ocr_confidence=ocr_confidence,
+                page_count=page_count,
+                character_count=character_count,
+                risk_score=5
+            )
+            # Atomic rename from tmp to enc on successful DB commit
+            if os.path.exists(tmp_file_path):
+                os.replace(tmp_file_path, file_path)
+        except Exception as db_err:
+            if os.path.exists(tmp_file_path):
+                try:
+                    os.remove(tmp_file_path)
+                except Exception:
+                    pass
+            raise db_err
 
-        # Step 8: Auto-execute Phase 4 AI Analysis Core
-        analysis_result = analyze_document(doc_id=doc_id, document_text=extracted_text, persist_to_db=True)
-        risk_score = analysis_result["risk"]["score"]
+        # Run full AI analysis in a background thread so upload returns immediately.
+        # The analysis persists risk_score + factors to DB; GET /analysis re-runs fresh.
+        def _bg_analyze(did, txt):
+            try:
+                analyze_document(doc_id=did, document_text=txt, persist_to_db=True)
+            except Exception as bg_err:
+                print(f"[Background Analysis Error] {bg_err}")
+        threading.Thread(target=_bg_analyze, args=(doc_id, extracted_text), daemon=True).start()
+        risk_score = 5  # Placeholder; GET /analysis always re-computes from text
 
         # Clean public response (no server storage path leakage)
         response_payload = {
@@ -148,9 +156,6 @@ def upload_document():
         print(f"[Upload Error] {e}")
         return jsonify({"error": str(e) or "Failed to process document upload"}), 500
 
-# -------------------------------------------------------------
-# 3. Analyze Document (POST /api/documents/<id>/analyze)
-# -------------------------------------------------------------
 @documents_bp.route('/<doc_id>/analyze', methods=['POST'])
 def trigger_analysis(doc_id):
     """
@@ -165,9 +170,6 @@ def trigger_analysis(doc_id):
     result = analyze_document(doc_id=doc_id, document_text=extracted_text, persist_to_db=True)
     return jsonify(result), 200
 
-# -------------------------------------------------------------
-# 4. Get Unified Analysis (GET /api/documents/<id>/analysis)
-# -------------------------------------------------------------
 @documents_bp.route('/<doc_id>/analysis', methods=['GET'])
 def get_analysis(doc_id):
     """
@@ -182,9 +184,6 @@ def get_analysis(doc_id):
     result = analyze_document(doc_id=doc_id, document_text=extracted_text, persist_to_db=False)
     return jsonify(result), 200
 
-# -------------------------------------------------------------
-# 5. Get Detected & Missing Clauses (GET /api/documents/<id>/clauses)
-# -------------------------------------------------------------
 @documents_bp.route('/<doc_id>/clauses', methods=['GET'])
 def get_document_clauses(doc_id):
     """
@@ -242,9 +241,6 @@ def get_document_clauses(doc_id):
         if conn:
             conn.close()
 
-# -------------------------------------------------------------
-# 6. Get Deadlines (GET /api/documents/<id>/deadlines)
-# -------------------------------------------------------------
 @documents_bp.route('/<doc_id>/deadlines', methods=['GET'])
 def get_document_deadlines(doc_id):
     """
@@ -279,9 +275,6 @@ def get_document_deadlines(doc_id):
         if conn:
             conn.close()
 
-# -------------------------------------------------------------
-# 7. Get Risk Factors (GET /api/documents/<id>/risks)
-# -------------------------------------------------------------
 @documents_bp.route('/<doc_id>/risks', methods=['GET'])
 def get_document_risks(doc_id):
     """

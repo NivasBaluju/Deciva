@@ -1,5 +1,5 @@
 /**
- * Deciva — Contract Decision Intelligence Service (Phase 10)
+ * Deciva — Contract Decision Intelligence Service
  * ---------------------------------------------------------------------------
  * Coordinates unified contract decision intelligence between the Node.js API
  * gateway and the Python Flask intelligence microservice.
@@ -20,11 +20,13 @@ const db = require('../db');
 const { recordAudit } = require('../utils/audit');
 const { recordAiTelemetry } = require('../utils/aiTelemetry');
 const logger = require('../utils/logger');
+const { getInternalServiceKey } = require('./productionConfigService');
+const { createDeterministicProvenance } = require('../utils/aiProvenance');
 
 const FLASK_HOST = process.env.FLASK_HOST || '127.0.0.1';
 const FLASK_PORT = process.env.FLASK_PORT || 5001;
 const AI_MICROSERVICE_URL = (process.env.AI_MICROSERVICE_URL || `http://${FLASK_HOST}:${FLASK_PORT}`).replace(/\/+$/, '');
-const INTERNAL_KEY = process.env.INTERNAL_SERVICE_KEY || 'deciva-internal-service-secret-key-default';
+const INTERNAL_KEY = getInternalServiceKey();
 
 const DECISION_DISCLAIMER = "This decision intelligence brief is grounded in detected contract evidence and deterministic decision logic. It provides structured guidance and does not constitute formal legal counsel.";
 const CONFLICT_DISCLAIMER = "Potential conflict requiring review — not an absolute legal conclusion.";
@@ -56,7 +58,6 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
   const docText = docRow.extracted_text || '';
   const textLower = docText.toLowerCase();
 
-  // 1. Monetary figures
   const monetaryFigures = [];
   const moneyRegex = /(?:\$|USD\s*)\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]{2})?|[0-9]+(?:\.[0-9]{2})?)\s*(?:million|thousand|k|m)?\b/gi;
   let match;
@@ -83,7 +84,6 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
   // 2. 9-Dimension Exposure Model
   const dimensions = {};
 
-  // Liability
   const hasCap = /\b(aggregate\s+liability\s+(?:shall\s+not\s+exceed|capped\s+at)|maximum\s+cumulative\s+liability|limitation\s+of\s+liability)\b/i.test(textLower);
   const hasUncappedIndemnity = /\b(indemnif.*hold\s+harmless.*all\s+claims|unlimited\s+indemnif|without\s+limitation.*indemn)\b/i.test(textLower);
   const hasCarveouts = /\b(excluding.*gross\s+negligence|excluding.*confidentiality|except\s+for.*indemnif)\b/i.test(textLower);
@@ -104,7 +104,11 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     baseScore: liabBase,
     contributors: liabContribs,
     calculation: `Clamp(${liabBase} + ${liabContribs.map(c => c.weight).join(' + ') || '0'} = ${liabScore}, 0, 100)`,
-    confidence: 0.94,
+    confidence: {
+      score: null,
+      methodology: "deterministic_rule_based"
+    },
+    confidenceScore: null,
     evidenceCitation: "Limitation of Liability & Indemnification clauses"
   };
 
@@ -128,11 +132,14 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     baseScore: termBase,
     contributors: termContribs,
     calculation: `Clamp(${termBase} + ${termContribs.map(c => c.weight).join(' + ') || '0'} = ${termScore}, 0, 100)`,
-    confidence: 0.91,
+    confidence: {
+      score: null,
+      methodology: "deterministic_rule_based"
+    },
+    confidenceScore: null,
     evidenceCitation: "Term, Termination, and Breach provisions"
   };
 
-  // Financial
   const finCaps = monetaryFigures.filter(f => f.contextType === 'LIABILITY_CAP');
   const hasInterestLate = /\b(late\s+payment\s+interest|1\.5%|2%\s+per\s+month|maximum\s+permitted\s+by\s+law)\b/i.test(textLower);
   const shortPayment = /\b(?:payable|due)\s+within\s+(?:10|15)\s*days\b/i.test(textLower);
@@ -154,7 +161,11 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     baseScore: finBase,
     contributors: finContribs,
     calculation: `Clamp(${finBase} + ${finContribs.map(c => c.weight).join(' + ') || '0'} = ${finScore}, 0, 100)`,
-    confidence: 0.88,
+    confidence: {
+      score: null,
+      methodology: "deterministic_rule_based"
+    },
+    confidenceScore: null,
     evidenceCitation: "Fees, Invoicing, and Payment clauses"
   };
 
@@ -177,11 +188,14 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     baseScore: opBase,
     contributors: opContribs,
     calculation: `Clamp(${opBase} + ${opContribs.map(c => c.weight).join(' + ') || '0'} = ${opScore}, 0, 100)`,
-    confidence: 0.89,
+    confidence: {
+      score: null,
+      methodology: "deterministic_rule_based"
+    },
+    confidenceScore: null,
     evidenceCitation: "Service Delivery, Operational Performance, and SLA terms"
   };
 
-  // Legal
   const hasForeignJur = /\b(laws\s+of\s+england|laws\s+of\s+delaware|courts\s+of\s+new\s+york|singapore|arbitration)\b/i.test(textLower);
   const hasJuryWaiver = /\b(waive.*jury\s+trial|class\s+action\s+waiver)\b/i.test(textLower);
   const hasWarrantyDisc = /\b(as\s+is|without\s+warranty\s+of\s+any\s+kind|disclaim.*all\s+warranties)\b/i.test(textLower);
@@ -200,11 +214,14 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     baseScore: legBase,
     contributors: legContribs,
     calculation: `Clamp(${legBase} + ${legContribs.map(c => c.weight).join(' + ') || '0'} = ${legScore}, 0, 100)`,
-    confidence: 0.92,
+    confidence: {
+      score: null,
+      methodology: "deterministic_rule_based"
+    },
+    confidenceScore: null,
     evidenceCitation: "Governing Law, Jurisdiction, and Dispute Resolution"
   };
 
-  // Compliance
   const missingDataProt = !/\b(gdpr|ccpa|data\s+protection|personal\s+data|privacy)\b/i.test(textLower);
   const missingConf = !/\b(confidential\s+information|non-disclosure|proprietary)\b/i.test(textLower);
 
@@ -222,11 +239,14 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     baseScore: compBase,
     contributors: compContribs,
     calculation: `Clamp(${compBase} + ${compContribs.map(c => c.weight).join(' + ') || '0'} = ${compScore}, 0, 100)`,
-    confidence: 0.95,
+    confidence: {
+      score: null,
+      methodology: "deterministic_rule_based"
+    },
+    confidenceScore: null,
     evidenceCitation: "Regulatory, Privacy, and Confidentiality sections"
   };
 
-  // Deadline
   const deadlinesCount = deadlineRows.length;
   const deadBase = 20;
   const deadContribs = [];
@@ -248,7 +268,11 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     baseScore: deadBase,
     contributors: deadContribs,
     calculation: `Clamp(${deadBase} + ${deadContribs.map(c => c.weight).join(' + ') || '0'} = ${deadScore}, 0, 100)`,
-    confidence: 0.90,
+    confidence: {
+      score: null,
+      methodology: "deterministic_rule_based"
+    },
+    confidenceScore: null,
     evidenceCitation: "Document milestone and notice schedules"
   };
 
@@ -269,7 +293,11 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     baseScore: concBase,
     contributors: concContribs,
     calculation: `Clamp(${concBase} + ${concContribs.map(c => c.weight).join(' + ') || '0'} = ${concScore}, 0, 100)`,
-    confidence: 0.87,
+    confidence: {
+      score: null,
+      methodology: "deterministic_rule_based"
+    },
+    confidenceScore: null,
     evidenceCitation: "Exclusivity, Scope of Services, and Territory"
   };
 
@@ -296,17 +324,19 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
       description: `Score ${dimensions[k].score}/100`
     })),
     calculation: "Sum(Dimension_Score * Weight)",
-    confidence: 0.93,
+    confidence: {
+      score: null,
+      methodology: "deterministic_rule_based"
+    },
+    confidenceScore: null,
     evidenceCitation: "Weighted composite across all 8 contract risk dimensions"
   };
 
-  // 3. Primary Deterioration Driver
   const dimEntries = Object.entries(dimensions).filter(([k]) => k !== 'overall');
   dimEntries.sort((a, b) => b[1].score - a[1].score);
   const primaryDriverKey = dimEntries[0] ? dimEntries[0][0] : 'liability';
   const primaryDriverLabel = `${primaryDriverKey.charAt(0).toUpperCase() + primaryDriverKey.slice(1)} Exposure`;
 
-  // 4. Primary Dependency Chain
   const noticeMatch = textLower.match(/(\d{1,3})\s*days?['"]?\s*(?:prior\s*)?written\s+notice/);
   const noticeDays = noticeMatch ? noticeMatch[1] : '30';
 
@@ -353,7 +383,6 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     }
   ];
 
-  // 5. Cross-Clause Conflicts
   const crossClauseConflicts = [];
   if (hasCap && hasUncappedIndemnity && !hasCarveouts) {
     crossClauseConflicts.push({
@@ -377,7 +406,6 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     });
   }
 
-  // 6. What-If Multi-Scenario Matrix
   const verifiedCap = finCaps.length > 0 ? finCaps[0].amount : null;
   const optBDelta = -Math.min(28, Math.max(15, Math.round(overallScore * 0.35)));
   const optCDelta = -Math.min(48, Math.max(28, Math.round(overallScore * 0.60)));
@@ -448,7 +476,6 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     }
   ];
 
-  // 7. Health Score Breakdown
   const contractHealthScore = Math.max(5, Math.min(100, 100 - Math.round(overallScore * 0.7)));
   const healthScoreBreakdown = {
     overallHealthScore: contractHealthScore,
@@ -461,7 +488,6 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     }))
   };
 
-  // 8. Executive Decision Brief
   const recScenario = whatIfScenarios.find(s => s.recommended) || whatIfScenarios[1];
   const executiveDecisionBrief = {
     q1_core_issue: `Elevated exposure in ${primaryDriverLabel.toLowerCase()} across contractual terms.`,
@@ -475,7 +501,6 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
     q9_target_deadline: "Within 5 business days, prior to contract execution."
   };
 
-  // 9. Two-Tier Forward Risk
   const forwardRiskSignals = [];
   if (deadlineRows.some(d => (d.source_text || '').toLowerCase().includes('renew')) || textLower.includes('renew')) {
     forwardRiskSignals.push({
@@ -530,11 +555,11 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
       figuresDetected: monetaryFigures.length,
       figures: monetaryFigures
     },
-    provenance: {
-      generatedAt: new Date().toISOString(),
-      engine: "local_deterministic_fallback",
-      deterministicRepeatable: true
-    },
+    provenance: createDeterministicProvenance({
+      methodology: "deterministic_rule_based",
+      evidence: monetaryFigures.map(f => ({ text: f.formatted, segment_id: f.contextType })),
+      fallback: true
+    }),
     disclaimer: DECISION_DISCLAIMER
   };
 }
@@ -546,7 +571,6 @@ function computeLocalDeterministicDecisionIntelligence(docRow, clauseRows, riskR
 async function getDocumentDecisionIntelligence(docId, user, correlationId) {
   const startTime = Date.now();
 
-  // 1. Verify tenant access
   const docRes = await db.query(
     'SELECT id, original_name, filename, extracted_text, risk_score, user_id FROM documents WHERE id = $1',
     [docId]
@@ -568,7 +592,6 @@ async function getDocumentDecisionIntelligence(docId, user, correlationId) {
   let provider = 'flask_microservice';
   let model = 'deterministic_decision_intelligence_v1';
 
-  // 2. Try Flask microservice
   try {
     intelligenceData = await fetchFromFlask(docId, correlationId);
   } catch (flaskErr) {
@@ -621,7 +644,6 @@ async function getDocumentDecisionIntelligence(docId, user, correlationId) {
 
   const durationMs = Date.now() - startTime;
 
-  // 3. Record AI Telemetry
   await recordAiTelemetry({
     correlationId,
     userId: user ? user.id : null,
@@ -651,7 +673,6 @@ async function getDocumentDecisionIntelligence(docId, user, correlationId) {
 async function applyDecisionAction(docId, user, decisionParams) {
   const { scenarioId, notes, targetDueDate } = decisionParams || {};
 
-  // 1. Verify tenant access
   const docRes = await db.query(
     'SELECT id, original_name, filename, user_id FROM documents WHERE id = $1',
     [docId]
@@ -668,7 +689,6 @@ async function applyDecisionAction(docId, user, decisionParams) {
     throw err;
   }
 
-  // 2. Fetch or compute decision intelligence
   const intelligence = await getDocumentDecisionIntelligence(docId, user);
   const scenario = (intelligence.whatIfScenarios || []).find(s => s.scenarioId === scenarioId) || intelligence.whatIfScenarios[1];
 
@@ -679,7 +699,6 @@ async function applyDecisionAction(docId, user, decisionParams) {
   const priorityScore = scenario.projectedExposureScore;
   const dueDate = targetDueDate ? new Date(targetDueDate) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
 
-  // 3. Insert relational contract_actions record
   await db.query(`
     INSERT INTO contract_actions (
       id, document_id, source_action_id, title, category,
@@ -701,7 +720,6 @@ async function applyDecisionAction(docId, user, decisionParams) {
     notes || `Applied from Phase 10 Decision Intelligence. Recommended strategy: ${scenario.strategy}`
   ]);
 
-  // 4. Log activity
   await db.query(`
     INSERT INTO contract_action_activity (
       id, action_id, event_type, actor_id, metadata, created_at
@@ -720,7 +738,6 @@ async function applyDecisionAction(docId, user, decisionParams) {
     })
   ]);
 
-  // 5. Append immutable cryptographic audit block
   const auditResult = await recordAudit(user ? user.id : null, 'DECISION_ACTION_CREATED', {
     documentId: docId,
     actionId,
@@ -739,7 +756,8 @@ async function applyDecisionAction(docId, user, decisionParams) {
     priorityScore,
     dueDate,
     scenarioAdopted: scenario.scenarioId,
-    blockchainAudit: auditResult
+    cryptographicAudit: auditResult,
+    blockchainAudit: auditResult // backward-compatible deprecated alias
   };
 }
 

@@ -1,6 +1,6 @@
 /**
  * server/services/dataImportService.js
- * Component 8: Data Import & Migration Portability
+ * Data Import & Migration Portability
  * Validated import of portable enterprise data.
  * Modes: DRY_RUN, VALIDATE, IMPORT with checksum and referential validation.
  */
@@ -57,7 +57,6 @@ async function importTenantData(exportPayload, { targetTenantId, mode = 'DRY_RUN
     throw new EnterpriseError(ERROR_CODES.VALIDATION_ERROR, 'targetTenantId is required for import');
   }
 
-  // Step 1: Validation
   validateExportPackage(exportPayload);
 
   const report = {
@@ -81,12 +80,10 @@ async function importTenantData(exportPayload, { targetTenantId, mode = 'DRY_RUN
     return report;
   }
 
-  // Step 2: Full Import inside database transaction
   const client = await db.connect();
   try {
     await client.query('BEGIN');
 
-    // 1. Documents
     if (datasets.documents && datasets.documents.length > 0) {
       for (const doc of datasets.documents) {
         try {
@@ -107,7 +104,6 @@ async function importTenantData(exportPayload, { targetTenantId, mode = 'DRY_RUN
       }
     }
 
-    // 2. Governance Policies & Controls
     if (datasets.contract_governance_policies && datasets.contract_governance_policies.length > 0) {
       for (const pol of datasets.contract_governance_policies) {
         try {
@@ -128,7 +124,6 @@ async function importTenantData(exportPayload, { targetTenantId, mode = 'DRY_RUN
       }
     }
 
-    // 3. Workflows
     if (datasets.contract_decision_workflows && datasets.contract_decision_workflows.length > 0) {
       for (const wf of datasets.contract_decision_workflows) {
         try {

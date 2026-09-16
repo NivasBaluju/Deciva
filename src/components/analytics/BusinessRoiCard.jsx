@@ -50,7 +50,6 @@ export const BusinessRoiCard = () => {
         marginBottom: '24px'
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -95,7 +94,6 @@ export const BusinessRoiCard = () => {
           </p>
         </div>
 
-        {/* Configurable Assumptions Input Box */}
         <div
           style={{
             display: 'flex',
@@ -137,7 +135,6 @@ export const BusinessRoiCard = () => {
         </div>
       </div>
 
-      {/* Metrics Grid */}
       {loading ? (
         <div style={{ padding: '24px', textAlign: 'center', color: '#A1A1AA' }}>
           Loading transparent business ROI metrics…
@@ -214,7 +211,6 @@ export const BusinessRoiCard = () => {
         </div>
       )}
 
-      {/* Strict Methodology Disclaimer */}
       <div
         style={{
           border: '1px solid rgba(255, 255, 255, 0.1)',

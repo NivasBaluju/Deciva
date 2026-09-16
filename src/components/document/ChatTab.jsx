@@ -11,7 +11,7 @@ export const ChatTab = ({ doc }) => {
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [retrievalStage, setRetrievalStage] = useState(''); // 'retrieving' | 'generating'
+  const [retrievalStage, setRetrievalStage] = useState('');
   const chatWindowRef = useRef(null);
   const { toast } = useToast();
 
@@ -108,7 +108,6 @@ export const ChatTab = ({ doc }) => {
         Ask any legal question about this contract. Answers are strictly grounded in existing document segments with verifiable citations.
       </p>
 
-      {/* Suggestion Chips */}
       <div className="chat-suggestions mb-16">
         {suggestions.map((s, idx) => (
           <motion.button
@@ -125,7 +124,6 @@ export const ChatTab = ({ doc }) => {
 
       <div className="divider" />
 
-      {/* Messages Window */}
       <div className="chat-window" id="chatWindow" ref={chatWindowRef} style={{ minHeight: '320px', maxHeight: '520px', overflowY: 'auto' }}>
         {messages.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 16px' }}>
@@ -161,16 +159,21 @@ export const ChatTab = ({ doc }) => {
                   background: 'rgba(255, 255, 255, 0.02)'
                 }}
               >
-                {/* Grounding Status Header */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                   {isGrounded ? (
                     <span className="badge badge-ok" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       ✓ Grounded in Document
-                      {m.confidence ? ` (${Math.round(m.confidence * 100)}% match)` : ''}
+                      {typeof m.retrieval_score === 'number'
+                        ? ` (${Math.round(m.retrieval_score * 100)}% match)`
+                        : (typeof m.confidence === 'number'
+                            ? ` (${Math.round(m.confidence * 100)}% match)`
+                            : (m.confidence?.score != null ? ` (${Math.round(m.confidence.score * 100)}% match)` : ''))}
+                      {(m.engine || m.provenance?.engine) ? ` • ${(m.engine || m.provenance?.engine).toUpperCase()}` : ''}
                     </span>
                   ) : (
                     <span className="badge badge-warn" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       ⚠ Information Not Found in Document
+                      {(m.engine || m.provenance?.engine) ? ` • ${(m.engine || m.provenance?.engine).toUpperCase()}` : ''}
                     </span>
                   )}
                   {m.createdAt && (
@@ -180,12 +183,10 @@ export const ChatTab = ({ doc }) => {
                   )}
                 </div>
 
-                {/* Answer Content */}
                 <div style={{ lineHeight: '1.6', fontSize: '13.5px', color: 'var(--hi)' }}>
                   {m.content}
                 </div>
 
-                {/* Source Citations Drawer */}
                 {sources.length > 0 && (
                   <div className="mt-12" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
                     <div className="text-lo" style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
@@ -226,7 +227,6 @@ export const ChatTab = ({ doc }) => {
           })
         )}
 
-        {/* Dynamic Loading Stages */}
         {sending && (
           <motion.div
             className="chat-msg assistant"
@@ -242,7 +242,6 @@ export const ChatTab = ({ doc }) => {
         )}
       </div>
 
-      {/* Input Row */}
       <div className="chat-input-row" style={{ marginTop: '16px' }}>
         <input
           id="chatInput"

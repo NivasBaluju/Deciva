@@ -18,9 +18,13 @@ def simulate_scenario(doc_id):
     """
     data = request.get_json(silent=True) or {}
     scenario = (data.get("scenario") or "").strip()
+    clause_id = data.get("clause_id") or data.get("clauseId")
+    original_clause = data.get("original_clause") or data.get("originalClause")
+    proposed_clause = data.get("proposed_clause") or data.get("proposedClause")
+    idempotency_key = data.get("idempotency_key") or data.get("idempotencyKey")
 
-    if not scenario:
-        return jsonify({"error": "Scenario text is required for risk simulation"}), 400
+    if not scenario and not proposed_clause:
+        return jsonify({"error": "Either scenario text or proposedClause is required for risk simulation"}), 400
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -33,7 +37,14 @@ def simulate_scenario(doc_id):
         cur.close()
         conn.close()
 
-    result = simulate_contract_scenario(document_id=doc_id, scenario=scenario)
+    result = simulate_contract_scenario(
+        document_id=doc_id,
+        scenario=scenario,
+        clause_id=clause_id,
+        original_clause=original_clause,
+        proposed_clause=proposed_clause,
+        idempotency_key=idempotency_key
+    )
     if result.get("error"):
         return jsonify(result), result.get("status", 400)
 

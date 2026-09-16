@@ -2,14 +2,10 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
-const { verifyChain } = require('../utils/audit');
+const { verifyChain, verifyLedger } = require('../utils/audit');
 const complianceService = require('../services/complianceAuditService');
 const exportService = require('../services/evidenceExportService');
 const integrityService = require('../services/evidenceIntegrityService');
-
-// ============================================================================
-// 1. STATLESS IN-MEMORY EVIDENCE VERIFICATION
-// ============================================================================
 
 /**
  * POST /api/compliance/verify
@@ -38,10 +34,6 @@ router.post('/verify', requireAuth, (req, res) => {
     return res.status(500).json({ error: err.message, valid: false });
   }
 });
-
-// ============================================================================
-// 2. CONTRACT COMPLIANCE EVIDENCE & EXPORTS
-// ============================================================================
 
 /**
  * GET /api/compliance/documents/:documentId/evidence
@@ -181,10 +173,6 @@ router.get('/documents/:documentId/export/activity.csv', requireAuth, async (req
   }
 });
 
-// ============================================================================
-// 3. PORTFOLIO COMPLIANCE EVIDENCE & EXPORTS
-// ============================================================================
-
 /**
  * GET /api/compliance/portfolio/evidence
  * GET /api/compliance/portfolio
@@ -300,10 +288,6 @@ router.get('/portfolio/export/contracts.csv', requireAuth, async (req, res) => {
   }
 });
 
-// ============================================================================
-// 4. ENTERPRISE CRYPTOGRAPHIC AUDIT EXPLORER
-// ============================================================================
-
 /**
  * GET /api/compliance/audit-trail
  * Paginated, tamper-evident audit ledger explorer with cryptographic integrity status.
@@ -394,18 +378,20 @@ router.get(['/audit-trail', '/audit-explorer'], requireAuth, async (req, res) =>
 
 /**
  * GET /api/compliance/audit-trail/verify
- * Direct mathematical verification of every SHA-256 hash across the blockchain ledger.
+ * Direct mathematical verification of every SHA-256 hash across the cryptographic audit ledger.
  */
-router.get(['/audit-trail/verify', '/audit-chain/verify'], requireAuth, async (req, res) => {
+router.get(['/audit-trail/verify', '/audit-chain/verify', '/audit-ledger/verify'], requireAuth, async (req, res) => {
   try {
-    const chainStatus = await verifyChain();
+    const chainStatus = await verifyLedger();
     res.json({
       ...chainStatus,
+      cryptographicAudit: { totalBlocks: chainStatus.totalBlocks, valid: chainStatus.valid },
+      blockchainAudit: { totalBlocks: chainStatus.totalBlocks, valid: chainStatus.valid }, // backward-compatible deprecated alias
       algorithm: 'SHA-256',
       verifiedAt: new Date().toISOString()
     });
   } catch (err) {
-    console.error('[Audit Chain Verification Error]:', err);
+    console.error('[Audit Ledger Verification Error]:', err);
     res.status(500).json({ error: 'Failed to verify cryptographic chain' });
   }
 });

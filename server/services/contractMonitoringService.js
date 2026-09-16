@@ -1,5 +1,5 @@
 /**
- * Deciva — Contract Portfolio Monitoring & Lifecycle Service (Phase 11)
+ * Deciva — Contract Portfolio Monitoring & Lifecycle Service
  * ---------------------------------------------------------------------------
  * Continuous, deterministic portfolio intelligence and monitoring engine.
  * 
@@ -22,11 +22,12 @@ const db = require('../db');
 const { recordAudit } = require('../utils/audit');
 const { recordAiTelemetry } = require('../utils/aiTelemetry');
 const logger = require('../utils/logger');
+const { getInternalServiceKey } = require('./productionConfigService');
 
 const FLASK_HOST = process.env.FLASK_HOST || '127.0.0.1';
 const FLASK_PORT = process.env.FLASK_PORT || 5001;
 const AI_MICROSERVICE_URL = (process.env.AI_MICROSERVICE_URL || `http://${FLASK_HOST}:${FLASK_PORT}`).replace(/\/+$/, '');
-const INTERNAL_KEY = process.env.INTERNAL_SERVICE_KEY || 'deciva-internal-service-secret-key-default';
+const INTERNAL_KEY = getInternalServiceKey();
 
 const NOT_AVAILABLE = 'NOT_AVAILABLE';
 const UNKNOWN = 'UNKNOWN';
@@ -271,7 +272,6 @@ function computeLocalChanges(prevText, currText, prevIntel, currIntel, docId) {
   const prevT = prevText || '';
   const currT = currText || '';
 
-  // 1. Liability Cap Changes
   const prevCap = extractLiabilityCap(prevT);
   const currCap = extractLiabilityCap(currT);
   if (prevCap && currCap && prevCap.val !== currCap.val) {
@@ -323,7 +323,6 @@ function computeLocalChanges(prevText, currText, prevIntel, currIntel, docId) {
     });
   }
 
-  // 2. Governing Law
   const prevLaw = extractGoverningLaw(prevT);
   const currLaw = extractGoverningLaw(currT);
   if (prevLaw && currLaw && prevLaw.jurisdiction.toLowerCase() !== currLaw.jurisdiction.toLowerCase()) {
@@ -343,7 +342,6 @@ function computeLocalChanges(prevText, currText, prevIntel, currIntel, docId) {
     });
   }
 
-  // 3. Payment Terms
   const prevPay = extractPaymentTerms(prevT);
   const currPay = extractPaymentTerms(currT);
   if (prevPay && currPay && prevPay.term.toLowerCase() !== currPay.term.toLowerCase()) {
@@ -363,7 +361,6 @@ function computeLocalChanges(prevText, currText, prevIntel, currIntel, docId) {
     });
   }
 
-  // 4. Notice Period
   const prevNotice = extractNoticeDays(prevT);
   const currNotice = extractNoticeDays(currT);
   if (prevNotice && currNotice && prevNotice.days !== currNotice.days) {
@@ -384,7 +381,6 @@ function computeLocalChanges(prevText, currText, prevIntel, currIntel, docId) {
     });
   }
 
-  // 5. Stored Intelligence Risk Shift
   if (prevIntel && currIntel) {
     const prevExp = prevIntel.exposure_score || prevIntel.health_score || 0;
     const currExp = currIntel.exposure_score || currIntel.health_score || 0;
@@ -438,7 +434,6 @@ async function evaluateContractMonitoring(docId, correlationId) {
   let result = null;
   let fallbackUsed = false;
 
-  // 1. Attempt Flask microservice evaluation
   try {
     result = await fetchMonitoringFromFlask(docId, correlationId);
   } catch (flaskErr) {
@@ -446,7 +441,6 @@ async function evaluateContractMonitoring(docId, correlationId) {
     fallbackUsed = true;
   }
 
-  // 2. If microservice was unavailable, run identical local deterministic evaluation
   if (!result) {
     const { rows: docRows } = await db.query(
       `SELECT id, user_id, filename, extracted_text, version_group, version_number FROM documents WHERE id = $1`,
@@ -551,7 +545,6 @@ async function runPortfolioMonitoring(user, correlationId = uuidv4()) {
       const evaluation = await evaluateContractMonitoring(doc.id, correlationId);
       const lc = evaluation.lifecycle;
 
-      // 1. Upsert lifecycle state
       const renewalDateVal = lc.renewal_date !== NOT_AVAILABLE ? lc.renewal_date : null;
       const noticeDeadlineVal = lc.notice_deadline !== NOT_AVAILABLE ? lc.notice_deadline : null;
       const cureDeadlineVal = lc.cure_deadline !== NOT_AVAILABLE ? lc.cure_deadline : null;
@@ -580,7 +573,6 @@ async function runPortfolioMonitoring(user, correlationId = uuidv4()) {
         JSON.stringify(lc.evidence || {})
       ]);
 
-      // 2. Generate lifecycle alert event if in critical lifecycle state
       const candidateEvents = [...(evaluation.detectedChanges || [])];
       if (lc.state === 'NOTICE_WINDOW_OPEN') {
         const pCalc = calculateAttentionPriority('CRITICAL', 'HIGH', 'IMMEDIATE', 'MAJOR');
@@ -618,7 +610,6 @@ async function runPortfolioMonitoring(user, correlationId = uuidv4()) {
         });
       }
 
-      // 3. Idempotently insert monitoring events
       for (const ev of candidateEvents) {
         const eventId = uuidv4();
         const score = typeof ev.priority_score === 'number' ? ev.priority_score : 50;
@@ -672,7 +663,6 @@ async function runPortfolioMonitoring(user, correlationId = uuidv4()) {
           });
         }
 
-        // 4. Action Center Bridge: Route CRITICAL or HIGH events to contract_actions deduplicated
         if (score >= 60 || ev.severity === 'CRITICAL' || ev.severity === 'HIGH') {
           const sourceActionId = `MONITORING_${ev.deduplication_key}`;
           

@@ -68,9 +68,13 @@ router.post('/documents/:id/chat', requireAuth, async (req, res) => {
     `INSERT INTO chat_messages (id, document_id, user_id, role, content) VALUES ($1, $2, $3, 'user', $4)`,
     [uuidv4(), doc.id, req.user.id, question]
   );
+  const dbConfidence = typeof result.confidence === 'object' && result.confidence !== null
+    ? result.confidence.score
+    : (typeof result.confidence === 'number' ? result.confidence : null);
+
   await db.query(
     `INSERT INTO chat_messages (id, document_id, user_id, role, content, confidence, source_ref, grounded) VALUES ($1, $2, $3, 'assistant', $4, $5, $6, $7)`,
-    [uuidv4(), doc.id, req.user.id, result.answer, result.confidence, JSON.stringify(result.sources || []), result.grounded !== false]
+    [uuidv4(), doc.id, req.user.id, result.answer, dbConfidence, JSON.stringify(result.sources || []), result.grounded !== false]
   );
 
   res.json(result);

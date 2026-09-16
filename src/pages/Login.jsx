@@ -7,11 +7,6 @@ import FormField from '../components/ui/FormField';
 import Button from '../components/ui/Button';
 import MetalFx from '../components/ui/MetalFx';
 
-/**
- * Login — Client Portal Access
- * Restyled to Paper & Ink monochrome tokens with underline inputs.
- * Preserves 100% of authentication and MFA dispatch logic.
- */
 export function Login() {
   const [email, setEmail] = useState('');
   const [fieldErrors, setFieldErrors] = useState({ email: '' });

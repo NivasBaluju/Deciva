@@ -1,11 +1,6 @@
 import React from 'react';
 import Breadcrumb from '../components/ui/Breadcrumb';
 
-/**
- * Accessibility Statement — Part 10.10
- * Plain-language description of prefers-reduced-motion, keyboard navigation,
- * WCAG AAA contrast, and semantic structure.
- */
 export function Accessibility() {
   return (
     <div className="w-full bg-paper py-20 sm:py-28">

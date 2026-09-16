@@ -13,7 +13,6 @@ function triggerBlobDownload(blob, defaultFilename) {
 }
 
 export const ComplianceAuditApi = {
-  // --- Contract-Level Evidence & Exports ---
   async getContractEvidence(documentId) {
     return Api.get(`/api/compliance/documents/${documentId}/evidence`);
   },
@@ -48,7 +47,6 @@ export const ComplianceAuditApi = {
     triggerBlobDownload(blob, `contract_activity_${cleanName}.csv`);
   },
 
-  // --- Portfolio-Level Evidence & Exports ---
   async getPortfolioEvidence() {
     return Api.get('/api/compliance/portfolio/evidence');
   },
@@ -73,7 +71,6 @@ export const ComplianceAuditApi = {
     triggerBlobDownload(blob, 'portfolio_contracts_health.csv');
   },
 
-  // --- Stateless Verification ---
   async verifyEvidence(evidence, expectedHash) {
     return Api.post('/api/compliance/verify', { evidence, expectedHash });
   }

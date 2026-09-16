@@ -16,7 +16,6 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
     }
   }, [initialSection]);
 
-  // Handle ESC key and isolate body scrolling
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
@@ -52,7 +51,7 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
       id: 'TECH_SECURITY',
       num: '03',
       label: 'Stack & Security',
-      title: 'Full Engineering Stack, Merkle Audit Ledger & Zero-Trust DR',
+      title: 'Full Engineering Stack, Cryptographic Audit Ledger & Zero-Trust DR',
       icon: '🛡️'
     }
   ];
@@ -72,7 +71,6 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-rule bg-[#0C0C12]">
           <div className="flex items-center gap-3">
             <span id="guide-title" className="font-display text-xl text-white font-semibold">
@@ -92,7 +90,6 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
           </button>
         </div>
 
-        {/* 3-Tab Spacious Navigation Strip */}
         <div className="grid grid-cols-3 border-b border-rule bg-[#07070A]">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -121,14 +118,12 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
           })}
         </div>
 
-        {/* Scrollable Content Body with Dedicated Visible Scrollbar */}
         <div
           data-lenis-prevent="true"
           className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 text-zinc-200 text-body-sm leading-relaxed guide-scrollable"
           style={{ overscrollBehavior: 'contain' }}
           onWheel={(e) => e.stopPropagation()}
         >
-          {/* TAB 1: HOW TO USE & OPERATIONAL WORKFLOW */}
           {activeTab === 'WORKFLOW' && (
             <div className="space-y-6">
               <div>
@@ -146,7 +141,7 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 pt-2">
                 <div className="border border-white/10 p-4 bg-[#121218] flex flex-col justify-between">
                   <div>
-                    <span className="font-mono text-micro text-white block mb-2 font-bold">[Step 1]</span>
+                    <span className="font-mono text-micro text-white block mb-2 font-bold">Step 1</span>
                     <h4 className="font-body text-white font-semibold text-sm mb-2">Ingestion &amp; OCR</h4>
                     <p className="text-xs text-zinc-300 leading-normal">
                       Upload PDFs, DOCX, or scanned legal exhibits. Hardware OCR extracts text with 99.4% confidence and generates a unique SHA-256 digest.
@@ -157,7 +152,7 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
 
                 <div className="border border-white/10 p-4 bg-[#121218] flex flex-col justify-between">
                   <div>
-                    <span className="font-mono text-micro text-white block mb-2 font-bold">[Step 2]</span>
+                    <span className="font-mono text-micro text-white block mb-2 font-bold">Step 2</span>
                     <h4 className="font-body text-white font-semibold text-sm mb-2">AI Risk Radar</h4>
                     <p className="text-xs text-zinc-300 leading-normal">
                       The engine scores 9 risk dimensions (indemnity caps, liability, termination) and flags statutory redlines automatically.
@@ -168,7 +163,7 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
 
                 <div className="border border-white/10 p-4 bg-[#121218] flex flex-col justify-between">
                   <div>
-                    <span className="font-mono text-micro text-white block mb-2 font-bold">[Step 3]</span>
+                    <span className="font-mono text-micro text-white block mb-2 font-bold">Step 3</span>
                     <h4 className="font-body text-white font-semibold text-sm mb-2">Bilateral Redlining</h4>
                     <p className="text-xs text-zinc-300 leading-normal">
                       Calculate counterparty concession probabilities, view fallback clause alternatives, and simulate negotiation outcomes.
@@ -179,7 +174,7 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
 
                 <div className="border border-white/10 p-4 bg-[#121218] flex flex-col justify-between">
                   <div>
-                    <span className="font-mono text-micro text-white block mb-2 font-bold">[Step 4]</span>
+                    <span className="font-mono text-micro text-white block mb-2 font-bold">Step 4</span>
                     <h4 className="font-body text-white font-semibold text-sm mb-2">Portfolio Oversight</h4>
                     <p className="text-xs text-zinc-300 leading-normal">
                       Monitor multi-contract health, track upcoming renewal deadlines, and resolve executive remediation backlog in batches.
@@ -190,7 +185,7 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
 
                 <div className="border border-white/10 p-4 bg-[#121218] flex flex-col justify-between">
                   <div>
-                    <span className="font-mono text-micro text-white block mb-2 font-bold">[Step 5]</span>
+                    <span className="font-mono text-micro text-white block mb-2 font-bold">Step 5</span>
                     <h4 className="font-body text-white font-semibold text-sm mb-2">Governed Signoff</h4>
                     <p className="text-xs text-zinc-300 leading-normal">
                       Enforce dual-signatory approval. Every state mutation is anchored to the immutable SHA-256 cryptographic audit ledger.
@@ -216,10 +211,8 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
             </div>
           )}
 
-          {/* TAB 2: AI INTELLIGENCE & GOVERNANCE */}
           {activeTab === 'INTELLIGENCE_GOVERNANCE' && (
             <div className="space-y-8">
-              {/* Part A: AI Decision Intelligence */}
               <div className="space-y-4">
                 <div>
                   <span className="text-micro text-white font-mono uppercase tracking-widest block mb-1">
@@ -264,18 +257,17 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
 
                 <div className="border border-white/10 p-5 bg-[#07070B]">
                   <h4 className="font-body text-white font-semibold text-sm mb-3">
-                    Under the Hood: Isolated Machine Learning Pipeline
+                    Under the Hood: Hybrid Intelligence Architecture
                   </h4>
                   <div className="font-mono text-xs text-zinc-200 space-y-1.5 bg-black p-4 border border-white/15">
                     <p className="text-neutral-400"># Document Tokenization &amp; Segment Analysis</p>
                     <p>Input Document → PyMuPDF Vector Text Extraction → Clause Boundary Segmentation</p>
-                    <p>Clause Vectors → PyTorch Embedding Transformer → Statutory Precedent Cosine Match</p>
+                    <p>Clause Segments → TF-IDF Vectorization → Calibrated Rule + Model Consensus</p>
                     <p>Risk Quantification → 9D Heuristic Matrix → SHA-256 Audit Leaf Generation</p>
                   </div>
                 </div>
               </div>
 
-              {/* Part B: Continuous Monitoring & Governance */}
               <div className="pt-4 border-t border-rule space-y-4">
                 <div>
                   <span className="text-micro text-white font-mono uppercase tracking-widest block mb-1">
@@ -334,10 +326,8 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
             </div>
           )}
 
-          {/* TAB 3: TECH STACK & ZERO-TRUST SECURITY */}
           {activeTab === 'TECH_SECURITY' && (
             <div className="space-y-8">
-              {/* Part A: Systems & Engineering Stack */}
               <div className="space-y-4">
                 <div>
                   <span className="text-micro text-white font-mono uppercase tracking-widest block mb-1">
@@ -387,11 +377,11 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
 
                   <div className="border border-white/10 p-4 bg-[#121218]">
                     <span className="text-micro font-mono text-white uppercase block mb-1 font-bold">Tier 4: ML Service</span>
-                    <h4 className="font-body text-white font-semibold text-sm mb-2">Python &amp; PyTorch</h4>
+                    <h4 className="font-body text-white font-semibold text-sm mb-2">Python &amp; scikit-learn</h4>
                     <ul className="text-xs text-zinc-300 space-y-1">
                       <li>• Flask service on port 5001</li>
                       <li>• PyMuPDF text &amp; layout extraction</li>
-                      <li>• HuggingFace Transformers embeddings</li>
+                      <li>• TF-IDF + Logistic Regression clause classifier</li>
                       <li>• Zero global model training bleed</li>
                     </ul>
                   </div>
@@ -402,21 +392,20 @@ export const PlatformGuideModal = ({ isOpen, onClose, initialSection = 'WORKFLOW
                     System Data Flow Architecture
                   </h4>
                   <div className="font-mono text-xs text-zinc-200 bg-black p-4 border border-white/15 overflow-x-auto whitespace-pre">
-{`Client Browser [React 19]
+{`Client Browser (React 19)
        ↓ (HTTPS / TLS 1.3 + JWT Bearer)
-Node.js Express API Server [:5000]
+Node.js Express API Server (:5000)
        ├── Authentication & Zero-Trust Verification (Argon2 / SHA-256)
        ├── AES-256-GCM Contract Encryption Vault
        ├── PostgreSQL Neon Cloud (50 Structured Tables, ACID Outbox)
        └── Internal RPC Dispatch
              ↓ (Isolated Port 5001)
-       Python Machine Learning Microservice [PyTorch / PyMuPDF]
-             └── 9-Dimension Risk Engine & Clause Embedding Transformer`}
+       Python NLP & Analysis Microservice (scikit-learn / PyMuPDF)
+             └── 9-Dimension Risk Engine & TF-IDF Clause Classification Pipeline`}
                   </div>
                 </div>
               </div>
 
-              {/* Part B: Zero-Trust Security & Disaster Recovery */}
               <div className="pt-4 border-t border-rule space-y-4">
                 <div>
                   <span className="text-micro text-white font-mono uppercase tracking-widest block mb-1">
@@ -433,7 +422,7 @@ Node.js Express API Server [:5000]
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   <div className="border border-white/10 p-5 bg-[#121218] space-y-2">
                     <h4 className="font-body text-white font-semibold text-sm">
-                      ⛓️ Immutable SHA-256 Merkle Ledger
+                      ⛓️ Tamper-Evident SHA-256 Audit Ledger
                     </h4>
                     <p className="text-xs text-zinc-300">
                       Every audit record contains the cryptographic hash of the previous block. Changing even one byte of contract text breaks the validation chain across the entire ledger.
@@ -490,7 +479,6 @@ Node.js Express API Server [:5000]
           )}
         </div>
 
-        {/* Modal Footer Controls */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-rule bg-[#0C0C12]">
           <div className="flex items-center gap-2 text-micro text-zinc-400 font-mono">
             <span>Press ESC or click outside to dismiss</span>

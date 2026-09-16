@@ -1,6 +1,6 @@
 /**
  * server/utils/errorTaxonomy.js
- * Component 17: Production Error Taxonomy & Sanitized Responses
+ * Production Error Taxonomy & Sanitized Responses
  * Standardizes operational errors across all enterprise subsystems, ensuring
  * zero leakage of stack traces, SQL syntax, filesystem paths, or secrets.
  */

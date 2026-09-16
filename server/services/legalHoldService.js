@@ -1,6 +1,6 @@
 /**
  * server/services/legalHoldService.js
- * Component 11: Enterprise Legal Hold Protection
+ * Enterprise Legal Hold Protection
  * Manages formal legal holds over documents, workflows, findings, and exceptions.
  * Enforces the invariant that assets under active legal hold cannot be purged by retention or tenant deletion.
  */

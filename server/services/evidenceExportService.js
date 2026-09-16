@@ -269,7 +269,6 @@ function generatePdfExport(exportType, evidencePackage) {
   const BORDER = '#CBD5E1';
   const BOX_BG = '#F8FAFC';
 
-  // 1. Header Banner
   doc.rect(40, 40, 515, 45).fill('#0F172A');
   doc.fillColor('#FFFFFF').fontSize(16).font('Helvetica-Bold')
     .text('DECIVA', 55, 48);
@@ -279,7 +278,6 @@ function generatePdfExport(exportType, evidencePackage) {
   doc.moveDown(2);
   let y = 100;
 
-  // 2. Report Title & Subject
   doc.fillColor(PRIMARY).fontSize(14).font('Helvetica-Bold')
     .text(isPortfolio ? 'Contract Portfolio Governance Audit' : `Contract Compliance Audit: ${manifest.subject?.documentName || 'Document'}`, 40, y);
   y += 20;
@@ -288,7 +286,6 @@ function generatePdfExport(exportType, evidencePackage) {
     .text(`Export Type: ${manifest.exportType}  |  Schema Version: v${manifest.evidenceSchemaVersion}  |  Generated: ${new Date(manifest.generatedAt).toUTCString()}`, 40, y);
   y += 20;
 
-  // 3. Cryptographic Integrity Box
   doc.rect(40, y, 515, 65).fillAndStroke(BOX_BG, BORDER);
   doc.fillColor(ACCENT).fontSize(10).font('Helvetica-Bold')
     .text('CANONICAL EVIDENCE SHA-256 CONTENT HASH', 50, y + 10);
@@ -397,7 +394,6 @@ function generatePdfExport(exportType, evidencePackage) {
       y += 16;
     }
 
-    // 6. Governed Operations Lineage
     const batches = evidence.governedOperationsHistory || [];
     if (batches.length > 0) {
       if (y > 650) { doc.addPage(); y = 50; }
@@ -467,7 +463,6 @@ function generatePdfExport(exportType, evidencePackage) {
       y += 16;
     }
 
-    // 4. Governed Operation Batches
     const pBatches = evidence.governedBatches || [];
     if (pBatches.length > 0) {
       if (y > 650) { doc.addPage(); y = 50; }

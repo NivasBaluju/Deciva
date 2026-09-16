@@ -7,11 +7,6 @@ import FormField from '../components/ui/FormField';
 import Button from '../components/ui/Button';
 import MetalFx from '../components/ui/MetalFx';
 
-/**
- * Register — Enterprise Account Registration
- * Paper & Ink monochrome styling, underline inputs,
- * preserving all registration contracts and validation.
- */
 export function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

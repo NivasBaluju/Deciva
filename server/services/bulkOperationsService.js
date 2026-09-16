@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Phase 8.0 — Bulk Operations Service
+ * Bulk Operations Service
  *
  * Implements the three-step controlled portfolio operation flow:
  *   1. previewBulkOperation  — validates, classifies, stores preview record + canonical hash
@@ -23,10 +23,6 @@ const crypto = require('crypto');
 const db = require('../db');
 const { WORKFLOW_STATES, ALLOWED_TRANSITIONS, isValidTransition } = require('./actionWorkflowService');
 const { evaluateBatchPolicy, POLICY_VERSION, GOVERNANCE_POLICY_FLAGS } = require('./operationPolicyEngine');
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
 
 const OPERATION_TYPES = {
   BULK_ASSIGN:     'BULK_ASSIGN',
@@ -65,9 +61,7 @@ const BLOCK_REASONS = {
   STATE_CHANGED:      'STATE_CHANGED',
 };
 
-// ---------------------------------------------------------------------------
 // Canonical hashing helpers
-// ---------------------------------------------------------------------------
 
 /**
  * Returns a canonical JSON string suitable for hashing.
@@ -109,9 +103,7 @@ function computeRequestHash(userId, previewId, idempotencyKey) {
     .digest('hex');
 }
 
-// ---------------------------------------------------------------------------
 // Input validation helpers
-// ---------------------------------------------------------------------------
 
 function validateInputs(operation, mode, actionIds, payload) {
   if (!operation || !Object.values(OPERATION_TYPES).includes(operation.toUpperCase())) {
@@ -166,9 +158,7 @@ function validateInputs(operation, mode, actionIds, payload) {
   return null;
 }
 
-// ---------------------------------------------------------------------------
 // Per-action pre-flight validator
-// ---------------------------------------------------------------------------
 
 /**
  * Classifies a single actionId as eligible or blocked.
@@ -205,10 +195,6 @@ async function validateSingleAction(actionId, operation, payload, seenIds, clien
   return { eligible: true, actionData: action };
 }
 
-// ---------------------------------------------------------------------------
-// Preview
-// ---------------------------------------------------------------------------
-
 /**
  * Pre-flight validation and preview record creation.
  *
@@ -220,14 +206,12 @@ async function validateSingleAction(actionId, operation, payload, seenIds, clien
  * @returns {object}          - { previewId, eligible, blocked, ... } or { errorStatus, errorMessage }
  */
 async function previewBulkOperation(user, { operation, mode, actionIds, payload }) {
-  // 1. Input validation
   const inputError = validateInputs(operation, mode, actionIds, payload);
   if (inputError) return inputError;
 
   const op = operation.toUpperCase();
   const md = mode.toUpperCase();
 
-  // 2. Verify assignment target exists (BULK_ASSIGN with non-null ownerId)
   let resolvedOwnerId = null;
   if (op === OPERATION_TYPES.BULK_ASSIGN && payload.ownerId !== null && payload.ownerId !== undefined) {
     const { rows: ownerRows } = await db.query(
@@ -240,7 +224,6 @@ async function previewBulkOperation(user, { operation, mode, actionIds, payload 
     resolvedOwnerId = ownerRows[0].id;
   }
 
-  // 3. Deduplication + per-action classification
   const seenIds = new Set();
   const eligible = [];
   const blocked = [];
@@ -319,7 +302,6 @@ async function previewBulkOperation(user, { operation, mode, actionIds, payload 
     });
   }
 
-  // 4. Strict mode: reject if any blocked
   if (md === BATCH_MODES.STRICT && blocked.length > 0) {
     return {
       previewId: null,
@@ -352,7 +334,6 @@ async function previewBulkOperation(user, { operation, mode, actionIds, payload 
     };
   }
 
-  // 5. Evaluate deterministic governance policy (v1.0)
   const policyResult = evaluateBatchPolicy({
     operation: op,
     mode: md,
@@ -366,11 +347,9 @@ async function previewBulkOperation(user, { operation, mode, actionIds, payload 
     ...(op === OPERATION_TYPES.BULK_TRANSITION ? { targetStatus: payload.targetStatus.toUpperCase() } : {}),
   };
 
-  // 6. Compute canonical preview hash
   const eligibleIds = eligible.map(e => e.actionId).sort();
   const previewHash = computePreviewHash(op, md, eligibleIds, normalizedPayload);
 
-  // 7. Persist preview record
   const previewId = uuidv4();
   const initialStatus = policyResult.requiresApproval
     ? BATCH_STATUS.PENDING_APPROVAL
@@ -427,10 +406,6 @@ async function previewBulkOperation(user, { operation, mode, actionIds, payload 
   };
 }
 
-// ---------------------------------------------------------------------------
-// Execute
-// ---------------------------------------------------------------------------
-
 /**
  * Executes a previously previewed bulk operation.
  *
@@ -440,13 +415,11 @@ async function previewBulkOperation(user, { operation, mode, actionIds, payload 
  * @returns {object}              - Execution receipt or error
  */
 async function executeBulkOperation(user, previewId, idempotencyKey) {
-  // 1. Require idempotency key
   if (!idempotencyKey || typeof idempotencyKey !== 'string' || idempotencyKey.trim().length === 0) {
     return { errorStatus: 400, errorMessage: 'Idempotency-Key header is required', code: 'IDEMPOTENCY_KEY_REQUIRED' };
   }
   const iKey = idempotencyKey.trim();
 
-  // 2. Load preview record
   const { rows: previewRows } = await db.query(
     'SELECT * FROM portfolio_operation_batches WHERE id = $1',
     [previewId]
@@ -456,15 +429,12 @@ async function executeBulkOperation(user, previewId, idempotencyKey) {
   }
   const preview = previewRows[0];
 
-  // 3. Ownership check
   if (preview.user_id !== user.id && user.role !== 'admin') {
     return { errorStatus: 403, errorMessage: 'Unauthorized: preview belongs to another user' };
   }
 
-  // 4. Compute request hash for this (user, preview, key) triple
   const requestHash = computeRequestHash(user.id, previewId, iKey);
 
-  // 5. Idempotency lookup
   const { rows: existingRows } = await db.query(
     `SELECT * FROM portfolio_operation_batches
      WHERE user_id = $1 AND idempotency_key = $2`,
@@ -500,7 +470,6 @@ async function executeBulkOperation(user, previewId, idempotencyKey) {
     }
   }
 
-  // 6. Verify preview status based on governance approval rules
   if (preview.requires_approval) {
     if (preview.status === BATCH_STATUS.PENDING_APPROVAL) {
       return {
@@ -539,7 +508,6 @@ async function executeBulkOperation(user, previewId, idempotencyKey) {
     }
   }
 
-  // 7. Load operation details from stored preview record (NOT from request body)
   const storedPayload = preview.payload_json || {};
   const eligibleActionIds = storedPayload.eligibleActionIds || [];
   const operation = preview.operation_type;
@@ -549,7 +517,6 @@ async function executeBulkOperation(user, previewId, idempotencyKey) {
     return { errorStatus: 400, errorMessage: 'No eligible actions in this preview. Cannot execute.' };
   }
 
-  // 8. Mark as EXECUTING and store idempotency binding
   await db.query(
     `UPDATE portfolio_operation_batches
      SET status = $1, idempotency_key = $2, request_hash = $3
@@ -557,7 +524,6 @@ async function executeBulkOperation(user, previewId, idempotencyKey) {
     [BATCH_STATUS.EXECUTING, iKey, requestHash, previewId]
   );
 
-  // 9. Execute within a single atomic transaction
   const client = await db.connect();
   const executedActionIds = [];
   const executionBlocked = [];
@@ -717,9 +683,7 @@ async function executeBulkOperation(user, previewId, idempotencyKey) {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Inline mutation helpers (execute inside the caller's transaction)
-// ---------------------------------------------------------------------------
 
 async function executeSingleAssign(client, action, payload, user, batchId) {
   const newOwnerId = payload.ownerId || null;
@@ -824,10 +788,6 @@ async function executeSingleTransition(client, action, payload, user, batchId) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// History
-// ---------------------------------------------------------------------------
-
 /**
  * Returns paginated batch history for the authenticated user.
  */
@@ -866,9 +826,7 @@ async function getBatchHistory(user, { page = 1, limit = 20 } = {}) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Governed Operations: Approval & Review Engine (Phase 8.1)
-// ---------------------------------------------------------------------------
+// Governed Operations: Approval & Review Engine
 
 /**
  * Predicate determining whether an authenticated user is authorized to approve/reject a batch.
@@ -959,7 +917,6 @@ async function approveBatchOperation(user, batchId, { comments = '' } = {}) {
     }
     const batch = rows[0];
 
-    // 1. Separation of duties: requester cannot approve their own batch
     if (batch.user_id === user.id) {
       await client.query('ROLLBACK');
       return {
@@ -969,7 +926,6 @@ async function approveBatchOperation(user, batchId, { comments = '' } = {}) {
       };
     }
 
-    // 2. Approver authorization: must have existing admin authority
     if (user.role !== 'admin') {
       await client.query('ROLLBACK');
       return {
@@ -979,7 +935,6 @@ async function approveBatchOperation(user, batchId, { comments = '' } = {}) {
       };
     }
 
-    // 3. Status check: must be currently in PENDING_APPROVAL
     if (batch.status !== BATCH_STATUS.PENDING_APPROVAL) {
       await client.query('ROLLBACK');
       return {
@@ -989,7 +944,6 @@ async function approveBatchOperation(user, batchId, { comments = '' } = {}) {
       };
     }
 
-    // 4. Exact preview hash re-verification
     const storedPayload = batch.payload_json || {};
     const { eligibleActionIds = [], ...operationPayload } = storedPayload;
     const expectedHash = computePreviewHash(batch.operation_type, batch.mode, eligibleActionIds, operationPayload);
@@ -1078,7 +1032,6 @@ async function rejectBatchOperation(user, batchId, { reason = '' } = {}) {
     }
     const batch = rows[0];
 
-    // 1. Separation of duties: requester cannot reject their own batch
     if (batch.user_id === user.id) {
       await client.query('ROLLBACK');
       return {
@@ -1088,7 +1041,6 @@ async function rejectBatchOperation(user, batchId, { reason = '' } = {}) {
       };
     }
 
-    // 2. Approver authorization: must have existing admin authority
     if (user.role !== 'admin') {
       await client.query('ROLLBACK');
       return {
@@ -1098,7 +1050,6 @@ async function rejectBatchOperation(user, batchId, { reason = '' } = {}) {
       };
     }
 
-    // 3. Status check: must be currently in PENDING_APPROVAL
     if (batch.status !== BATCH_STATUS.PENDING_APPROVAL) {
       await client.query('ROLLBACK');
       return {
@@ -1154,10 +1105,6 @@ async function rejectBatchOperation(user, batchId, { reason = '' } = {}) {
     client.release();
   }
 }
-
-// ---------------------------------------------------------------------------
-// Exports
-// ---------------------------------------------------------------------------
 
 module.exports = {
   OPERATION_TYPES,

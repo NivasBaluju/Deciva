@@ -19,7 +19,6 @@ export function Landing() {
 
   return (
     <div className="w-full">
-      {/* SECTION 01: Full-Bleed Hero (Ink Section) with Statue Black Art */}
       <section
         className="section-ink relative flex items-center min-h-[88vh] py-28 sm:py-36 border-b border-neutral-800 bg-black overflow-hidden"
         style={{
@@ -27,7 +26,6 @@ export function Landing() {
           color: '#FFFFFF'
         }}
       >
-        {/* Lady Justice Dithered Black & White Statue Background Art */}
         <div 
           className="absolute right-0 top-0 bottom-0 w-full lg:w-1/2 pointer-events-none select-none flex items-center justify-end overflow-hidden opacity-60 sm:opacity-75 lg:opacity-85 z-0"
           style={{
@@ -59,7 +57,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* SECTION 02: Editorial Thesis & Operating Mandate (Paper Section) */}
       <section className="bg-paper py-28 sm:py-36 border-b border-rule">
         <div className="container-wide">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
@@ -101,7 +98,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* SECTION 03: Primary Capabilities — Diligence & Autonomous Risk Radar (Asymmetric 7/5 Split) */}
       <section className="bg-paper py-24 sm:py-32 border-b border-rule">
         <div className="container-wide">
           <div className="mb-16">
@@ -114,7 +110,6 @@ export function Landing() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-stretch">
-            {/* Feature: Diligence Engine (7 Columns) */}
             <div className="lg:col-span-7 bg-paper-dim border border-rule p-8 sm:p-12 flex flex-col justify-between">
               <div>
                 <span className="font-body text-micro text-ink-soft block mb-3 font-medium">
@@ -142,7 +137,6 @@ export function Landing() {
               </div>
             </div>
 
-            {/* Feature: Risk Surveillance (5 Columns) */}
             <div className="lg:col-span-5 border border-rule p-8 sm:p-12 flex flex-col justify-between bg-paper">
               <div>
                 <span className="font-body text-micro text-ink-soft block mb-3 font-medium">
@@ -179,7 +173,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* SECTION 04: Primary Capabilities — Bilateral Negotiation & Portfolio Governance (Asymmetric 5/7 Split) */}
       <section className="bg-paper-dim py-24 sm:py-32 border-b border-rule">
         <div className="container-wide">
           <div className="mb-16">
@@ -192,7 +185,6 @@ export function Landing() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-stretch">
-            {/* Feature: Negotiation Workbench (5 Columns) */}
             <div className="lg:col-span-5 border border-rule p-8 sm:p-12 flex flex-col justify-between bg-paper">
               <div>
                 <span className="font-body text-micro text-ink-soft block mb-3 font-medium">
@@ -215,7 +207,6 @@ export function Landing() {
               </div>
             </div>
 
-            {/* Feature: Portfolio Health Engine (7 Columns) */}
             <div className="lg:col-span-7 bg-paper border border-rule p-8 sm:p-12 flex flex-col justify-between">
               <div>
                 <span className="font-body text-micro text-ink-soft block mb-3 font-medium">
@@ -248,7 +239,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* SECTION 05: Primary Capabilities — Audit Ledger & Regulatory Cross-Check (Asymmetric 9/3 Split) */}
       <section className="bg-paper py-24 sm:py-32 border-b border-rule">
         <div className="container-wide">
           <div className="mb-16">
@@ -261,7 +251,6 @@ export function Landing() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-            {/* 9 Columns Main Content */}
             <div className="lg:col-span-9 space-y-12">
               <div className="border border-rule p-8 sm:p-12 bg-paper-dim">
                 <span className="font-body text-micro text-ink-soft block mb-3 font-medium">
@@ -294,7 +283,6 @@ export function Landing() {
               </div>
             </div>
 
-            {/* 3 Columns Sidebar Specs */}
             <div className="lg:col-span-3 border-l border-rule pl-8 lg:pl-10 space-y-8 pt-2">
               <div>
                 <h5 className="font-body text-label text-ink font-semibold uppercase tracking-wider mb-2">
@@ -325,7 +313,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* SECTION 06: Statutory Surveillance Statement (Ink Section Pause) */}
       <section
         className="section-ink py-32 sm:py-44 border-b border-neutral-800"
         style={{
@@ -355,7 +342,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* SECTION 07: Representative Diligence Matter (Paper Section) */}
       <section className="bg-paper py-28 sm:py-36 border-b border-rule">
         <div className="container-wide">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
@@ -391,7 +377,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* SECTION 08: Recent Legal Engineering Research (Paper-Dim Section) */}
       <section className="bg-paper-dim py-28 sm:py-36 border-b border-rule">
         <div className="container-wide">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-16 gap-6">
@@ -423,7 +408,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* SECTION 09: Zero-Trust Security Guarantee & Immutable Evidence (Paper Section) */}
       <section className="bg-paper py-24 sm:py-32 border-b border-rule">
         <div className="container-wide">
           <div className="max-w-3xl">
@@ -443,7 +427,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* SECTION 10: Closing Executive Counsel Dispatch CTA (Ink Section) */}
       <section
         className="section-ink py-32 sm:py-40 text-center flex flex-col items-center justify-center"
         style={{

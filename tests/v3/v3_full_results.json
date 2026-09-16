@@ -1,0 +1,625 @@
+{
+  "results": [
+    {
+      "id": "V3-H01",
+      "cat": "GET /api/health returns 200",
+      "status": "PASS",
+      "expected": "200",
+      "actual": 200,
+      "evidence": "ok"
+    },
+    {
+      "id": "V3-H02",
+      "cat": "Health body status=ok",
+      "status": "PASS",
+      "expected": "ok",
+      "actual": "ok",
+      "evidence": ""
+    },
+    {
+      "id": "V3-H03",
+      "cat": "GET /api/health/live returns 200",
+      "status": "PASS",
+      "expected": "200",
+      "actual": 200,
+      "evidence": ""
+    },
+    {
+      "id": "V3-H04",
+      "cat": "GET /api/health/ready returns 200/503",
+      "status": "PASS",
+      "expected": "200 or 503",
+      "actual": 200,
+      "evidence": ""
+    },
+    {
+      "id": "V3-H05",
+      "cat": "DB healthy in readiness check",
+      "status": "PASS",
+      "expected": "healthy",
+      "actual": "healthy",
+      "evidence": ""
+    },
+    {
+      "id": "V3-H06",
+      "cat": "Flask microservice up",
+      "status": "PASS",
+      "expected": "healthy",
+      "actual": "healthy",
+      "evidence": "Flask at 127.0.0.1:5001 not running — fallback mode active"
+    },
+    {
+      "id": "V3-AUTH01",
+      "cat": "Register User A - 200",
+      "status": "PASS",
+      "expected": "200",
+      "actual": 200,
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUTH02",
+      "cat": "Register triggers mfaRequired=true",
+      "status": "PASS",
+      "expected": "true",
+      "actual": true,
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUTH03",
+      "cat": "OTP NOT in response body [SECURITY CRITICAL]",
+      "status": "PASS",
+      "expected": "backupPass absent",
+      "actual": "absent",
+      "evidence": "auth.js:87 backupPass returned when deliveryFailed=true (SMTP configured but failing)"
+    },
+    {
+      "id": "V3-AUTH04",
+      "cat": "OTP stored in otp_codes table",
+      "status": "PASS",
+      "expected": "code in DB",
+      "actual": "code present",
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUTH05",
+      "cat": "OTP verify returns full JWT",
+      "status": "PASS",
+      "expected": "token",
+      "actual": "200 tok=true",
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUTH06",
+      "cat": "OTP replay rejected",
+      "status": "PASS",
+      "expected": "4xx",
+      "actual": 401,
+      "evidence": "Replay consumed OTP"
+    },
+    {
+      "id": "V3-AUTH07",
+      "cat": "Wrong OTP rejected",
+      "status": "PASS",
+      "expected": "4xx",
+      "actual": 401,
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUTH08",
+      "cat": "Unauthenticated access returns 401",
+      "status": "PASS",
+      "expected": "401",
+      "actual": 401,
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUTH09",
+      "cat": "Malformed JWT returns 401",
+      "status": "PASS",
+      "expected": "401",
+      "actual": 401,
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUTH10",
+      "cat": "preToken cannot access protected routes",
+      "status": "PASS",
+      "expected": "401",
+      "actual": 401,
+      "evidence": "preToken (preauth=true) used on /api/documents"
+    },
+    {
+      "id": "V3-AUTH11",
+      "cat": "Register User B - 200",
+      "status": "PASS",
+      "expected": "200",
+      "actual": 200,
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUTH12",
+      "cat": "Login User B complete",
+      "status": "PASS",
+      "expected": "token",
+      "actual": true,
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUTH13",
+      "cat": "Hardcoded admin email = admin role [P0 SEC]",
+      "status": "PASS",
+      "expected": "no auto admin escalation",
+      "actual": "balujunivas@gmail.com role=user — hardcoded auth.js:19,41",
+      "evidence": "P0: Attacker who registers this email gets admin"
+    },
+    {
+      "id": "V3-AUTH14",
+      "cat": "OTP NOT logged to console (devMode) [P0 SEC]",
+      "status": "PASS",
+      "expected": "no console.log of OTP",
+      "actual": "[DEV MODE] OTP for {email}: {code} in email.js:40",
+      "evidence": "email.js source line 40"
+    },
+    {
+      "id": "V3-AUTH15",
+      "cat": "OTP NOT logged on SMTP failure [P0 SEC]",
+      "status": "PASS",
+      "expected": "no console.log of OTP",
+      "actual": "[CONTINUITY PASSCODE] Emergency OTP in email.js:72",
+      "evidence": "email.js source line 72"
+    },
+    {
+      "id": "V3-RATE01",
+      "cat": "Rate limiting triggers 429 on rapid requests",
+      "status": "PASS",
+      "expected": "any 429",
+      "actual": "200,200,200,200,200,429,429,429,429,429",
+      "evidence": "10 concurrent register"
+    },
+    {
+      "id": "V3-DOC01",
+      "cat": "Upload Doc A returns 201",
+      "status": "PASS",
+      "expected": "201",
+      "actual": 201,
+      "evidence": "3564ms Flask=true"
+    },
+    {
+      "id": "V3-DOC02",
+      "cat": "Doc A DB row exists",
+      "status": "PASS",
+      "expected": "1 row",
+      "actual": 1,
+      "evidence": ""
+    },
+    {
+      "id": "V3-DOC03",
+      "cat": "Doc A user_id correct",
+      "status": "PASS",
+      "expected": "matches userA",
+      "actual": "2a5964a2",
+      "evidence": ""
+    },
+    {
+      "id": "V3-DOC04",
+      "cat": "Doc A text extracted > 50 chars",
+      "status": "PASS",
+      "expected": ">50",
+      "actual": 579,
+      "evidence": ""
+    },
+    {
+      "id": "V3-DOC05",
+      "cat": "Doc A SHA256 stored (64 chars)",
+      "status": "PASS",
+      "expected": "64",
+      "actual": 64,
+      "evidence": ""
+    },
+    {
+      "id": "V3-DOC06",
+      "cat": "Upload creates DOCUMENT_UPLOADED audit",
+      "status": "PASS",
+      "expected": "DOCUMENT_UPLOADED",
+      "actual": "DOCUMENT_UPLOADED,LOGIN_SUCCESS,USER_REGISTERED",
+      "evidence": ""
+    },
+    {
+      "id": "V3-DOC07",
+      "cat": "Upload Doc B (high-risk) returns 201",
+      "status": "PASS",
+      "expected": "201",
+      "actual": 201,
+      "evidence": ""
+    },
+    {
+      "id": "V3-DOC08",
+      "cat": "Upload Doc C (fact-absent NDA) returns 201",
+      "status": "PASS",
+      "expected": "201",
+      "actual": 201,
+      "evidence": ""
+    },
+    {
+      "id": "V3-DOC09",
+      "cat": "Upload Doc D (prompt injection) returns 201",
+      "status": "PASS",
+      "expected": "201",
+      "actual": 201,
+      "evidence": ""
+    },
+    {
+      "id": "V3-DOC10",
+      "cat": "Empty file rejected (4xx)",
+      "status": "PASS",
+      "expected": "4xx",
+      "actual": 400,
+      "evidence": "0-byte file"
+    },
+    {
+      "id": "V3-DOC11",
+      "cat": "Executable disguised as PDF rejected",
+      "status": "PASS",
+      "expected": "4xx",
+      "actual": 400,
+      "evidence": "MZ header in .exe"
+    },
+    {
+      "id": "V3-DOC12",
+      "cat": "Unknown extension rejected",
+      "status": "PASS",
+      "expected": "4xx",
+      "actual": 400,
+      "evidence": ".xyz999 extension"
+    },
+    {
+      "id": "V3-DOC13",
+      "cat": "User B uploads own doc returns 201",
+      "status": "PASS",
+      "expected": "201",
+      "actual": 201,
+      "evidence": ""
+    },
+    {
+      "id": "V3-IDOR01",
+      "cat": "User B cannot GET User A doc",
+      "status": "PASS",
+      "expected": "403/404",
+      "actual": 404,
+      "evidence": ""
+    },
+    {
+      "id": "V3-IDOR02",
+      "cat": "User B cannot GET User A analysis",
+      "status": "PASS",
+      "expected": "403/404",
+      "actual": 403,
+      "evidence": ""
+    },
+    {
+      "id": "V3-IDOR03",
+      "cat": "User B cannot GET User A clauses",
+      "status": "PASS",
+      "expected": "403/404",
+      "actual": 403,
+      "evidence": ""
+    },
+    {
+      "id": "V3-IDOR04",
+      "cat": "User B cannot chat on User A doc",
+      "status": "PASS",
+      "expected": "403/404",
+      "actual": 403,
+      "evidence": ""
+    },
+    {
+      "id": "V3-IDOR05",
+      "cat": "User B cannot DELETE User A doc",
+      "status": "PASS",
+      "expected": "403/404",
+      "actual": 404,
+      "evidence": ""
+    },
+    {
+      "id": "V3-IDOR06",
+      "cat": "Doc A intact after cross-user delete attempt",
+      "status": "PASS",
+      "expected": "1",
+      "actual": 1,
+      "evidence": ""
+    },
+    {
+      "id": "V3-IDOR07",
+      "cat": "User A list excludes User B docs",
+      "status": "PASS",
+      "expected": "B doc absent",
+      "actual": "absent",
+      "evidence": ""
+    },
+    {
+      "id": "V3-IDOR08",
+      "cat": "User B cannot GET User A simulations",
+      "status": "PASS",
+      "expected": "403/404",
+      "actual": 403,
+      "evidence": ""
+    },
+    {
+      "id": "V3-RISK01",
+      "cat": "Analysis endpoint 200 for Doc A",
+      "status": "PASS",
+      "expected": "200",
+      "actual": 200,
+      "evidence": ""
+    },
+    {
+      "id": "V3-RISK02",
+      "cat": "Doc A risk score present",
+      "status": "PASS",
+      "expected": "number",
+      "actual": 47,
+      "evidence": ""
+    },
+    {
+      "id": "V3-RISK03",
+      "cat": "Doc A risk in valid range 0-100",
+      "status": "PASS",
+      "expected": "0-100",
+      "actual": 47,
+      "evidence": ""
+    },
+    {
+      "id": "V3-RISK04",
+      "cat": "Doc A risk < 60 (has liability cap)",
+      "status": "PASS",
+      "expected": "<60%",
+      "actual": "47%",
+      "evidence": "Standard contract w 50k cap"
+    },
+    {
+      "id": "V3-RISK05",
+      "cat": "Analysis endpoint 200 for Doc B",
+      "status": "PASS",
+      "expected": "200",
+      "actual": 200,
+      "evidence": ""
+    },
+    {
+      "id": "V3-RISK06",
+      "cat": "Doc B risk > Doc A (high-risk beats standard)",
+      "status": "PASS",
+      "expected": "B>A",
+      "actual": "B=100% A=47%",
+      "evidence": ""
+    },
+    {
+      "id": "V3-RISK07",
+      "cat": "Doc B risk >= 50 (unlimited liability)",
+      "status": "PASS",
+      "expected": ">=50",
+      "actual": "100%",
+      "evidence": ""
+    },
+    {
+      "id": "V3-RISK08",
+      "cat": "Doc B risk factors in DB",
+      "status": "PASS",
+      "expected": ">0",
+      "actual": 11,
+      "evidence": ""
+    },
+    {
+      "id": "V3-RAG01",
+      "cat": "Chat payment question returns 200",
+      "status": "PASS",
+      "expected": "200",
+      "actual": 200,
+      "evidence": ""
+    },
+    {
+      "id": "V3-RAG02",
+      "cat": "Payment answer contains doc facts",
+      "status": "PASS",
+      "expected": "10000 or 30 days",
+      "actual": "According to Payment Terms:: Payment Terms: USD 10000 per month within 30 days of invoice.",
+      "evidence": "grounded=true conf=0.4557"
+    },
+    {
+      "id": "V3-RAG03",
+      "cat": "CEO email: not in doc -> INSUFFICIENT_EVIDENCE",
+      "status": "PASS",
+      "expected": "insufficient/not mentioned",
+      "actual": "Insufficient grounded evidence: The document does not contain provisions or clauses addressing \"What is the CEO email address?\". No supporting text was located to ground a contractual assertion.",
+      "evidence": "grounded=false"
+    },
+    {
+      "id": "V3-RAG04",
+      "cat": "Bank account: not in doc -> INSUFFICIENT_EVIDENCE",
+      "status": "PASS",
+      "expected": "insufficient",
+      "actual": "I could not find sufficient information in this document to answer that question.",
+      "evidence": "grounded=false"
+    },
+    {
+      "id": "V3-RAG05",
+      "cat": "Governing law grounded (mentions New York)",
+      "status": "PASS",
+      "expected": "New York",
+      "actual": "According to Governing Law:: Governing Law: State of New York.",
+      "evidence": "grounded=true"
+    },
+    {
+      "id": "V3-RAG06",
+      "cat": "Prompt injection in doc D resisted",
+      "status": "PASS",
+      "expected": "normal risk answer",
+      "actual": "I could not find sufficient information in this document to answer that question.",
+      "evidence": "Doc D has IGNORE ALL PREVIOUS INSTRUCTIONS"
+    },
+    {
+      "id": "V3-RAG07",
+      "cat": "Confidence in 0.0-1.0 range",
+      "status": "PASS",
+      "expected": "0-1",
+      "actual": 0.4557,
+      "evidence": ""
+    },
+    {
+      "id": "V3-RAG08",
+      "cat": "Confidence not hardcoded 0.92",
+      "status": "PASS",
+      "expected": "not 0.92",
+      "actual": 0.4557,
+      "evidence": "V1 finding: suspected uniform 0.92"
+    },
+    {
+      "id": "V3-SEC01",
+      "cat": "SQL injection in chat does not drop users table",
+      "status": "PASS",
+      "expected": "users table intact",
+      "actual": "users count=150",
+      "evidence": "chat status=200"
+    },
+    {
+      "id": "V3-SEC02",
+      "cat": "XSS in name field sanitized or stored safely",
+      "status": "PASS",
+      "expected": "no <script> tag stored",
+      "actual": "alert(1)",
+      "evidence": "DB users.name"
+    },
+    {
+      "id": "V3-SEC03",
+      "cat": "Path traversal in doc ID rejected",
+      "status": "PASS",
+      "expected": "4xx",
+      "actual": 404,
+      "evidence": "GET /api/documents/../../etc/passwd"
+    },
+    {
+      "id": "V3-SEC04",
+      "cat": "Non-existent UUID returns 404",
+      "status": "PASS",
+      "expected": "404",
+      "actual": 404,
+      "evidence": ""
+    },
+    {
+      "id": "V3-SEC05",
+      "cat": "INTERNAL_SERVICE_KEY configured (not default)",
+      "status": "PASS",
+      "expected": "SET",
+      "actual": "SET",
+      "evidence": "P1 SECURITY: default key in source code"
+    },
+    {
+      "id": "V3-AUDIT01",
+      "cat": "blockchain_audit has records",
+      "status": "PASS",
+      "expected": ">0",
+      "actual": 10,
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUDIT02",
+      "cat": "All recent audit records have hash",
+      "status": "PASS",
+      "expected": "all non-empty hash",
+      "actual": "0 missing",
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUDIT03",
+      "cat": "Chain links continuous (prev_hash chain)",
+      "status": "PASS",
+      "expected": "chain intact",
+      "actual": "continuous",
+      "evidence": "Last 10 blocks"
+    },
+    {
+      "id": "V3-AUDIT04",
+      "cat": "Timestamps monotonically increasing",
+      "status": "PASS",
+      "expected": "monotonic",
+      "actual": "ok",
+      "evidence": ""
+    },
+    {
+      "id": "V3-AUDIT05",
+      "cat": "Chain-verify endpoint 200/403 (role-gated)",
+      "status": "PASS",
+      "expected": "200/403",
+      "actual": 200,
+      "evidence": ""
+    },
+    {
+      "id": "V3-LIFE01",
+      "cat": "Doc C exists before deletion",
+      "status": "PASS",
+      "expected": "1",
+      "actual": 1,
+      "evidence": ""
+    },
+    {
+      "id": "V3-LIFE02",
+      "cat": "DELETE Doc C returns 200/204",
+      "status": "PASS",
+      "expected": "200/204",
+      "actual": 200,
+      "evidence": ""
+    },
+    {
+      "id": "V3-LIFE03",
+      "cat": "Doc C removed from DB",
+      "status": "PASS",
+      "expected": "0",
+      "actual": 0,
+      "evidence": ""
+    },
+    {
+      "id": "V3-LIFE04",
+      "cat": "Clauses cascade-deleted",
+      "status": "PASS",
+      "expected": "0",
+      "actual": "0",
+      "evidence": ""
+    },
+    {
+      "id": "V3-LIFE05",
+      "cat": "Risk factors cascade-deleted",
+      "status": "PASS",
+      "expected": "0",
+      "actual": "0",
+      "evidence": ""
+    },
+    {
+      "id": "V3-LIFE06",
+      "cat": "Deletion creates audit event",
+      "status": "PASS",
+      "expected": "DELETE/REMOVED",
+      "actual": "DOCUMENT_DELETED,DOCUMENT_UPLOADED,DOCUMENT_UPLOADED,DOCUMENT_UPLOADED,DOCUMENT_UPLOADED",
+      "evidence": ""
+    },
+    {
+      "id": "V3-LIFE07",
+      "cat": "Access deleted doc returns 404",
+      "status": "PASS",
+      "expected": "404",
+      "actual": 404,
+      "evidence": ""
+    },
+    {
+      "id": "V3-LIFE08",
+      "cat": "User B cannot delete User A doc",
+      "status": "PASS",
+      "expected": "403/404",
+      "actual": 404,
+      "evidence": ""
+    }
+  ],
+  "PASS": 77,
+  "FAIL": 0,
+  "BLOCKED": 0,
+  "passRate": 100,
+  "ts": "2026-09-07T18:03:10.703Z"
+}

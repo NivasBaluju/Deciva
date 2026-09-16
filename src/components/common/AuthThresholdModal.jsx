@@ -3,15 +3,9 @@ import { ThinkingOrb } from 'thinking-orbs';
 import { IconCheckmark } from '../ui/Icons';
 import { useReducedMotion } from '../motion/useReducedMotion';
 
-/**
- * AuthThresholdModal — The Secure Threshold Transition
- * Connects real authentication states to an authoritative transition:
- * OTP Submitted -> Token Validated -> Identity Confirmed -> Workspace Initialized -> Cockpit Unveiled.
- * Avoids artificial delays: smoothly transitions in 700-1100ms when API succeeds.
- */
 export function AuthThresholdModal({
   isOpen = false,
-  status = 'validating', // 'validating' | 'confirmed' | 'initializing' | 'complete'
+  status = 'validating',
   email = '',
   onComplete
 }) {
@@ -25,7 +19,6 @@ export function AuthThresholdModal({
     }
 
     if (reduced) {
-      // Immediate completion on reduced motion
       if (status === 'confirmed' || status === 'initializing') {
         const timer = setTimeout(() => {
           if (onComplete) onComplete();
@@ -57,7 +50,6 @@ export function AuthThresholdModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#0A0A0A] text-[#FAF9F6]"
     >
       <div className="max-w-md w-full px-8 py-12 text-center flex flex-col items-center">
-        {/* ThinkingOrb or Checkmark based on step */}
         <div className="mb-8 relative flex items-center justify-center w-24 h-24">
           {internalStep < 2 ? (
             <ThinkingOrb state="working" size={64} />
@@ -70,7 +62,6 @@ export function AuthThresholdModal({
           )}
         </div>
 
-        {/* Dynamic Telemetry Status */}
         <h3 className="font-display text-2xl font-medium tracking-tight mb-2 text-white">
           {internalStep === 1 && 'Verifying Authentication Pass...'}
           {internalStep === 2 && 'Identity Confirmed'}
@@ -83,7 +74,6 @@ export function AuthThresholdModal({
           {internalStep >= 3 && 'Loading contract portfolio and governance cockpit'}
         </p>
 
-        {/* Structural progress hairline */}
         <div className="w-48 h-px bg-neutral-800 mt-8 relative overflow-hidden">
           <div
             className="absolute left-0 top-0 h-full bg-white transition-all duration-base ease-out-expo"

@@ -54,7 +54,6 @@ export const PortfolioCompliancePanel = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* 1. Header Card */}
       <div
         className="card"
         style={{
@@ -107,10 +106,8 @@ export const PortfolioCompliancePanel = () => {
         </button>
       </div>
 
-      {/* 2. Portfolio Evidence Integrity Card */}
       <EvidenceIntegrityCard manifest={manifest} evidence={evidence} />
 
-      {/* 3. Portfolio Key Stats Summary */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
         <div className="card" style={{ padding: '16px', background: 'rgba(15, 23, 42, 0.5)' }}>
           <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase' }}>Portfolio Health</span>
@@ -150,12 +147,10 @@ export const PortfolioCompliancePanel = () => {
         </div>
       </div>
 
-      {/* 4. Portfolio Export Downloads Grid */}
       <h4 style={{ margin: '8px 0 0 0', fontSize: '14px', fontWeight: 600, color: '#E2E8F0' }}>
         Portfolio Audit Export Artifacts
       </h4>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
-        {/* PDF Card */}
         <div
           className="card"
           style={{
@@ -186,7 +181,6 @@ export const PortfolioCompliancePanel = () => {
           </button>
         </div>
 
-        {/* JSON Card */}
         <div
           className="card"
           style={{
@@ -225,7 +219,6 @@ export const PortfolioCompliancePanel = () => {
           </button>
         </div>
 
-        {/* Action Queue CSV */}
         <div
           className="card"
           style={{
@@ -264,7 +257,6 @@ export const PortfolioCompliancePanel = () => {
           </button>
         </div>
 
-        {/* Contracts Rankings CSV */}
         <div
           className="card"
           style={{

@@ -21,8 +21,8 @@ export const SecuritySignalsStrip = ({ zt, isAuditValid, activeSessionsCount }) 
       icon: '✓'
     },
     {
-      id: 'merkle',
-      label: isAuditValid ? 'Merkle Chain Intact' : 'Ledger Anomaly',
+      id: 'ledger',
+      label: isAuditValid ? 'Cryptographic Chain Intact' : 'Ledger Anomaly',
       status: isAuditValid ? 'ok' : 'danger',
       icon: isAuditValid ? '✓' : '⚠'
     },

@@ -32,7 +32,6 @@ export const IntelligenceShowcase = () => {
       transition={{ duration: 0.35, delay: 0.18, ease: EASE_OUT }}
       {...cardHoverMotion}
     >
-      {/* Apple Display Device Top Bar */}
       <div
         style={{
           display: 'flex',
@@ -63,7 +62,6 @@ export const IntelligenceShowcase = () => {
         </div>
       </div>
 
-      {/* Apple-Style Segmented Control Pills */}
       <div
         style={{
           padding: '12px 20px',
@@ -101,7 +99,6 @@ export const IntelligenceShowcase = () => {
         </div>
       </div>
 
-      {/* Living Document Surface */}
       <div style={{ padding: '28px 32px' }}>
         <AnimatePresence mode="wait">
           {activeTab === 'clauses' && (

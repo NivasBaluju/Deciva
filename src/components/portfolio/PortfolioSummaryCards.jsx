@@ -39,7 +39,6 @@ export const PortfolioSummaryCards = ({ summary }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Portfolio Health Header Banner */}
       <div
         className="card bg-paper-dim border border-rule"
         style={{ padding: '24px' }}
@@ -48,7 +47,7 @@ export const PortfolioSummaryCards = ({ summary }) => {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="font-body text-micro text-neutral-500 uppercase tracking-wider block">
-                [PORTFOLIO GOVERNANCE]
+                Portfolio Governance
               </span>
               <span className="font-mono text-micro text-ink bg-paper border border-rule px-2 py-0.5 select-none">
                 v{operationalHealth?.formulaVersion || '1.0'}
@@ -72,7 +71,6 @@ export const PortfolioSummaryCards = ({ summary }) => {
           </div>
         </div>
 
-        {/* Penalty details breakdown */}
         {operationalHealth?.penalties && (
           <div className="mt-4 pt-4 border-t border-rule flex flex-wrap gap-6 font-body text-body-sm text-ink-soft">
             <div>
@@ -99,7 +97,6 @@ export const PortfolioSummaryCards = ({ summary }) => {
         )}
       </div>
 
-      {/* 6 Key Performance Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <MetricCard
           icon={<Icon.document />}

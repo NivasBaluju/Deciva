@@ -53,10 +53,10 @@ export const LedgerExplorer = ({
         <div>
           <div className="card-title" style={{ marginBottom: '2px' }}>
             <span className="dot dot-emerald" />
-            Immutable Blockchain Audit Ledger
+            Tamper-Evident Cryptographic Audit Ledger
           </div>
           <p className="text-lo small" style={{ margin: 0 }}>
-            Cryptographically sealed SHA-256 Merkle chain providing legal non-repudiation.
+            Cryptographically sealed SHA-256 hash chain providing legal non-repudiation.
           </p>
         </div>
 
@@ -72,7 +72,6 @@ export const LedgerExplorer = ({
         </div>
       </div>
 
-      {/* Verification Notification Banner */}
       <AnimatePresence>
         {chainVerifyResult && (
           <motion.div
@@ -97,7 +96,6 @@ export const LedgerExplorer = ({
         )}
       </AnimatePresence>
 
-      {/* Filter Categories */}
       <div className="ledger-filter-row">
         <div className="session-filter-tabs">
           <button
@@ -121,12 +119,11 @@ export const LedgerExplorer = ({
         </div>
       </div>
 
-      {/* Ledger Block List */}
       <div className="ledger-block-table">
         <div className="ledger-table-header">
           <span>BLOCK HEIGHT</span>
           <span>ACTION EVENT</span>
-          <span>MERKLE HASH (SHA-256)</span>
+          <span>LEDGER HASH (SHA-256)</span>
           <span>TIMESTAMP</span>
         </div>
 

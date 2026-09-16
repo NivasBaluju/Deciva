@@ -66,7 +66,6 @@ export const ComplianceTab = ({ doc, refreshTrigger }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Compliance Header Gauge */}
       <div className="card" style={{ padding: '24px' }}>
         <div className="flex-between">
           <div>
@@ -87,7 +86,6 @@ export const ComplianceTab = ({ doc, refreshTrigger }) => {
         </div>
       </div>
 
-      {/* Checklist Grid */}
       <div className="card">
         <div className="card-title mb-16">
           <span className="dot" />

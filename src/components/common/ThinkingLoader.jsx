@@ -34,11 +34,6 @@ function SafeOrb({ state = 'working', size = 64 }) {
   }
 }
 
-/**
- * ThinkingLoader — Universal Waiting & Intelligence Processing State
- * Incorporates ThinkingOrb from 'thinking-orbs' per executive specification.
- * Safe against invalid sizes/states.
- */
 export function ThinkingLoader({
   state = 'working',
   size = 64,

@@ -33,7 +33,6 @@ const IntegrationHealthService = {
       ? { apiKey: CredentialVaultService.retrieveSecret(intg.credentials_reference) }
       : {};
 
-    // 1. Live reachability check
     let reachability = { reachable: true, authenticated: true, latency_ms: 10 };
     try {
       reachability = await provider.healthCheck(config, creds);
@@ -41,7 +40,6 @@ const IntegrationHealthService = {
       reachability = { reachable: false, authenticated: false, error: err.message };
     }
 
-    // 2. Query sync runs history
     const { rows: syncRuns } = await db.query(
       `SELECT status, completed_at FROM integration_sync_runs
        WHERE integration_id = $1 ORDER BY started_at DESC LIMIT 10`,
@@ -57,7 +55,6 @@ const IntegrationHealthService = {
       else break;
     }
 
-    // 3. Outbox event metrics
     const { rows: outboxRows } = await db.query(
       `SELECT status, COUNT(*)::int AS count
        FROM integration_event_outbox
@@ -95,7 +92,6 @@ const IntegrationHealthService = {
    * Generates aggregate integration metrics for the tenant admin dashboard.
    */
   getTenantOverview: async (tenantId) => {
-    // 1. Integration counts by status
     const { rows: intgSummary } = await db.query(
       `SELECT
          COUNT(*)::int AS total,
@@ -107,7 +103,6 @@ const IntegrationHealthService = {
       [tenantId]
     );
 
-    // 2. Sync run records aggregated
     const { rows: syncSummary } = await db.query(
       `SELECT
          COALESCE(SUM(records_created), 0)::int AS imported,
@@ -119,7 +114,6 @@ const IntegrationHealthService = {
       [tenantId]
     );
 
-    // 3. Outbox delivery summary
     const { rows: outboxSummary } = await db.query(
       `SELECT
          COUNT(*) FILTER (WHERE status = 'DELIVERED')::int AS delivered,
@@ -130,7 +124,6 @@ const IntegrationHealthService = {
       [tenantId]
     );
 
-    // 4. Mapped objects
     const { rows: mapSummary } = await db.query(
       `SELECT COUNT(*)::int AS total_mapped
        FROM integration_object_mappings

@@ -25,6 +25,7 @@ const Api = (() => {
       res = await fetch(url, {
         method,
         headers,
+        credentials: 'include',
         body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
         signal: controller.signal
       });

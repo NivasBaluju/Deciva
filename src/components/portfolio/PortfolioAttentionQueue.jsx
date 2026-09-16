@@ -44,7 +44,6 @@ export const PortfolioAttentionQueue = () => {
     fetchAttentionQueue();
   }, [page, filterReason, filterPriority]);
 
-  // Clear selection when items change (page/filter change)
   useEffect(() => { setSelectedIds(new Set()); }, [items]);
 
   const handleItemClick = (item) => {
@@ -80,7 +79,6 @@ export const PortfolioAttentionQueue = () => {
 
   return (
     <div className="card" style={{ padding: '24px' }}>
-      {/* Section Header */}
       <div className="flex-between" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
         <div>
           <div className="flex gap-8" style={{ alignItems: 'center' }}>
@@ -107,7 +105,6 @@ export const PortfolioAttentionQueue = () => {
           </p>
         </div>
 
-        {/* Filter Controls */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <select
             className="input-select input-sm"
@@ -137,7 +134,6 @@ export const PortfolioAttentionQueue = () => {
         </div>
       </div>
 
-      {/* Phase 8.0: Bulk Selection Toolbar */}
       {items.length > 0 && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: '10px',
@@ -183,7 +179,6 @@ export const PortfolioAttentionQueue = () => {
         </div>
       )}
 
-      {/* Queue Table */}
       {loading ? (
         <div style={{ padding: '20px 0' }}>
           <SkeletonLoader.Card count={3} height="64px" />
@@ -234,9 +229,7 @@ export const PortfolioAttentionQueue = () => {
                   e.currentTarget.style.background = item.isEscalated ? 'linear-gradient(90deg, rgba(239, 68, 68, 0.08), rgba(255, 255, 255, 0.02))' : 'rgba(255, 255, 255, 0.02)';
                 }}
               >
-                {/* Left side: Checkbox + Score + Title + Document */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flex: 1 }}>
-                  {/* Checkbox */}
                   <input
                     type="checkbox"
                     checked={selectedIds.has(item.actionId)}
@@ -244,7 +237,6 @@ export const PortfolioAttentionQueue = () => {
                     onChange={() => {}}
                     style={{ cursor: 'pointer', flexShrink: 0, width: '16px', height: '16px', accentColor: '#6366F1' }}
                   />
-                  {/* Attention Score Badge */}
                   <div
                     style={{
                       display: 'flex',
@@ -266,13 +258,11 @@ export const PortfolioAttentionQueue = () => {
                     </span>
                   </div>
 
-                  {/* Title & Metadata */}
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>
                         {item.title}
                       </span>
-                      {/* Reason Pills */}
                       {item.attentionReasons.map((r) => {
                         const style = getReasonBadge(r);
                         return (
@@ -308,7 +298,6 @@ export const PortfolioAttentionQueue = () => {
                   </div>
                 </div>
 
-                {/* Right side: Priority + Status + Action Arrow */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: '12px', fontWeight: 700, color: item.priorityScore >= 80 ? '#EF4444' : item.priorityScore >= 70 ? '#F59E0B' : '#60A5FA' }}>
@@ -324,7 +313,6 @@ export const PortfolioAttentionQueue = () => {
             ))}
           </AnimatePresence>
 
-          {/* Pagination */}
           {total > limit && (
             <div className="flex-between mt-16" style={{ alignItems: 'center' }}>
               <span className="text-muted small">
@@ -351,7 +339,6 @@ export const PortfolioAttentionQueue = () => {
         </div>
       )}
 
-      {/* Phase 8.0: Bulk Operation Modal */}
       <AnimatePresence>
         {showBulkModal && (
           <BulkOperationModal

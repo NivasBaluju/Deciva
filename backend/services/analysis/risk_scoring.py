@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 HIGH_RISK_PATTERNS = [
     {
-        "pattern": r"(unlimited\s+liability|no\s+cap\s+on\s+liability)",
+        "pattern": r"(unlimited\s+liability|no\s+cap\s+on\s+liability|liability\s+(?:is\s+)?unlimited)",
         "type": "CONFIRMED_HAZARD_UNLIMITED_LIABILITY",
         "severity": "HIGH",
         "points": 20,
@@ -24,18 +24,25 @@ HIGH_RISK_PATTERNS = [
         "reason": "Unilateral modification rights granting one party unchecked discretion."
     },
     {
-        "pattern": r"(non-refundable|waives?\s+all\s+(?:rights|claims|warranties))",
+        "pattern": r"(non-refundable|waives?\s+all\s+(?:rights|claims|warranties)|non-?compete.{0,30}(?:years|globally))",
         "type": "CONFIRMED_HAZARD_RIGHTS_WAIVER",
         "severity": "MEDIUM",
         "points": 10,
-        "reason": "Broad waiver of claims or statutory warranty protections."
+        "reason": "Broad waiver of claims, onerous non-compete, or statutory warranty protections."
     },
     {
-        "pattern": r"(immediate\s+termination\s+without\s+(?:cause|notice))",
+        "pattern": r"(immediate\s+termination|terminat(?:es?|ion)\s+immediately|without\s+(?:cause|notice))",
         "type": "CONFIRMED_HAZARD_ARBITRARY_TERMINATION",
         "severity": "HIGH",
         "points": 15,
         "reason": "Immediate termination without cure period or required default notice."
+    },
+    {
+        "pattern": r"(indemnif(?:y|ies|ication)\s+.*?\bwithout\s+limitation|all\s+claims\s+without\s+limitation)",
+        "type": "CONFIRMED_HAZARD_UNLIMITED_INDEMNITY",
+        "severity": "HIGH",
+        "points": 20,
+        "reason": "Uncapped indemnification obligations exposing organization to unlimited third-party claims."
     }
 ]
 
@@ -51,7 +58,6 @@ def calculate_document_risk(
     hazard_points = 0
     omission_points = 0
 
-    # 1. Evaluate Explicit Textual Hazards (Confirmed Toxic Terms)
     lower_text = (full_text or "").lower()
     for hazard in HIGH_RISK_PATTERNS:
         if re.search(hazard["pattern"], lower_text, re.IGNORECASE):
@@ -64,7 +70,6 @@ def calculate_document_risk(
             })
             hazard_points += hazard["points"]
 
-    # 2. Evaluate Potential Clause Omissions (Calibrated by Severity)
     for missing in missing_clauses_info.get("missing", []):
         risk_factors.append({
             "riskType": f"OMISSION_{missing['type']}",
@@ -75,7 +80,6 @@ def calculate_document_risk(
         })
         omission_points += missing["riskPoints"]
 
-    # 3. Weighted Risk Calculation:
     # Confirmed textual hazards carry 100% weight, while unverified omissions carry a moderated ceiling
     moderated_omissions = min(35, omission_points)
     total_raw_points = hazard_points + moderated_omissions

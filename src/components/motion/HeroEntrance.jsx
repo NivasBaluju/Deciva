@@ -2,15 +2,6 @@ import React, { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
 import { useReducedMotion } from './useReducedMotion';
 
-/**
- * HeroEntrance — Part 6.1
- * The single automatic entrance sequence permitted on the homepage.
- * 0ms: headline hidden behind redaction bar
- * 200ms: bar lifts right-to-left via scaleX over 700ms (--ease-redact)
- * 900ms: sub-headline fades up 8px
- * 1100ms: CTAs fade in with 4px settle
- * 1400ms: sequence complete
- */
 export function HeroEntrance({ headline, subheadline, children }) {
   const containerRef = useRef(null);
   const barRef = useRef(null);
@@ -36,17 +27,15 @@ export function HeroEntrance({ headline, subheadline, children }) {
 
     const tl = gsap.timeline({ defaults: { ease: 'cubic-bezier(0.16, 1, 0.3, 1)' } });
 
-    // Initial states
     gsap.set(barRef.current, { scaleX: 1, transformOrigin: 'right' });
     gsap.set(subRef.current, { opacity: 0, y: 8 });
     gsap.set(ctaRef.current, { opacity: 0, y: 4 });
 
-    // Timeline choreography
     tl.to(barRef.current, {
       scaleX: 0,
       duration: 0.7,
-      ease: 'cubic-bezier(0.83, 0, 0.17, 1)', // --ease-redact
-      delay: 0.2, // starts at 200ms
+      ease: 'cubic-bezier(0.83, 0, 0.17, 1)',
+      delay: 0.2,
       onComplete: () => {
         if (barRef.current) barRef.current.style.display = 'none';
       }
@@ -55,14 +44,14 @@ export function HeroEntrance({ headline, subheadline, children }) {
       opacity: 1,
       y: 0,
       duration: 0.4,
-      ease: 'cubic-bezier(0.16, 1, 0.3, 1)' // --ease-out-expo
-    }, 0.9) // starts at 900ms
+      ease: 'cubic-bezier(0.16, 1, 0.3, 1)'
+    }, 0.9)
     .to(ctaRef.current, {
       opacity: 1,
       y: 0,
       duration: 0.24,
       ease: 'cubic-bezier(0.16, 1, 0.3, 1)'
-    }, 1.1); // starts at 1100ms
+    }, 1.1);
 
     return () => {
       tl.kill();

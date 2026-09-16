@@ -20,7 +20,6 @@ async function evaluateDocumentEscalations(documentId, user) {
     return { errorStatus: 400, errorMessage: 'Document ID is required' };
   }
 
-  // 1. Authorize document access
   const { rows: docRows } = await db.query(
     'SELECT id, user_id FROM documents WHERE id = $1',
     [documentId]
@@ -39,7 +38,6 @@ async function evaluateDocumentEscalations(documentId, user) {
   try {
     await client.query('BEGIN');
 
-    // 2. Fetch active actions
     const { rows: actions } = await client.query(
       `SELECT a.id, a.document_id, a.source_action_id, a.title, a.category,
               a.priority_score, a.status, a.owner_id, a.due_date,
@@ -181,7 +179,6 @@ async function getExecutiveAttentionQueue(documentId, user) {
     return { errorStatus: 400, errorMessage: 'Document ID is required' };
   }
 
-  // 1. Authorize document access
   const { rows: docRows } = await db.query(
     'SELECT id, user_id FROM documents WHERE id = $1',
     [documentId]

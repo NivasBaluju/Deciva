@@ -68,7 +68,6 @@ export const AdminWatchtower = () => {
 
   return (
     <div className="admin-watchtower-wrapper mt-24">
-      {/* Watchtower Header Banner */}
       <div className="admin-watchtower-header">
         <div className="flex-between" style={{ alignItems: 'flex-start' }}>
           <div>
@@ -76,7 +75,6 @@ export const AdminWatchtower = () => {
               <span className="badge badge-gold" style={{ fontSize: '10px', padding: '3px 8px' }}>
                 ADMIN SPECIAL PRIVILEGE
               </span>
-              <span className="mono text-lo small">[GLOBAL_SECURITY_WATCHTOWER]</span>
             </div>
             <h2 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--ink)', margin: '6px 0 2px' }}>
               Risky Users & Threat Radar
@@ -95,7 +93,6 @@ export const AdminWatchtower = () => {
           </motion.button>
         </div>
 
-        {/* Global Telemetry Strip */}
         <div className="admin-telemetry-grid mt-16">
           <div className="admin-telemetry-item">
             <span className="telemetry-label">Total Users</span>
@@ -116,15 +113,14 @@ export const AdminWatchtower = () => {
             </strong>
           </div>
           <div className="admin-telemetry-item">
-            <span className="telemetry-label">Audit Blockchain</span>
+            <span className="telemetry-label">Cryptographic Ledger</span>
             <strong className="telemetry-val" style={{ color: '#10B981' }}>
-              {overview?.blockchainAudit?.valid ? '✓ Verified' : '⚠ Anomaly'}
+              {(overview?.cryptographicAudit?.valid ?? overview?.blockchainAudit?.valid) ? '✓ Verified' : '⚠ Anomaly'}
             </strong>
           </div>
         </div>
       </div>
 
-      {/* Risky Users Table Card */}
       <div className="admin-users-card mt-16">
         <div className="admin-users-header">
           <div className="admin-filter-pills">

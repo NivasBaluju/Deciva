@@ -1,10 +1,6 @@
 import React from 'react';
 import Breadcrumb from '../components/ui/Breadcrumb';
 
-/**
- * Terms of Use — Part 10.10
- * Authoritative document-style legal page.
- */
 export function Terms() {
   return (
     <div className="w-full bg-paper py-20 sm:py-28">

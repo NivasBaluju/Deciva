@@ -1,6 +1,6 @@
 /**
  * server/services/featureFlagService.js
- * Component 24: Feature Flag Safety & Governance
+ * Feature Flag Safety & Governance
  * Deterministic, auditable, tenant-aware feature flag service with safe defaults.
  * Guarantees security-critical authorization never relies on client-side flags alone.
  */

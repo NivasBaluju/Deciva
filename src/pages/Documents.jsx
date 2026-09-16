@@ -138,7 +138,6 @@ export const Documents = () => {
         </div>
       </div>
 
-      {/* STATE 1: LOADING */}
       {loading && (
         <div>
           <div className="flex-between mb-16">
@@ -148,7 +147,6 @@ export const Documents = () => {
         </div>
       )}
 
-      {/* STATE 2: ERROR */}
       {!loading && error && (
         <div className="card" style={{ borderColor: 'var(--red)', background: '#FEF2F2', padding: '24px', textAlign: 'center' }}>
           <div style={{ fontSize: '28px', marginBottom: '8px' }}>⚠</div>
@@ -160,7 +158,6 @@ export const Documents = () => {
         </div>
       )}
 
-      {/* STATE 3: EMPTY */}
       {!loading && !error && documents.length === 0 && (
         <div className="card">
           <EmptyState
@@ -176,7 +173,6 @@ export const Documents = () => {
         </div>
       )}
 
-      {/* STATE 4: SUCCESS (Real PostgreSQL Document List) */}
       {!loading && !error && documents.length > 0 && (
         <div className="card" style={{ padding: '8px' }}>
           {documents.map((d) => {
@@ -248,7 +244,6 @@ export const Documents = () => {
         </div>
       )}
 
-      {/* Comparison Drawer for 2+ documents */}
       {!loading && !error && documents.length >= 2 && (
         <div className="card mt-24">
           <div className="card-title">

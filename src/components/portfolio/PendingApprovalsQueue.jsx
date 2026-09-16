@@ -22,9 +22,8 @@ export const PendingApprovalsQueue = ({ onDecided }) => {
   const [pendingBatches, setPendingBatches] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0 });
 
-  // Dialog state for decision
-  const [activeBatch, setActiveBatch] = useState(null); // batch object being approved or rejected
-  const [dialogType, setDialogType] = useState(null);   // 'approve' | 'reject'
+  const [activeBatch, setActiveBatch] = useState(null);
+  const [dialogType, setDialogType] = useState(null);
   const [decisionComment, setDecisionComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -91,7 +90,6 @@ export const PendingApprovalsQueue = ({ onDecided }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Header bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -118,14 +116,12 @@ export const PendingApprovalsQueue = ({ onDecided }) => {
         </button>
       </div>
 
-      {/* Loading state */}
       {loading && (
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: '13px' }}>
           Loading pending approvals queue…
         </div>
       )}
 
-      {/* Empty state */}
       {!loading && pendingBatches.length === 0 && (
         <div style={{
           padding: '48px 24px', textAlign: 'center', borderRadius: '0px',
@@ -141,7 +137,6 @@ export const PendingApprovalsQueue = ({ onDecided }) => {
         </div>
       )}
 
-      {/* Queue items */}
       {!loading && pendingBatches.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {pendingBatches.map((batch) => {
@@ -158,7 +153,6 @@ export const PendingApprovalsQueue = ({ onDecided }) => {
                   display: 'flex', flexDirection: 'column', gap: '14px',
                 }}
               >
-                {/* Top row: Operation, Requester, Time */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontSize: '20px' }}>{OPERATION_ICONS[batch.operation_type] || '⚡'}</span>
@@ -184,7 +178,6 @@ export const PendingApprovalsQueue = ({ onDecided }) => {
                     </div>
                   </div>
 
-                  {/* Action buttons */}
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                       onClick={() => handleOpenApprove(batch)}
@@ -209,7 +202,6 @@ export const PendingApprovalsQueue = ({ onDecided }) => {
                   </div>
                 </div>
 
-                {/* Policy flags trigger tags */}
                 {flags.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
                     <span style={{ fontSize: '11px', color: 'var(--ink-soft)', marginRight: '2px' }}>Triggers:</span>
@@ -230,7 +222,6 @@ export const PendingApprovalsQueue = ({ onDecided }) => {
                   </div>
                 )}
 
-                {/* Metrics row */}
                 <div style={{
                   padding: '10px 14px', borderRadius: '0px',
                   background: 'var(--paper-dim)', border: '1px solid var(--rule)',
@@ -250,7 +241,6 @@ export const PendingApprovalsQueue = ({ onDecided }) => {
         </div>
       )}
 
-      {/* Decision Dialog Modal */}
       <AnimatePresence>
         {activeBatch && (
           <div style={{

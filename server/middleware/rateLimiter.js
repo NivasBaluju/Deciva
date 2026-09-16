@@ -7,10 +7,9 @@ const rateLimit = require('express-rate-limit');
 
 const isDev = process.env.NODE_ENV !== 'production';
 
-// 1. Strict Authentication Limiter (Login, Registration, OTP Requests)
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDev ? 100 : 20, // Max 20 attempts per IP per 15 minutes in prod (100 in dev)
+  windowMs: isDev ? 5 * 1000 : 15 * 60 * 1000, // 5s in dev/test, 15 minutes in prod
+  max: isDev ? 5 : 20, // 5 in dev/test so rapid 10-req batches trigger 429 and reset quickly
   standardHeaders: true,
   legacyHeaders: false,
   validate: false,
@@ -19,7 +18,6 @@ const authLimiter = rateLimit({
   }
 });
 
-// 2. Ultra-Strict Code Verification Limiter (OTP verification, TOTP MFA verify)
 const otpVerifyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: isDev ? 30 : 10, // Max 10 attempts to prevent PIN brute forcing in prod
@@ -31,7 +29,6 @@ const otpVerifyLimiter = rateLimit({
   }
 });
 
-// 3. AI Inference & Heavy Processing Limiter (Chat, Simulation, Negotiation)
 const aiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 25, // Max 25 queries per minute per user/IP
@@ -46,7 +43,6 @@ const aiLimiter = rateLimit({
   }
 });
 
-// 4. Integration Operations Limiter (Sync runs, connection checks)
 const integrationLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 60,
@@ -58,7 +54,6 @@ const integrationLimiter = rateLimit({
   }
 });
 
-// 5. Inbound Webhook Limiter (Prevents webhook flood / resource exhaustion)
 const webhookLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 120,

@@ -1,11 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-/**
- * TextLink — Part 8.4
- * Underlined by default (1px --ink, 3px offset).
- * Thickens to 2px on hover.
- */
 export function TextLink({
   href,
   children,

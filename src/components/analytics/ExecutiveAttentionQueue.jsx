@@ -79,7 +79,6 @@ export const ExecutiveAttentionQueue = ({ documentId, onSelectAction }) => {
 
   return (
     <div className="attention-queue-container">
-      {/* Header Banner */}
       <div
         className="card mb-20"
         style={{
@@ -124,7 +123,6 @@ export const ExecutiveAttentionQueue = ({ documentId, onSelectAction }) => {
         </div>
       </div>
 
-      {/* Attention Queue Items */}
       {queue.length === 0 ? (
         <EmptyState
           icon="check"
@@ -159,7 +157,6 @@ export const ExecutiveAttentionQueue = ({ documentId, onSelectAction }) => {
                 <div className="flex-between" style={{ alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: '260px' }}>
                     <div className="flex gap-8" style={{ alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap' }}>
-                      {/* Priority Score Pill */}
                       <span
                         style={{
                           fontSize: '11px',
@@ -174,7 +171,6 @@ export const ExecutiveAttentionQueue = ({ documentId, onSelectAction }) => {
                         Score: {item.priorityScore}
                       </span>
 
-                      {/* Escalation Tag */}
                       {item.isEscalated && (
                         <span
                           style={{
@@ -201,7 +197,6 @@ export const ExecutiveAttentionQueue = ({ documentId, onSelectAction }) => {
                       {item.title}
                     </h3>
 
-                    {/* Escalation Reason Box */}
                     {item.isEscalated && item.escalationReason && (
                       <div
                         style={{

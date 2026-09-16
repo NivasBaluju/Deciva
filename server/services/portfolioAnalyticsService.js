@@ -1,5 +1,5 @@
 /**
- * Portfolio Analytics Service (Phase 7.8)
+ * Portfolio Analytics Service
  * 
  * Provides deterministic, strictly read-only cross-contract aggregation queries
  * and executive oversight intelligence scoped to the authenticated user's documents.
@@ -483,11 +483,6 @@ async function getPortfolioAttentionQueue(user, options = {}) {
   }
 
   // Deterministic sorting:
-  // 1. attentionScore DESC
-  // 2. priorityScore DESC
-  // 3. daysOverdue DESC
-  // 4. createdAt ASC
-  // 5. actionId ASC
   items.sort((a, b) => {
     if (b.attentionScore !== a.attentionScore) return b.attentionScore - a.attentionScore;
     if (b.priorityScore !== a.priorityScore) return b.priorityScore - a.priorityScore;
@@ -520,7 +515,6 @@ async function getPortfolioContractHealth(user, options = {}) {
   const limit = Math.min(100, Math.max(1, parseInt(options.limit, 10) || 20));
   const offset = (page - 1) * limit;
 
-  // 1. Fetch user's documents
   const { rows: docs } = await db.query(
     'SELECT id, original_name, created_at FROM documents WHERE user_id = $1 ORDER BY created_at DESC',
     [user.id]
@@ -537,7 +531,6 @@ async function getPortfolioContractHealth(user, options = {}) {
     };
   }
 
-  // 2. Fetch actions for all user documents
   const { rows: actions } = await db.query(
     `SELECT a.id, a.document_id, a.title, a.category, a.priority_score, a.status,
             a.decision, a.owner_id, a.due_date, a.is_escalated, a.resolved_at,
@@ -548,7 +541,6 @@ async function getPortfolioContractHealth(user, options = {}) {
     [user.id]
   );
 
-  // 3. Fetch reopens and latest activities
   const { rows: activities } = await db.query(
     `SELECT act.action_id, a.document_id, act.event_type, act.created_at
      FROM contract_action_activity act
@@ -578,7 +570,6 @@ async function getPortfolioContractHealth(user, options = {}) {
     }
   });
 
-  // 4. Compute exact Phase 7.7 operational health score for each document
   const contracts = docs.map((doc) => {
     const dActions = actionsByDoc.get(doc.id) || [];
     const totalActions = dActions.length;
@@ -658,10 +649,6 @@ async function getPortfolioContractHealth(user, options = {}) {
   });
 
   // Deterministic sorting:
-  // 1. Lowest healthScore first
-  // 2. Highest criticalActions count
-  // 3. Highest overdueActions count
-  // 4. Oldest document creation
   contracts.sort((a, b) => {
     if (a.healthScore !== b.healthScore) return a.healthScore - b.healthScore;
     if (b.criticalActions !== a.criticalActions) return b.criticalActions - a.criticalActions;
@@ -812,10 +799,6 @@ async function getPortfolioWorkload(user) {
   const owners = Array.from(ownerMap.values());
 
   // Deterministic sorting:
-  // 1. Highest activeActions
-  // 2. Highest overdueActions
-  // 3. Highest criticalActions
-  // 4. ownerId ASC
   owners.sort((a, b) => {
     if (b.activeActions !== a.activeActions) return b.activeActions - a.activeActions;
     if (b.overdueActions !== a.overdueActions) return b.overdueActions - a.overdueActions;
@@ -959,7 +942,7 @@ async function getPortfolioEscalationAnalytics(user) {
 }
 
 /**
- * 8. GET /api/portfolio/concentration (Phase 10)
+ * 8. GET /api/portfolio/concentration
  * Evaluates empirical concentration across 4 key dimensions:
  * - Governing Law / Jurisdiction
  * - Liability Caps (Capped vs Uncapped)
@@ -1050,7 +1033,7 @@ async function getPortfolioConcentrationAnalytics(user) {
 }
 
 /**
- * 9. GET /api/portfolio/anomalies (Phase 10)
+ * 9. GET /api/portfolio/anomalies
  * Evaluates baseline-grounded anomalies across the user's contract portfolio.
  * Strict No-Fabrication Rule: Returns INSUFFICIENT_HISTORICAL_DATA when user has < 2 contracts.
  */
@@ -1114,7 +1097,7 @@ async function getPortfolioAnomalyAnalytics(user) {
 }
 
 /**
- * Phase 11 Portfolio Change Intelligence:
+ * Portfolio Change Intelligence:
  * Answers: "What materially changed across the portfolio?"
  * Derives concrete metrics from contract_monitoring_events and contract_lifecycle_states.
  */

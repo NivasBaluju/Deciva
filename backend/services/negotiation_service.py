@@ -7,9 +7,27 @@ from typing import Dict, Any, List, Optional
 try:
     from backend.services.database import get_db_connection
     from backend.services.diff_service import compute_word_diff
+    from backend.services.ai_provenance import (
+        get_active_gemini_model,
+        get_gemini_api_key,
+        create_hybrid_provenance,
+        create_deterministic_provenance
+    )
+    from backend.services.analysis.risk_scoring import calculate_document_risk
+    from backend.services.analysis.missing_clause import detect_missing_clauses
+    from backend.services.simulation_service import construct_modified_contract_state, compare_risk_findings
 except ImportError:
     from services.database import get_db_connection
     from services.diff_service import compute_word_diff
+    from services.ai_provenance import (
+        get_active_gemini_model,
+        get_gemini_api_key,
+        create_hybrid_provenance,
+        create_deterministic_provenance
+    )
+    from services.analysis.risk_scoring import calculate_document_risk
+    from services.analysis.missing_clause import detect_missing_clauses
+    from services.simulation_service import construct_modified_contract_state, compare_risk_findings
 
 VALID_NEGOTIATION_MODES = ["balanced", "protective", "aggressive", "collaborative"]
 
@@ -208,12 +226,15 @@ def generate_clause_negotiation(
     mode: str = "balanced"
 ) -> Dict[str, Any]:
     """
-    Executes Phase 6.2 AI Contract Negotiation & Redline Pipeline:
-      1. Layer 2 Isolation: Enforces clause belongs strictly to document_id
-      2. Retrieves immutable document facts (documentEvidence)
-      3. Gathers risk context
+    Executes Phase 2 Task 5 AI Contract Negotiation & Post-Redline Risk Recalculation:
+      1. Layer 2 Isolation: Enforces clause belongs strictly to document_id (clauseId is authoritative)
+      2. Retrieves immutable document full text from documents.extracted_text
+      3. Gathers risk context from document_risk_factors
       4. Synthesizes strategic recommendations according to posture mode (aiRecommendation)
       5. Generates word-level redline diff (redline)
+      6. Ephemerally substitutes proposed clause in memory with strict ambiguity protection
+      7. Deterministically calculates before_score, after_score, risk_delta, risk_direction, findings_diff
+      8. Returns quantitative metrics and truthful AI provenance (confidence.score === null)
     """
     if mode not in VALID_NEGOTIATION_MODES:
         mode = "balanced"
@@ -221,7 +242,13 @@ def generate_clause_negotiation(
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        # Step 1: Verify Clause belongs to Document (Layer 2 Isolation)
+        # Fetch immutable document text
+        cur.execute("SELECT id, original_name, extracted_text, risk_score FROM documents WHERE id = %s;", (document_id,))
+        doc_row = cur.fetchone()
+        if not doc_row:
+            return {"error": "Document not found", "status": 404}
+        original_text = doc_row.get("extracted_text") or ""
+
         clause_row = None
         if clause_id:
             cur.execute("""
@@ -231,6 +258,11 @@ def generate_clause_negotiation(
                 WHERE id = %s AND document_id = %s;
             """, (clause_id, document_id))
             clause_row = cur.fetchone()
+            if not clause_row:
+                return {
+                    "error": "Clause not found in specified document",
+                    "status": 404
+                }
 
         if not clause_row:
             # If no specific clause_id given, search for first clause matching clause_type or top risky clause
@@ -253,6 +285,7 @@ def generate_clause_negotiation(
                 """, (document_id,))
                 clause_row = cur.fetchone()
 
+        segment_context_text = None
         if not clause_row:
             # Fallback to document segment if clauses not yet indexed
             cur.execute("""
@@ -268,6 +301,7 @@ def generate_clause_negotiation(
                     "status": 404
                 }
             clause_text = seg_fallback["segment_text"]
+            segment_context_text = seg_fallback["segment_text"]
             resolved_clause_id = f"seg-{seg_fallback['id']}"
             resolved_type = "GENERAL_PROVISION"
             section_title = seg_fallback["title"] or f"Section {seg_fallback['position'] + 1}"
@@ -279,7 +313,6 @@ def generate_clause_negotiation(
             clause_text = clause_row["extracted_snippet"] or ""
             seg_id = str(clause_row.get("segment_id") or "")
 
-            # Fetch associated segment information
             section_title = "Contract Provision"
             seg_index = 0
             if seg_id:
@@ -288,6 +321,7 @@ def generate_clause_negotiation(
                 if seg_info:
                     section_title = seg_info["title"] or f"Section {seg_info['position'] + 1}"
                     seg_index = seg_info["position"]
+                    segment_context_text = seg_info.get("segment_text")
                     if not clause_text:
                         clause_text = seg_info["segment_text"]
 
@@ -300,7 +334,6 @@ def generate_clause_negotiation(
         risk_rows = cur.fetchall()
         risk_context = [f"{r['risk_type']} ({r['severity']}): {r['reason']}" for r in risk_rows]
 
-        # Step 2: Immutable Document Facts (documentEvidence)
         document_evidence = {
             "clause": clause_text,
             "section": section_title,
@@ -313,14 +346,15 @@ def generate_clause_negotiation(
             ]
         }
 
-        # Step 3: AI Recommendation Synthesis
-        gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        gemini_key = get_gemini_api_key()
+        active_model = get_active_gemini_model()
         ai_rec = None
+        llm_used = False
 
         if gemini_key:
             try:
                 prompt = format_negotiation_prompt(clause_text, resolved_type, mode, risk_context)
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{active_model}:generateContent?key={gemini_key}"
                 req = urllib.request.Request(
                     url,
                     data=json.dumps({"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"temperature": 0.2}}).encode("utf-8"),
@@ -340,24 +374,127 @@ def generate_clause_negotiation(
                             "suggestedRevision": parsed.get("suggestedRevision", clause_text),
                             "objectives": MODE_OBJECTIVES.get(mode, MODE_OBJECTIVES["balanced"])
                         }
+                        llm_used = True
             except Exception:
                 ai_rec = None
+                llm_used = False
 
         if not ai_rec:
             ai_rec = synthesize_contextual_recommendation(clause_text, resolved_type, mode, risk_context)
+            llm_used = False
 
-        # Step 4: Word-Level Redline Diff Engine
-        redline_diff = compute_word_diff(clause_text, ai_rec["suggestedRevision"])
+        suggested_revision = ai_rec["suggestedRevision"]
+        redline_diff = compute_word_diff(clause_text, suggested_revision)
+
+        # In-memory ephemeral clause substitution with ambiguity protection
+        modified_text, replace_ok, replace_err = construct_modified_contract_state(
+            original_text=original_text,
+            target_clause=clause_text,
+            proposed_clause=suggested_revision,
+            context_text=segment_context_text
+        )
+        if not replace_ok:
+            return {
+                "error": f"Target clause could not be safely substituted in document text: {replace_err}",
+                "status": 400
+            }
+
+        # Deterministic risk recalculation
+        cur.execute("""
+            SELECT id, clause_type, confidence, extracted_snippet
+            FROM document_clauses
+            WHERE document_id = %s;
+        """, (document_id,))
+        all_clause_rows = cur.fetchall()
+        detected_clauses = [
+            {"clauseType": r["clause_type"], "confidence": float(r["confidence"] or 0.85), "snippet": r.get("extracted_snippet", "")}
+            for r in all_clause_rows
+        ]
+        missing_clauses_info = detect_missing_clauses(detected_clauses)
+
+        before_risk = calculate_document_risk(
+            full_text=original_text,
+            detected_clauses=detected_clauses,
+            missing_clauses_info=missing_clauses_info
+        )
+        after_risk = calculate_document_risk(
+            full_text=modified_text,
+            detected_clauses=detected_clauses,
+            missing_clauses_info=missing_clauses_info
+        )
+
+        before_score = before_risk["score"]
+        before_level = before_risk["level"]
+        after_score = after_risk["score"]
+        after_level = after_risk["level"]
+        risk_delta = after_score - before_score
+
+        if risk_delta < 0:
+            risk_direction = "REDUCED"
+        elif risk_delta > 0:
+            risk_direction = "INCREASED"
+        else:
+            risk_direction = "UNCHANGED"
+
+        findings_diff = compare_risk_findings(before_risk.get("factors", []), after_risk.get("factors", []))
+
+        if llm_used:
+            prov = create_hybrid_provenance(
+                provider="gemini",
+                model=active_model,
+                grounded=bool(document_evidence and len(document_evidence) > 0),
+                evidence=document_evidence,
+                confidence_score=None,
+                methodology="not_available",
+                retrieval_score=None,
+                retrieval_methodology=None,
+                fallback=False
+            )
+        else:
+            prov = create_deterministic_provenance(
+                methodology="deterministic_template",
+                evidence=document_evidence,
+                fallback=True
+            )
+
+        prov["riskScoring"] = {
+            "engine": "deterministic-calibrated-risk-2.0",
+            "authority": "rules_engine",
+            "confidence": { "score": None }
+        }
 
         return {
             "documentId": document_id,
             "clauseId": resolved_clause_id,
             "clauseType": resolved_type,
             "mode": mode,
+            "originalClause": clause_text,
+            "proposedClause": suggested_revision,
+            "beforeScore": before_score,
+            "afterScore": after_score,
+            "riskDelta": risk_delta,
+            "riskDirection": risk_direction,
+            "beforeLevel": before_level,
+            "afterLevel": after_level,
+            "riskFindings": findings_diff,
+            "before_score": before_score,
+            "after_score": after_score,
+            "risk_delta": risk_delta,
+            "risk_direction": risk_direction,
+            "risk_findings": findings_diff,
             "documentEvidence": document_evidence,
             "aiRecommendation": ai_rec,
             "redline": redline_diff,
-            "confidence": 0.90
+            "engine": prov["engine"],
+            "provider": prov["provider"],
+            "model": prov["model"],
+            "grounded": prov["grounded"],
+            "confidence": {
+                "score": None,
+                "methodology": prov["confidence"]["methodology"]
+            },
+            "confidenceScore": None,
+            "provenance": prov
         }
 
     finally:

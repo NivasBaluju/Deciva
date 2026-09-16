@@ -1,6 +1,6 @@
 /**
  * server/services/operationalMetricsService.js
- * Component 16: Centralized Enterprise Operational Metrics
+ * Centralized Enterprise Operational Metrics
  * Gathers and correlates real-time health, DR, workflow, governance,
  * integration outbox, and background job metrics across tenants.
  */
@@ -18,7 +18,6 @@ async function getOperationalMetrics(tenantId = null) {
   };
 
   try {
-    // 1. Documents & Workflows
     let docQ = 'SELECT COUNT(*) AS total FROM documents';
     let wfQ = "SELECT COUNT(*) AS pending FROM contract_decision_workflows WHERE status IN ('UNDER_REVIEW', 'CHANGES_REQUESTED')";
     let actQ = "SELECT COUNT(*) AS open FROM contract_actions WHERE status != 'COMPLETED'";

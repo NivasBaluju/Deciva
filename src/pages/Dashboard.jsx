@@ -6,12 +6,6 @@ import { useToast } from '../context/ToastContext';
 import ThinkingLoader from '../components/common/ThinkingLoader';
 import Button from '../components/ui/Button';
 
-/**
- * Dashboard — The Command Bridge (Idea #11)
- * Restyled with Paper & Ink monochrome tokens, Fraunces numerals,
- * explainable 88.4 health metrics, and pending approvals governance.
- * Preserves 100% of API endpoints and authorization checks.
- */
 export function Dashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -74,11 +68,10 @@ export function Dashboard() {
   return (
     <div className="w-full bg-paper py-12 sm:py-16 min-h-[85vh]">
       <div className="container-wide">
-        {/* Top Statement Bar */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between pb-8 mb-12 border-b border-rule gap-6">
           <div>
-            <span className="font-body text-micro text-neutral-500 block mb-2 select-none">
-              [EXECUTIVE COMMAND BRIDGE]
+            <span className="font-body text-micro text-neutral-500 block mb-2 select-none uppercase tracking-wider">
+              Executive Overview
             </span>
             <h1 className="display-03 text-ink tracking-tight">
               Executive Portfolio Governance &amp; Compliance Cockpit
@@ -89,7 +82,6 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Pending Approvals Callout (Phase 8.1 / 8.2 Invariant) */}
         {pendingApprovalsCount > 0 && user?.role === 'admin' && (
           <div className="mb-12 p-6 bg-paper-dim border border-rule text-ink flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div>
@@ -109,9 +101,7 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Three-Column Command Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
-          {/* Column 1–4: Explained Portfolio Health Index (Idea #5 / #11) */}
           <div className="lg:col-span-4 bg-paper-dim p-8 border border-rule">
             <span className="font-body text-label text-ink-soft block mb-4">
               Portfolio Health Index
@@ -125,7 +115,6 @@ export function Dashboard() {
               </span>
             </div>
 
-            {/* Calculated Provenance */}
             <div className="pt-6 border-t border-rule space-y-3 font-body text-body-sm">
               <p className="font-semibold text-ink text-xs uppercase tracking-wider mb-2">
                 Calculated Provenance
@@ -159,7 +148,6 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Column 5–8: Recent Contracts & Examination Queue */}
           <div className="lg:col-span-4 bg-paper p-8 border border-rule flex flex-col justify-between">
             <div>
               <span className="font-body text-label text-ink-soft block mb-4">
@@ -199,7 +187,6 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Column 9–12: Cryptographic Security & Ledger Metrics */}
           <div className="lg:col-span-4 bg-paper-dim p-8 border border-rule flex flex-col justify-between">
             <div>
               <span className="font-body text-label text-ink-soft block mb-4">

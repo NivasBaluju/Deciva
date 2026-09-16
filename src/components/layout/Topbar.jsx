@@ -37,7 +37,6 @@ export function Topbar() {
     setGuideModalOpen(true);
   };
 
-  // 3 Consolidated Platform Guide Items (Spacious Topbar Navigation)
   const guideSections = [
     { id: 'WORKFLOW', label: 'User Guide', icon: '🧭', badge: 'Guide' },
     { id: 'INTELLIGENCE_GOVERNANCE', label: 'AI & Governance', icon: '🧠', badge: 'Engines' },
@@ -69,7 +68,6 @@ export function Topbar() {
           aria-label="Primary"
           className="container-wide h-full flex items-center justify-between"
         >
-          {/* Brand Wordmark (Fraunces Serif) */}
           <div className="flex items-center gap-4">
             <Link
               to="/"
@@ -84,9 +82,7 @@ export function Topbar() {
             )}
           </div>
 
-          {/* Desktop Navigation */}
           {user ? (
-            /* Authenticated: 3-Section Spacious System Guide Navigation */
             <div className="hidden lg:flex items-center gap-3 xl:gap-5 bg-white/[0.03] border border-rule px-3 py-1.5">
               <span className="font-body text-micro text-ink-soft uppercase tracking-wider font-mono pr-1">
                 System Guide:
@@ -104,7 +100,6 @@ export function Topbar() {
               ))}
             </div>
           ) : (
-            /* Public Visitors Navigation Links + Quick Guide Access */
             <div className="hidden lg:flex items-center gap-8 xl:gap-10">
               {publicLinks.map((link) => {
                 const isActive =
@@ -136,7 +131,6 @@ export function Topbar() {
             </div>
           )}
 
-          {/* Desktop User Status & Actions */}
           <div className="hidden lg:flex items-center gap-6 sm:gap-7">
             {user ? (
               <div className="flex items-center gap-5">
@@ -178,7 +172,6 @@ export function Topbar() {
             )}
           </div>
 
-          {/* Mobile Menu Trigger */}
           <div className="flex items-center gap-4 lg:hidden">
             <button
               type="button"
@@ -199,7 +192,6 @@ export function Topbar() {
         </nav>
       </header>
 
-      {/* Mobile Slide-Out Menu */}
       <MobileMenu
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
@@ -211,7 +203,6 @@ export function Topbar() {
         }}
       />
 
-      {/* Interactive Platform Guide & Architecture Modal */}
       <PlatformGuideModal
         isOpen={guideModalOpen}
         initialSection={activeGuideSection}

@@ -8,14 +8,13 @@ try:
 except ImportError:
     SKLEARN_AVAILABLE = False
 
-
 try:
     from backend.services.database import get_db_connection
 except ImportError:
     from services.database import get_db_connection
 
 DEFAULT_TOP_K = int(os.getenv("RAG_TOP_K", 5))
-DEFAULT_MIN_SIMILARITY = float(os.getenv("RAG_MIN_SIMILARITY", 0.15))
+DEFAULT_MIN_SIMILARITY = float(os.getenv("RAG_MIN_SIMILARITY", 0.08))
 
 def retrieve_relevant_segments(
     document_id: str,
@@ -44,7 +43,6 @@ def retrieve_relevant_segments(
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        # 1. Fetch existing segments for this document only
         cur.execute("""
             SELECT id, document_id, title, segment_text, position
             FROM document_segments
@@ -59,12 +57,12 @@ def retrieve_relevant_segments(
             doc_row = cur.fetchone()
             if doc_row and doc_row.get("extracted_text"):
                 raw_text = doc_row["extracted_text"]
-                paragraphs = [p.strip() for p in re.split(r'\n\s*\n', raw_text) if len(p.strip()) > 30]
+                paragraphs = [p.strip() for p in re.split(r'[\r\n]+', raw_text) if len(p.strip()) > 10]
                 rows = [
                     {
                         "id": f"fallback-seg-{idx}",
                         "document_id": document_id,
-                        "title": f"Paragraph {idx + 1}",
+                        "title": f"Clause {idx + 1}",
                         "segment_text": p,
                         "position": idx
                     }
@@ -88,7 +86,6 @@ def retrieve_relevant_segments(
             top = scored[:top_k]
             return [t[1] for t in top], {"topScore": round(top[0][0], 2) if top else 0.0, "grounded": bool(top), "count": len(top)}
 
-        # 2. Vectorize segment corpus and user question
         vectorizer = TfidfVectorizer(
             stop_words='english',
             ngram_range=(1, 2),
@@ -103,7 +100,6 @@ def retrieve_relevant_segments(
             # Vocabulary empty (e.g. only stop words or numbers)
             return [], {"topScore": 0.0, "grounded": False, "count": 0}
 
-        # 3. Filter by similarity threshold & rank
         scored_segments = []
         for idx, score in enumerate(similarities):
             if score >= min_similarity:

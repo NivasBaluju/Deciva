@@ -5,7 +5,7 @@ import { fmtDate } from '../../utils/formatters';
 import { buttonMotion, EASE_OUT } from '../../styles/motion';
 
 export const SessionsManager = ({ sessions = [], currentSessionId, onRevokeSession }) => {
-  const [filter, setFilter] = useState('active'); // 'all' | 'active' | 'revoked'
+  const [filter, setFilter] = useState('active');
   const [showAll, setShowAll] = useState(false);
 
   const allSessions = sessions || [];
@@ -42,7 +42,6 @@ export const SessionsManager = ({ sessions = [], currentSessionId, onRevokeSessi
           </p>
         </div>
 
-        {/* Filter Tabs */}
         <div className="session-filter-tabs">
           <button
             className={`filter-tab ${filter === 'active' ? 'active' : ''}`}
@@ -65,7 +64,6 @@ export const SessionsManager = ({ sessions = [], currentSessionId, onRevokeSessi
         </div>
       </div>
 
-      {/* Grid of Session Cards */}
       <div className="session-cards-grid">
         <AnimatePresence mode="popLayout">
           {visibleSessions.map((s) => {
@@ -104,7 +102,6 @@ export const SessionsManager = ({ sessions = [], currentSessionId, onRevokeSessi
                   </div>
                 </div>
 
-                {/* Trust Score Health Bar */}
                 <div className="session-trust-bar-wrap">
                   <div className="session-trust-labels">
                     <span>Trust Health</span>

@@ -160,7 +160,6 @@ async function createComment(actionId, payload = {}, user) {
   try {
     await client.query('BEGIN');
 
-    // 1. Insert comment row with authenticated user ID
     const { rows: insertedRows } = await client.query(
       `INSERT INTO contract_action_comments (
          id, action_id, parent_comment_id, author_id, body, context_references, created_at, updated_at
@@ -169,7 +168,6 @@ async function createComment(actionId, payload = {}, user) {
       [commentId, actionId, parentCommentId || null, user.id, trimmedBody, JSON.stringify(safeContext)]
     );
 
-    // 2. Insert lightweight audit record (no duplicate comment content)
     await client.query(
       `INSERT INTO contract_action_activity (
          id, action_id, event_type, actor_id, metadata, created_at
@@ -247,7 +245,6 @@ async function editComment(actionId, commentId, payload = {}, user) {
   try {
     await client.query('BEGIN');
 
-    // 1. Fetch comment with lock
     const { rows } = await client.query(
       `SELECT c.*, u.name AS author_name, u.email AS author_email, u.role AS author_role
        FROM contract_action_comments c
@@ -275,7 +272,6 @@ async function editComment(actionId, commentId, payload = {}, user) {
       return { errorStatus: 403, errorMessage: 'You are not authorized to edit this comment.' };
     }
 
-    // 2. Update comment body and timestamp
     const { rows: updatedRows } = await client.query(
       `UPDATE contract_action_comments
        SET body = $1, updated_at = CURRENT_TIMESTAMP
@@ -284,7 +280,6 @@ async function editComment(actionId, commentId, payload = {}, user) {
       [trimmedBody, commentId]
     );
 
-    // 3. Lightweight audit log
     await client.query(
       `INSERT INTO contract_action_activity (
          id, action_id, event_type, actor_id, metadata, created_at
@@ -373,7 +368,6 @@ async function softDeleteComment(actionId, commentId, user) {
       return { success: true, message: 'Comment is already deleted.' };
     }
 
-    // 2. Set deleted_at timestamp (soft delete)
     await client.query(
       `UPDATE contract_action_comments
        SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
@@ -381,7 +375,6 @@ async function softDeleteComment(actionId, commentId, user) {
       [commentId]
     );
 
-    // 3. Lightweight audit log
     await client.query(
       `INSERT INTO contract_action_activity (
          id, action_id, event_type, actor_id, metadata, created_at

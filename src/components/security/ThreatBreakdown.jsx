@@ -24,7 +24,6 @@ export const ThreatBreakdown = ({ threats = [] }) => {
         </span>
       </div>
 
-      {/* Threat Category Stat Chips */}
       <div className="threat-summary-strip">
         <div className="threat-chip">
           <span className="threat-chip-dot" style={{ background: '#EF4444' }} />
@@ -38,7 +37,6 @@ export const ThreatBreakdown = ({ threats = [] }) => {
         </div>
       </div>
 
-      {/* Threat List */}
       <div className="threat-feed-list">
         {threatList.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '32px 16px', color: '#71717A' }}>

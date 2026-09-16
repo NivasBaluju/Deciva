@@ -57,7 +57,6 @@ export const CompactPortfolioTableView = () => {
     );
   };
 
-  // Process and filter documents
   const filteredDocs = useMemo(() => {
     return documents.filter((d) => {
       const name = (d.original_name || d.filename || d.name || '').toLowerCase();
@@ -73,7 +72,6 @@ export const CompactPortfolioTableView = () => {
     });
   }, [documents, searchTerm, riskFilter]);
 
-  // Sort documents
   const sortedDocs = useMemo(() => {
     return [...filteredDocs].sort((a, b) => {
       let valA, valB;
@@ -103,14 +101,12 @@ export const CompactPortfolioTableView = () => {
     });
   }, [filteredDocs, sortField, sortAsc]);
 
-  // Pagination
   const totalPages = Math.max(1, Math.ceil(sortedDocs.length / pageSize));
   const paginatedDocs = useMemo(() => {
     const start = (page - 1) * pageSize;
     return sortedDocs.slice(start, start + pageSize);
   }, [sortedDocs, page, pageSize]);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (paginatedDocs.length === 0) return;
@@ -155,7 +151,6 @@ export const CompactPortfolioTableView = () => {
         padding: '16px'
       }}
     >
-      {/* Dense Controls Toolbar */}
       <div
         style={{
           display: 'flex',
@@ -260,7 +255,6 @@ export const CompactPortfolioTableView = () => {
         </div>
       </div>
 
-      {/* Dense Table */}
       <div style={{ overflowX: 'auto' }}>
         <table
           style={{
@@ -441,7 +435,6 @@ export const CompactPortfolioTableView = () => {
         </table>
       </div>
 
-      {/* Pagination Footer */}
       <div
         style={{
           display: 'flex',

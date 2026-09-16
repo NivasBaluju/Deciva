@@ -2,17 +2,9 @@ const jwt = require('jsonwebtoken');
 const db = require('../db');
 const { sha256 } = require('../utils/crypto');
 const { logThreat } = require('../utils/audit');
+const { getJwtSecret } = require('../services/productionConfigService');
 
-const DEFAULT_JWT_SECRET = 'dev_insecure_secret_change_me';
-const rawJwtSecret = process.env.JWT_SECRET;
-
-if (process.env.NODE_ENV === 'production' && (!rawJwtSecret || rawJwtSecret === DEFAULT_JWT_SECRET)) {
-  console.warn('[SECURITY WARNING] JWT_SECRET is not configured or using default in production. Set JWT_SECRET in environment variables.');
-} else if (!rawJwtSecret) {
-  console.warn('[SECURITY WARNING] Using default fallback JWT_SECRET. Set JWT_SECRET in .env before deploying to production.');
-}
-
-const JWT_SECRET = rawJwtSecret || DEFAULT_JWT_SECRET;
+const JWT_SECRET = getJwtSecret();
 
 function fingerprint(req) {
   const ua = req.headers['user-agent'] || 'unknown';
@@ -59,6 +51,9 @@ async function requireAuth(req, res, next) {
   try {
     payload = jwt.verify(token, JWT_SECRET);
   } catch (e) {
+    if (req.cookies?.token) {
+      res.clearCookie('token', { path: '/', httpOnly: true });
+    }
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
@@ -66,6 +61,9 @@ async function requireAuth(req, res, next) {
     const { rows: sessionRows } = await db.query('SELECT * FROM sessions WHERE id = $1', [payload.sessionId]);
     const session = sessionRows[0];
     if (!session || session.revoked) {
+      if (req.cookies?.token) {
+        res.clearCookie('token', { path: '/', httpOnly: true });
+      }
       return res.status(401).json({ error: 'Session invalid or revoked' });
     }
 

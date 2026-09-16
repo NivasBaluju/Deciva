@@ -45,7 +45,6 @@ export const PortfolioDeadlinesAndEscalations = () => {
 
   return (
     <div className="grid grid-2 gap-16">
-      {/* Deadlines Card */}
       <div className="card" style={{ padding: '20px' }}>
         <div className="flex-between" style={{ alignItems: 'center', marginBottom: '14px' }}>
           <div>
@@ -98,7 +97,6 @@ export const PortfolioDeadlinesAndEscalations = () => {
         </div>
       </div>
 
-      {/* Escalations Card */}
       <div className="card" style={{ padding: '20px' }}>
         <div className="flex-between" style={{ alignItems: 'center', marginBottom: '14px' }}>
           <div>

@@ -1,11 +1,5 @@
 import React from 'react';
 
-/**
- * PullQuote — Part 8.10
- * Set in display-04 (Fraunces italic).
- * 4px-wide vertical rule to the left, offset 24px from text.
- * Attribution beneath in body-sm, ink-soft.
- */
 export function PullQuote({
   quote,
   attribution,
@@ -19,7 +13,6 @@ export function PullQuote({
 
   return (
     <figure className={`relative pl-6 sm:pl-8 my-10 ${className}`}>
-      {/* 4px vertical rule */}
       <div
         className={`absolute left-0 top-1 bottom-1 w-1 ${ruleColor}`}
         aria-hidden="true"

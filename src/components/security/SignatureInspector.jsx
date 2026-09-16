@@ -33,7 +33,6 @@ export const SignatureInspector = ({ publicKey, onLoadKey }) => {
         </span>
       </div>
 
-      {/* Key Metadata Card */}
       <div className="sig-meta-box">
         <div className="sig-meta-row">
           <span className="sig-label">Algorithm</span>

@@ -12,7 +12,7 @@ export const NotificationCenter = ({ onSelectAction }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
-  const [filter, setFilter] = useState('ALL'); // 'ALL' | 'UNREAD'
+  const [filter, setFilter] = useState('ALL');
   const [markingId, setMarkingId] = useState(null);
   const [markingAll, setMarkingAll] = useState(false);
 
@@ -24,7 +24,6 @@ export const NotificationCenter = ({ onSelectAction }) => {
       const res = await NotificationsApi.getUnreadCount();
       setUnreadCount(res.unreadCount || 0);
     } catch (err) {
-      // Quiet background failure
     }
   };
 
@@ -63,7 +62,6 @@ export const NotificationCenter = ({ onSelectAction }) => {
     }
   };
 
-  // Poll unread count on mount / action open
   useEffect(() => {
     fetchUnreadCountOnly();
   }, []);
@@ -74,7 +72,6 @@ export const NotificationCenter = ({ onSelectAction }) => {
     }
   }, [isOpen, filter]);
 
-  // Click outside to close popover
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -136,7 +133,6 @@ export const NotificationCenter = ({ onSelectAction }) => {
 
   return (
     <div ref={containerRef} style={{ position: 'relative', display: 'inline-block' }}>
-      {/* Bell Trigger Button */}
       <motion.button
         {...buttonMotion}
         style={{
@@ -187,7 +183,6 @@ export const NotificationCenter = ({ onSelectAction }) => {
         <span className="hide-mobile">Alerts</span>
       </motion.button>
 
-      {/* Dropdown Popover Panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -212,7 +207,6 @@ export const NotificationCenter = ({ onSelectAction }) => {
               overflow: 'hidden'
             }}
           >
-            {/* Header */}
             <div
               style={{
                 padding: '14px 16px',
@@ -276,7 +270,6 @@ export const NotificationCenter = ({ onSelectAction }) => {
               </div>
             </div>
 
-            {/* Filter Tabs */}
             <div
               style={{
                 display: 'flex',
@@ -318,7 +311,6 @@ export const NotificationCenter = ({ onSelectAction }) => {
               </button>
             </div>
 
-            {/* Notification List Scroll Area */}
             <div
               style={{
                 flex: 1,

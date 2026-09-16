@@ -35,9 +35,7 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// ---------------------------------------------------------------------------
 // Provider & Tenant Overview
-// ---------------------------------------------------------------------------
 
 router.get('/providers', requireAuth, (req, res) => {
   res.json({ providers: listSupportedProviders() });
@@ -54,9 +52,7 @@ router.get('/overview', requireAuth, async (req, res) => {
   }
 });
 
-// ---------------------------------------------------------------------------
 // Integration Lifecycle (CRUD)
-// ---------------------------------------------------------------------------
 
 router.get('/', requireAuth, async (req, res) => {
   try {
@@ -327,9 +323,7 @@ router.delete('/:integrationId', requireAuth, requireAdmin, async (req, res) => 
   }
 });
 
-// ---------------------------------------------------------------------------
 // Connection & Health Diagnostics
-// ---------------------------------------------------------------------------
 
 router.post('/:integrationId/test', requireAuth, integrationLimiter, async (req, res) => {
   try {
@@ -364,9 +358,7 @@ router.get('/:integrationId/health', requireAuth, async (req, res) => {
   }
 });
 
-// ---------------------------------------------------------------------------
 // Synchronization Runs & Mappings
-// ---------------------------------------------------------------------------
 
 router.post('/:integrationId/sync', requireAuth, requireAdmin, integrationLimiter, async (req, res) => {
   try {
@@ -411,9 +403,7 @@ router.get('/:integrationId/mappings', requireAuth, async (req, res) => {
   }
 });
 
-// ---------------------------------------------------------------------------
 // Outbox Events & Dead-Letter Replay
-// ---------------------------------------------------------------------------
 
 router.get('/:integrationId/events', requireAuth, async (req, res) => {
   try {
@@ -441,9 +431,7 @@ router.post('/:integrationId/events/retry', requireAuth, requireAdmin, async (re
   }
 });
 
-// ---------------------------------------------------------------------------
 // Inbound Webhook Endpoint (HMAC-Verified)
-// ---------------------------------------------------------------------------
 
 router.post('/:integrationId/webhook', webhookLimiter, async (req, res) => {
   try {

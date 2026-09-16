@@ -7,7 +7,7 @@ export default function IntegrationConsole() {
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('registry'); // 'registry' | 'runs' | 'events' | 'mappings'
+  const [activeTab, setActiveTab] = useState('registry');
   const [integrations, setIntegrations] = useState([]);
   const [overview, setOverview] = useState(null);
   const [selectedIntegration, setSelectedIntegration] = useState(null);
@@ -18,7 +18,6 @@ export default function IntegrationConsole() {
   const [actionLoading, setActionLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Form State
   const [newIntegration, setNewIntegration] = useState({
     name: '',
     provider: 'generic_rest',
@@ -204,7 +203,6 @@ export default function IntegrationConsole() {
 
   return (
     <div className="space-y-6">
-      {/* Overview Stat Cards */}
       {overview && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-paper border border-rule p-4 rounded shadow-sm">
@@ -238,9 +236,7 @@ export default function IntegrationConsole() {
         </div>
       )}
 
-      {/* Main Console Container */}
       <div className="bg-paper border border-rule rounded-lg shadow-sm overflow-hidden">
-        {/* Header and Controls */}
         <div className="px-6 py-5 border-b border-rule flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="font-display text-xl font-semibold text-ink">
@@ -270,7 +266,6 @@ export default function IntegrationConsole() {
           </div>
         </div>
 
-        {/* Console Navigation Tabs */}
         <div className="flex border-b border-rule px-6 bg-subtle/40 overflow-x-auto">
           <button
             onClick={() => setActiveTab('registry')}
@@ -318,7 +313,6 @@ export default function IntegrationConsole() {
           )}
         </div>
 
-        {/* Tab 1: Connectors Registry */}
         {activeTab === 'registry' && (
           <div className="p-6">
             {integrations.length === 0 ? (
@@ -409,7 +403,6 @@ export default function IntegrationConsole() {
           </div>
         )}
 
-        {/* Tab 2: Sync Runs History */}
         {activeTab === 'runs' && (
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -466,7 +459,6 @@ export default function IntegrationConsole() {
           </div>
         )}
 
-        {/* Tab 3: Outbox Events Ledger */}
         {activeTab === 'events' && (
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -522,7 +514,6 @@ export default function IntegrationConsole() {
           </div>
         )}
 
-        {/* Tab 4: Object Mappings */}
         {activeTab === 'mappings' && (
           <div className="p-6">
             <h3 className="font-display text-base font-semibold text-ink mb-2">
@@ -564,7 +555,6 @@ export default function IntegrationConsole() {
         )}
       </div>
 
-      {/* Modal: Create Integration */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-paper border border-rule rounded-lg shadow-xl w-full max-w-lg overflow-hidden">

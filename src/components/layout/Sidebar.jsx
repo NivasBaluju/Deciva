@@ -1,9 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import Icon from '../common/Icon';
-import { DURATIONS, EASE_OUT } from '../../styles/motion';
 
 export const Sidebar = () => {
   const navigate = useNavigate();

@@ -7,7 +7,7 @@ export default function EnterpriseOperationsConsole() {
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('disaster_recovery'); // 'disaster_recovery' | 'portability' | 'lifecycle' | 'retention' | 'system_health'
+  const [activeTab, setActiveTab] = useState('disaster_recovery');
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState(null);
   const [dbIntegrity, setDbIntegrity] = useState(null);
@@ -19,7 +19,6 @@ export default function EnterpriseOperationsConsole() {
   const [demoStatus, setDemoStatus] = useState(null);
   const [lifecycleStatus, setLifecycleStatus] = useState(null);
 
-  // Modals & Action States
   const [actionLoading, setActionLoading] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
@@ -29,7 +28,6 @@ export default function EnterpriseOperationsConsole() {
   const [showRetentionPreviewModal, setShowRetentionPreviewModal] = useState(false);
   const [retentionPreviewData, setRetentionPreviewData] = useState(null);
 
-  // Forms
   const [backupForm, setBackupForm] = useState({ type: 'FULL_DATABASE', description: '' });
   const [restoreForm, setRestoreForm] = useState({ dry_run: true, isolation_prefix: 'isolated_recovery_' });
   const [holdForm, setHoldForm] = useState({ name: '', matter_id: '', scope_type: 'ALL', scope_id: '', description: '' });
@@ -394,7 +392,6 @@ export default function EnterpriseOperationsConsole() {
 
   return (
     <div role="region" aria-label="Enterprise Operations Console" style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem', fontFamily: 'var(--font-serif, Georgia, serif)' }}>
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--color-ink-border, #e5e5e5)', paddingBottom: '1.5rem', marginBottom: '2rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
@@ -452,7 +449,6 @@ export default function EnterpriseOperationsConsole() {
         </div>
       </div>
 
-      {/* Executive 10-Second System Health Snapshot */}
       <div style={{
         border: '2px solid #171717',
         background: '#ffffff',
@@ -535,7 +531,6 @@ export default function EnterpriseOperationsConsole() {
         </div>
       </div>
 
-      {/* Top Strategic Operational Metric Cards */}
       <div role="status" aria-label="Operational Key Metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         <div style={{ border: '1px solid var(--color-ink-border, #e5e5e5)', padding: '1.25rem', borderRadius: '4px', background: '#fafafa' }}>
           <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#737373', letterSpacing: '0.05em' }}>Recovery Point (RPO)</div>
@@ -562,7 +557,7 @@ export default function EnterpriseOperationsConsole() {
         </div>
 
         <div style={{ border: '1px solid var(--color-ink-border, #e5e5e5)', padding: '1.25rem', borderRadius: '4px', background: '#fafafa' }}>
-          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#737373', letterSpacing: '0.05em' }}>Audit Blockchain</div>
+          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#737373', letterSpacing: '0.05em' }}>Cryptographic Audit Ledger</div>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.4rem', color: auditIntegrity?.status === 'VALID' ? '#15803d' : '#b91c1c' }}>
             {auditIntegrity?.status || 'UNKNOWN'}
           </div>
@@ -578,7 +573,6 @@ export default function EnterpriseOperationsConsole() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div role="tablist" aria-label="Operations Navigation Tabs" style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--color-ink-border, #e5e5e5)', marginBottom: '2rem', flexWrap: 'wrap' }}>
         {[
           { id: 'disaster_recovery', label: '🛡️ Disaster Recovery & Backups' },
@@ -611,7 +605,6 @@ export default function EnterpriseOperationsConsole() {
         ))}
       </div>
 
-      {/* Tab 1: Disaster Recovery & Backups */}
       {activeTab === 'disaster_recovery' && (
         <div role="tabpanel" id="tabpanel-disaster_recovery">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
@@ -727,10 +720,8 @@ export default function EnterpriseOperationsConsole() {
         </div>
       )}
 
-      {/* Tab 2: Data Portability (Export / Import) */}
       {activeTab === 'portability' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-          {/* Export Box */}
           <div style={{ border: '1px solid #e5e5e5', padding: '1.5rem', borderRadius: '4px' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>Tenant Data Export</h3>
             <p style={{ color: '#737373', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
@@ -755,7 +746,6 @@ export default function EnterpriseOperationsConsole() {
             </button>
           </div>
 
-          {/* Import Box */}
           <div style={{ border: '1px solid #e5e5e5', padding: '1.5rem', borderRadius: '4px' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>Validated Data Import</h3>
             <p style={{ color: '#737373', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
@@ -819,7 +809,6 @@ export default function EnterpriseOperationsConsole() {
         </div>
       )}
 
-      {/* Tab 3: Tenant Lifecycle & Legal Holds */}
       {activeTab === 'lifecycle' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -977,7 +966,6 @@ export default function EnterpriseOperationsConsole() {
         </div>
       )}
 
-      {/* Tab 4: Retention Engine */}
       {activeTab === 'retention' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -1011,13 +999,12 @@ export default function EnterpriseOperationsConsole() {
               <li><strong style={{ color: '#FFFFFF' }}>Documents:</strong> Retained for 2,555 days (7 years). Records under active legal hold are shielded.</li>
               <li><strong style={{ color: '#FFFFFF' }}>Monitoring Events:</strong> Retained for 365 days (1 year).</li>
               <li><strong style={{ color: '#FFFFFF' }}>Integration Outbox Logs:</strong> Retained for 90 days.</li>
-              <li><strong style={{ color: '#FFFFFF' }}>Cryptographic Blockchain Audit:</strong> Indefinite retention (immutable ledger).</li>
+              <li><strong style={{ color: '#FFFFFF' }}>Cryptographic Audit Ledger:</strong> Indefinite retention (immutable ledger).</li>
             </ul>
           </div>
         </div>
       )}
 
-      {/* Tab 5: System Health & Background Jobs */}
       {activeTab === 'system_health' && (
         <div>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 1rem 0' }}>Background Job Reliability Ledger</h3>
@@ -1090,7 +1077,6 @@ export default function EnterpriseOperationsConsole() {
         </div>
       )}
 
-      {/* Tab 6: Showcase Demo Mode */}
       {activeTab === 'demo_environment' && (
         <div role="tabpanel" id="tabpanel-demo_environment">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -1140,7 +1126,6 @@ export default function EnterpriseOperationsConsole() {
             </div>
           </div>
 
-          {/* Status banner */}
           <div style={{
             padding: '1rem 1.25rem',
             background: demoStatus?.is_seeded ? '#dcfce7' : '#f3f4f6',
@@ -1164,7 +1149,6 @@ export default function EnterpriseOperationsConsole() {
             </span>
           </div>
 
-          {/* 5 Contracts Table */}
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem', marginBottom: '2rem' }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #e5e5e5', background: '#f5f5f5' }}>
@@ -1214,7 +1198,6 @@ export default function EnterpriseOperationsConsole() {
             </tbody>
           </table>
 
-          {/* 5-Minute Story Guide */}
           <div style={{ border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '4px', padding: '1.5rem', background: 'rgba(255, 255, 255, 0.03)' }}>
             <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1.1rem', color: '#FFFFFF' }}>How to Present the 5-to-10 Minute Story to Interviewers & Recruiters</h4>
             <ol style={{ paddingLeft: '1.25rem', fontSize: '0.88rem', lineHeight: 1.8, color: '#D4D4D8' }}>
@@ -1224,13 +1207,12 @@ export default function EnterpriseOperationsConsole() {
               <li><strong style={{ color: '#FFFFFF' }}>Policy Governance & Exception:</strong> View POL-02 violation trigger, and show formal governance exception request.</li>
               <li><strong style={{ color: '#FFFFFF' }}>Dual-Signatory Approval:</strong> Navigate to <em>QuantumBio JDA</em> workflow; demonstrate Legal Counsel signature recorded and VP Finance pending.</li>
               <li><strong style={{ color: '#FFFFFF' }}>Continuous Monitoring:</strong> Inspect <em>AetherScale SaaS</em>; show automated alert triggered when uptime hit 98.42% with webhook integration.</li>
-              <li><strong style={{ color: '#FFFFFF' }}>Immutable Audit & Disaster Recovery:</strong> Open Operations Console; show the SHA-256 blockchain block verifying all above actions.</li>
+              <li><strong style={{ color: '#FFFFFF' }}>Immutable Audit & Disaster Recovery:</strong> Open Operations Console; show the SHA-256 cryptographic audit block verifying all above actions.</li>
             </ol>
           </div>
         </div>
       )}
 
-      {/* Modal: Create Backup */}
       {showBackupModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '6px', width: '480px', maxWidth: '90%' }}>
@@ -1280,7 +1262,6 @@ export default function EnterpriseOperationsConsole() {
         </div>
       )}
 
-      {/* Modal: Restore Test */}
       {showRestoreModal && selectedBackup && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '6px', width: '500px', maxWidth: '90%' }}>
@@ -1333,7 +1314,6 @@ export default function EnterpriseOperationsConsole() {
         </div>
       )}
 
-      {/* Modal: Legal Hold */}
       {showHoldModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '6px', width: '480px', maxWidth: '90%' }}>
@@ -1396,7 +1376,6 @@ export default function EnterpriseOperationsConsole() {
         </div>
       )}
 
-      {/* Modal: Break Glass */}
       {showBreakGlassModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
           <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '6px', width: '520px', maxWidth: '90%', border: '2px solid #b91c1c' }}>
@@ -1405,7 +1384,7 @@ export default function EnterpriseOperationsConsole() {
             </h3>
             <p style={{ color: '#525252', fontSize: '0.85rem', marginBottom: '1.25rem', lineHeight: 1.5 }}>
               This action bypasses standard tenancy isolation and invokes emergency administrative recovery privileges. 
-              Your identity, IP address, and justification will be immutably recorded in the cryptographic blockchain audit log.
+              Your identity, IP address, and justification will be immutably recorded in the cryptographic audit ledger.
             </p>
 
             <form onSubmit={handleBreakGlass}>
@@ -1454,7 +1433,6 @@ export default function EnterpriseOperationsConsole() {
         </div>
       )}
 
-      {/* Modal: Retention Preview */}
       {showRetentionPreviewModal && retentionPreviewData && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '6px', width: '560px', maxWidth: '90%' }}>

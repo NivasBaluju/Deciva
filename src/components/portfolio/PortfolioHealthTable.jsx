@@ -188,7 +188,6 @@ export const PortfolioHealthTable = () => {
             </tbody>
           </table>
 
-          {/* Pagination */}
           {total > limit && (
             <div className="flex-between mt-16" style={{ alignItems: 'center' }}>
               <span className="text-muted small">

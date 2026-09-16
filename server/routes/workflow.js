@@ -1,5 +1,5 @@
 /**
- * Deciva — Contract Decision Workflow Routes (Phase 12)
+ * Deciva — Contract Decision Workflow Routes
  * ---------------------------------------------------------------------------
  * Authenticated endpoints for enterprise human-in-the-loop decision governance,
  * approval policies, multi-reviewer collaboration, and inbox management.
@@ -25,8 +25,6 @@ const {
 } = require('../services/contractDecisionWorkflowService');
 
 const router = express.Router();
-
-// --- Inbox Endpoints ---
 
 /**
  * GET /api/workflow/inbox
@@ -69,8 +67,6 @@ router.get('/my-decisions', requireAuth, async (req, res) => {
     res.status(err.status || 500).json({ error: err.message || 'Failed to fetch my decisions' });
   }
 });
-
-// --- Decision Details & Actions ---
 
 /**
  * GET /api/workflow/decisions/:decisionId
@@ -253,8 +249,6 @@ router.get('/decisions/:decisionId/timeline', requireAuth, async (req, res) => {
     res.status(err.status || 500).json({ error: err.message || 'Failed to fetch workflow timeline' });
   }
 });
-
-// --- Phase I: Human Decision Feedback Telemetry -----------
 
 /**
  * POST /api/workflow/decision-feedback

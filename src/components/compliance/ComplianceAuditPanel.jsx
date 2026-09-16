@@ -8,7 +8,7 @@ import EvidenceIntegrityCard from './EvidenceIntegrityCard';
 export const ComplianceAuditPanel = ({ doc }) => {
   const [evidencePackage, setEvidencePackage] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [subTab, setSubTab] = useState('OVERVIEW'); // 'OVERVIEW' | 'EVIDENCE' | 'INTEGRITY' | 'EXPORTS'
+  const [subTab, setSubTab] = useState('OVERVIEW');
   const [downloading, setDownloading] = useState({});
   const { toast } = useToast();
 
@@ -61,7 +61,6 @@ export const ComplianceAuditPanel = ({ doc }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '4px 0' }}>
-      {/* 1. Header & Sub-Navigation */}
       <div
         className="card"
         style={{
@@ -100,7 +99,6 @@ export const ComplianceAuditPanel = ({ doc }) => {
           </div>
         </div>
 
-        {/* Sub-tab pills */}
         <div style={{ display: 'flex', gap: '6px', background: 'rgba(2, 6, 23, 0.6)', padding: '4px', borderRadius: '8px' }}>
           {[
             { id: 'OVERVIEW', label: 'Overview', icon: 'activity' },
@@ -132,13 +130,10 @@ export const ComplianceAuditPanel = ({ doc }) => {
         </div>
       </div>
 
-      {/* 2. Sub-view 1: OVERVIEW */}
       {subTab === 'OVERVIEW' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Quick Integrity Banner */}
           <EvidenceIntegrityCard manifest={manifest} evidence={evidence} />
 
-          {/* Key Metrics Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
             <div className="card" style={{ padding: '16px', background: 'rgba(15, 23, 42, 0.5)' }}>
               <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase' }}>Operational Health</span>
@@ -182,10 +177,8 @@ export const ComplianceAuditPanel = ({ doc }) => {
         </div>
       )}
 
-      {/* 3. Sub-view 2: EVIDENCE DATA EXPLORER */}
       {subTab === 'EVIDENCE' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Historical Intelligence Snapshot Card */}
           <div className="card" style={{ padding: '16px 20px', background: 'rgba(15, 23, 42, 0.6)' }}>
             <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600, color: '#38BDF8' }}>
               Historical AI Intelligence Snapshot (Phase 6.4)
@@ -211,7 +204,6 @@ export const ComplianceAuditPanel = ({ doc }) => {
             )}
           </div>
 
-          {/* Workflow Actions Table */}
           <div className="card" style={{ padding: '16px 20px', background: 'rgba(15, 23, 42, 0.6)' }}>
             <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600, color: '#E2E8F0' }}>
               Workflow Actions Evidence ({actions.length})
@@ -258,7 +250,6 @@ export const ComplianceAuditPanel = ({ doc }) => {
         </div>
       )}
 
-      {/* 4. Sub-view 3: HASH INTEGRITY */}
       {subTab === 'INTEGRITY' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <EvidenceIntegrityCard manifest={manifest} evidence={evidence} />
@@ -288,10 +279,8 @@ export const ComplianceAuditPanel = ({ doc }) => {
         </div>
       )}
 
-      {/* 5. Sub-view 4: EXPORT ARTIFACTS */}
       {subTab === 'EXPORTS' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-          {/* Executive PDF Card */}
           <div
             className="card"
             style={{
@@ -322,7 +311,6 @@ export const ComplianceAuditPanel = ({ doc }) => {
             </button>
           </div>
 
-          {/* Machine-Readable JSON Card */}
           <div
             className="card"
             style={{
@@ -361,7 +349,6 @@ export const ComplianceAuditPanel = ({ doc }) => {
             </button>
           </div>
 
-          {/* Action Items CSV Card */}
           <div
             className="card"
             style={{
@@ -400,7 +387,6 @@ export const ComplianceAuditPanel = ({ doc }) => {
             </button>
           </div>
 
-          {/* Decision Ledger CSV Card */}
           <div
             className="card"
             style={{
