@@ -38,106 +38,86 @@ export const EvidenceIntegrityCard = ({ manifest, evidence, onVerificationResult
     <div
       className="card"
       style={{
-        padding: '20px',
-        background: 'rgba(15, 23, 42, 0.75)',
-        border: '1px solid rgba(59, 130, 246, 0.3)',
-        borderRadius: '12px',
+        padding: '22px 24px',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--rule)',
         position: 'relative',
-        overflow: 'hidden'
+        margin: 0
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          background: 'linear-gradient(90deg, #3B82F6, #10B981, #6366F1)'
-        }}
-      />
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div
             style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              background: 'rgba(59, 130, 246, 0.15)',
-              border: '1px solid rgba(59, 130, 246, 0.4)',
+              width: '38px',
+              height: '38px',
+              background: 'var(--paper-wash)',
+              border: '1px solid var(--rule)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#60A5FA'
+              color: 'var(--ink)'
             }}
           >
-            <Icon name="shield" size={20} />
+            <Icon name="shield" size={18} />
           </div>
           <div>
-            <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#F8FAFC' }}>
+            <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--ink)', fontFamily: 'var(--font-head)' }}>
               Cryptographic Evidence Integrity
             </h4>
-            <span style={{ fontSize: '11px', color: '#94A3B8' }}>
-              Canonical SHA-256 Content Hash & Schema Specification
+            <span className="text-lo small" style={{ fontSize: '12px' }}>
+              Canonical SHA-256 Content Hash &amp; Schema Specification
             </span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            onClick={handleVerifyNow}
-            disabled={verifying}
-            className="btn btn-sm"
-            style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              color: '#34D399',
-              fontSize: '12px',
-              fontWeight: 500,
-              padding: '4px 10px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <Icon name="check" size={14} />
-            {verifying ? 'Verifying...' : 'Verify Hash Now'}
-          </button>
-        </div>
+        <button
+          onClick={handleVerifyNow}
+          disabled={verifying}
+          className="btn btn-outline btn-sm"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px',
+            fontWeight: 600
+          }}
+        >
+          <Icon name="check" size={14} />
+          {verifying ? 'Verifying...' : 'Verify Hash Now'}
+        </button>
       </div>
 
       <div
         style={{
-          background: 'rgba(2, 6, 23, 0.85)',
-          padding: '12px 14px',
-          borderRadius: '8px',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          fontFamily: 'monospace',
+          background: 'var(--paper-wash)',
+          padding: '12px 16px',
+          border: '1px solid var(--rule)',
+          fontFamily: 'monospace, var(--font-mono)',
           fontSize: '12px',
-          color: '#38BDF8',
+          color: 'var(--ink-soft)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           wordBreak: 'break-all',
-          marginBottom: '12px'
+          marginBottom: '14px'
         }}
       >
         <span style={{ letterSpacing: '0.5px' }}>{hash}</span>
         <button
           onClick={handleCopyHash}
           title="Copy SHA-256 hash"
+          className="btn btn-ghost btn-sm"
           style={{
-            background: 'transparent',
-            border: 'none',
-            color: copied ? '#34D399' : '#94A3B8',
+            color: copied ? 'var(--emerald, #10B981)' : 'var(--ink-soft)',
             cursor: 'pointer',
             padding: '4px 8px',
-            marginLeft: '8px',
+            marginLeft: '12px',
             flexShrink: 0,
-            fontSize: '12px'
+            fontSize: '11px',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em'
           }}
         >
           {copied ? '✓ Copied' : 'Copy'}
@@ -147,19 +127,18 @@ export const EvidenceIntegrityCard = ({ manifest, evidence, onVerificationResult
       {verificationResult && (
         <div
           style={{
-            padding: '10px 14px',
-            borderRadius: '6px',
-            marginBottom: '12px',
-            fontSize: '12px',
-            background: verificationResult.valid ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-            border: `1px solid ${verificationResult.valid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-            color: verificationResult.valid ? '#34D399' : '#F87171',
+            padding: '12px 16px',
+            marginBottom: '14px',
+            fontSize: '12.5px',
+            background: verificationResult.valid ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+            border: `1px solid ${verificationResult.valid ? 'rgba(16, 185, 129, 0.3)' : 'var(--signal)'}`,
+            color: verificationResult.valid ? '#10B981' : 'var(--signal)',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '10px'
           }}
         >
-          <Icon name={verificationResult.valid ? 'check' : 'alert-triangle'} size={16} />
+          <Icon name={verificationResult.valid ? 'check' : 'alertTriangle'} size={16} />
           <span>
             {verificationResult.valid
               ? 'Integrity Verified: Canonical SHA-256 hash strictly matches generated payload (Zero modification detected).'
@@ -172,24 +151,27 @@ export const EvidenceIntegrityCard = ({ manifest, evidence, onVerificationResult
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-          gap: '10px',
-          fontSize: '11px',
-          color: '#94A3B8',
-          borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-          paddingTop: '10px'
+          gap: '12px',
+          fontSize: '11.5px',
+          borderTop: '1px solid var(--rule)',
+          paddingTop: '12px'
         }}
       >
         <div>
-          <span style={{ color: '#64748B' }}>Algorithm:</span> <strong style={{ color: '#E2E8F0' }}>{algorithm}</strong>
+          <span className="text-lo" style={{ marginRight: '6px' }}>Algorithm:</span>
+          <strong style={{ color: 'var(--ink)' }}>{algorithm}</strong>
         </div>
         <div>
-          <span style={{ color: '#64748B' }}>Schema Version:</span> <strong style={{ color: '#E2E8F0' }}>v{schemaVersion}</strong>
+          <span className="text-lo" style={{ marginRight: '6px' }}>Schema Version:</span>
+          <strong style={{ color: 'var(--ink)' }}>v{schemaVersion}</strong>
         </div>
         <div>
-          <span style={{ color: '#64748B' }}>Export Type:</span> <strong style={{ color: '#E2E8F0' }}>{manifest?.exportType || 'CONTRACT'}</strong>
+          <span className="text-lo" style={{ marginRight: '6px' }}>Export Type:</span>
+          <strong style={{ color: 'var(--ink)' }}>{manifest?.exportType || 'CONTRACT_GOVERNANCE_AUDIT'}</strong>
         </div>
         <div>
-          <span style={{ color: '#64748B' }}>Snapshot Time:</span> <span style={{ color: '#CBD5E1' }}>{generatedAt}</span>
+          <span className="text-lo" style={{ marginRight: '6px' }}>Snapshot Time:</span>
+          <span style={{ color: 'var(--ink-soft)' }}>{generatedAt}</span>
         </div>
       </div>
     </div>

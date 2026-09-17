@@ -63,30 +63,31 @@ export const PortfolioCompliancePanel = () => {
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: '12px',
-          background: 'rgba(15, 23, 42, 0.65)'
+          background: 'var(--card-bg)',
+          border: '1px solid var(--rule)',
+          margin: 0
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div
             style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              background: 'rgba(99, 102, 241, 0.15)',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
+              width: '38px',
+              height: '38px',
+              background: 'var(--paper-wash)',
+              border: '1px solid var(--rule)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#818CF8'
+              color: 'var(--ink)'
             }}
           >
-            <Icon name="layers" size={22} />
+            <Icon name="layers" size={18} />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#F8FAFC' }}>
-              Portfolio Governance Audit & Compliance Export
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--ink)', fontFamily: 'var(--font-head)' }}>
+              Portfolio Governance Audit &amp; Compliance Export
             </h3>
-            <span style={{ fontSize: '12px', color: '#94A3B8' }}>
+            <span className="text-lo small" style={{ fontSize: '12px' }}>
               Cryptographically integrity-verifiable audit bundle covering your full contract portfolio
             </span>
           </div>
@@ -94,80 +95,95 @@ export const PortfolioCompliancePanel = () => {
 
         <button
           onClick={loadPortfolioEvidence}
-          className="btn btn-sm"
+          className="btn btn-outline btn-sm"
           style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: '#CBD5E1',
-            fontSize: '12px'
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px',
+            fontWeight: 600
           }}
         >
-          <Icon name="refresh-cw" size={13} /> Refresh
+          <Icon name="refresh" size={13} /> Refresh
         </button>
       </div>
 
       <EvidenceIntegrityCard manifest={manifest} evidence={evidence} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
-        <div className="card" style={{ padding: '16px', background: 'rgba(15, 23, 42, 0.5)' }}>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase' }}>Portfolio Health</span>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '6px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: '#38BDF8' }}>{health.portfolioHealthScore ?? 'N/A'}</span>
-            <span style={{ fontSize: '12px', color: '#64748B' }}>/ 100</span>
-            <span className="badge badge-info" style={{ marginLeft: 'auto', fontSize: '11px' }}>
+        <div className="card" style={{ padding: '20px', margin: 0, background: 'var(--card-bg)', border: '1px solid var(--rule)' }}>
+          <div className="text-mid small" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Portfolio Health</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', margin: '8px 0 6px' }}>
+            <span style={{ fontFamily: 'var(--font-head)', fontSize: '28px', fontWeight: 700, color: 'var(--ink)' }}>
+              {health.portfolioHealthScore ?? 'N/A'}
+            </span>
+            <span style={{ fontSize: '13px', color: 'var(--text-lo)' }}>/ 100</span>
+            <span className={`badge ${health.portfolioHealthScore >= 80 ? 'badge-ok' : health.portfolioHealthScore >= 50 ? 'badge-warn' : 'badge-neutral'}`} style={{ marginLeft: 'auto', fontSize: '11px' }}>
               {health.grade || 'N/A'}
             </span>
           </div>
+          <span className="text-lo small">Aggregate Health Score</span>
         </div>
 
-        <div className="card" style={{ padding: '16px', background: 'rgba(15, 23, 42, 0.5)' }}>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase' }}>Managed Contracts</span>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '6px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: '#F8FAFC' }}>{summary.totalContracts || 0}</span>
-            <span style={{ fontSize: '12px', color: '#64748B' }}>Contracts</span>
+        <div className="card" style={{ padding: '20px', margin: 0, background: 'var(--card-bg)', border: '1px solid var(--rule)' }}>
+          <div className="text-mid small" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Managed Contracts</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', margin: '8px 0 6px' }}>
+            <span style={{ fontFamily: 'var(--font-head)', fontSize: '28px', fontWeight: 700, color: 'var(--ink)' }}>
+              {summary.totalContracts || 0}
+            </span>
+            <span style={{ fontSize: '13px', color: 'var(--text-lo)' }}>Contracts</span>
           </div>
+          <span className="text-lo small">Active Portfolio Scope</span>
         </div>
 
-        <div className="card" style={{ padding: '16px', background: 'rgba(15, 23, 42, 0.5)' }}>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase' }}>Active Backlog</span>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '6px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: '#FBBF24' }}>{summary.activeActions || 0}</span>
-            <span style={{ fontSize: '12px', color: '#64748B' }}>/ {summary.totalActions || 0} Total</span>
+        <div className="card" style={{ padding: '20px', margin: 0, background: 'var(--card-bg)', border: '1px solid var(--rule)' }}>
+          <div className="text-mid small" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Backlog</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', margin: '8px 0 6px' }}>
+            <span style={{ fontFamily: 'var(--font-head)', fontSize: '28px', fontWeight: 700, color: 'var(--ink)' }}>
+              {summary.activeActions || 0}
+            </span>
+            <span style={{ fontSize: '13px', color: 'var(--text-lo)' }}>/ {summary.totalActions || 0} Total</span>
           </div>
+          <span className="text-lo small">Pending Governance Items</span>
         </div>
 
-        <div className="card" style={{ padding: '16px', background: 'rgba(15, 23, 42, 0.5)' }}>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase' }}>Active Escalations</span>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '6px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: summary.escalatedActions > 0 ? '#F87171' : '#34D399' }}>
+        <div className="card" style={{ padding: '20px', margin: 0, background: 'var(--card-bg)', border: '1px solid var(--rule)' }}>
+          <div className="text-mid small" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Escalations</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', margin: '8px 0 6px' }}>
+            <span style={{ fontFamily: 'var(--font-head)', fontSize: '28px', fontWeight: 700, color: summary.escalatedActions > 0 ? 'var(--signal)' : 'var(--ink)' }}>
               {summary.escalatedActions || 0}
             </span>
-            <span style={{ fontSize: '12px', color: '#64748B' }}>Escalated Items</span>
+            <span style={{ fontSize: '13px', color: 'var(--text-lo)' }}>Escalated Items</span>
           </div>
+          <span className="text-lo small">{summary.escalatedActions > 0 ? 'Requires Immediate Review' : 'Zero Critical Escalations'}</span>
         </div>
       </div>
 
-      <h4 style={{ margin: '8px 0 0 0', fontSize: '14px', fontWeight: 600, color: '#E2E8F0' }}>
+      <div className="card-title" style={{ margin: '8px 0 0 0' }}>
+        <span className="dot dot-gold" />
         Portfolio Audit Export Artifacts
-      </h4>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
         <div
           className="card"
           style={{
-            padding: '20px',
-            background: 'rgba(15, 23, 42, 0.65)',
+            padding: '24px',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--rule)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            border: '1px solid rgba(99, 102, 241, 0.25)'
+            margin: 0
           }}
         >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <Icon name="file-text" size={20} color="#818CF8" />
-              <h4 style={{ margin: 0, fontSize: '15px', color: '#F8FAFC' }}>Portfolio Executive PDF</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--paper-wash)', border: '1px solid var(--rule)', color: 'var(--ink)' }}>
+                <Icon name="fileText" size={16} />
+              </div>
+              <h4 style={{ margin: 0, fontSize: '15px', color: 'var(--ink)', fontFamily: 'var(--font-head)' }}>Portfolio Executive PDF</h4>
             </div>
-            <p style={{ fontSize: '12px', color: '#94A3B8', margin: '0 0 16px 0', lineHeight: 1.5 }}>
+            <p className="text-lo small" style={{ margin: '0 0 20px 0', lineHeight: 1.6 }}>
               Executive PDF summary containing portfolio health index, contract risk rankings, and SHA-256 evidence integrity box.
             </p>
           </div>
@@ -175,7 +191,7 @@ export const PortfolioCompliancePanel = () => {
             onClick={() => handleDownload('pdf', ComplianceAuditApi.downloadPortfolioPdf)}
             disabled={downloading['pdf']}
             className="btn btn-primary"
-            style={{ width: '100%', fontSize: '12px', fontWeight: 600, padding: '8px 14px' }}
+            style={{ width: '100%', fontSize: '12px', fontWeight: 600, padding: '10px 14px' }}
           >
             {downloading['pdf'] ? 'Generating PDF...' : 'Download Portfolio PDF'}
           </button>
@@ -184,36 +200,31 @@ export const PortfolioCompliancePanel = () => {
         <div
           className="card"
           style={{
-            padding: '20px',
-            background: 'rgba(15, 23, 42, 0.65)',
+            padding: '24px',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--rule)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            border: '1px solid rgba(16, 185, 129, 0.25)'
+            margin: 0
           }}
         >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <Icon name="code" size={20} color="#34D399" />
-              <h4 style={{ margin: 0, fontSize: '15px', color: '#F8FAFC' }}>Portfolio Canonical JSON</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--paper-wash)', border: '1px solid var(--rule)', color: 'var(--ink)' }}>
+                <Icon name="code" size={16} />
+              </div>
+              <h4 style={{ margin: 0, fontSize: '15px', color: 'var(--ink)', fontFamily: 'var(--font-head)' }}>Portfolio Canonical JSON</h4>
             </div>
-            <p style={{ fontSize: '12px', color: '#94A3B8', margin: '0 0 16px 0', lineHeight: 1.5 }}>
+            <p className="text-lo small" style={{ margin: '0 0 20px 0', lineHeight: 1.6 }}>
               Complete machine-verifiable portfolio evidence package including attention queue, team workload, and deadline analytics.
             </p>
           </div>
           <button
             onClick={() => handleDownload('json', ComplianceAuditApi.downloadPortfolioJson)}
             disabled={downloading['json']}
-            className="btn"
-            style={{
-              width: '100%',
-              fontSize: '12px',
-              fontWeight: 600,
-              padding: '8px 14px',
-              background: 'rgba(16, 185, 129, 0.2)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              color: '#34D399'
-            }}
+            className="btn btn-outline"
+            style={{ width: '100%', fontSize: '12px', fontWeight: 600, padding: '10px 14px' }}
           >
             {downloading['json'] ? 'Generating JSON...' : 'Download Portfolio JSON'}
           </button>
@@ -222,36 +233,31 @@ export const PortfolioCompliancePanel = () => {
         <div
           className="card"
           style={{
-            padding: '20px',
-            background: 'rgba(15, 23, 42, 0.65)',
+            padding: '24px',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--rule)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            border: '1px solid rgba(245, 158, 11, 0.25)'
+            margin: 0
           }}
         >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <Icon name="table" size={20} color="#FBBF24" />
-              <h4 style={{ margin: 0, fontSize: '15px', color: '#F8FAFC' }}>Attention Queue CSV</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--paper-wash)', border: '1px solid var(--rule)', color: 'var(--ink)' }}>
+                <Icon name="table" size={16} />
+              </div>
+              <h4 style={{ margin: 0, fontSize: '15px', color: 'var(--ink)', fontFamily: 'var(--font-head)' }}>Attention Queue CSV</h4>
             </div>
-            <p style={{ fontSize: '12px', color: '#94A3B8', margin: '0 0 16px 0', lineHeight: 1.5 }}>
+            <p className="text-lo small" style={{ margin: '0 0 20px 0', lineHeight: 1.6 }}>
               Portfolio-wide attention queue CSV with attention scores, reasons, and overdue days.
             </p>
           </div>
           <button
             onClick={() => handleDownload('actions_csv', ComplianceAuditApi.downloadPortfolioActionsCsv)}
             disabled={downloading['actions_csv']}
-            className="btn"
-            style={{
-              width: '100%',
-              fontSize: '12px',
-              fontWeight: 600,
-              padding: '8px 14px',
-              background: 'rgba(245, 158, 11, 0.15)',
-              border: '1px solid rgba(245, 158, 11, 0.4)',
-              color: '#FBBF24'
-            }}
+            className="btn btn-outline"
+            style={{ width: '100%', fontSize: '12px', fontWeight: 600, padding: '10px 14px' }}
           >
             {downloading['actions_csv'] ? 'Generating CSV...' : 'Download Queue CSV'}
           </button>
@@ -260,36 +266,31 @@ export const PortfolioCompliancePanel = () => {
         <div
           className="card"
           style={{
-            padding: '20px',
-            background: 'rgba(15, 23, 42, 0.65)',
+            padding: '24px',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--rule)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            border: '1px solid rgba(59, 130, 246, 0.25)'
+            margin: 0
           }}
         >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <Icon name="bar-chart-2" size={20} color="#60A5FA" />
-              <h4 style={{ margin: 0, fontSize: '15px', color: '#F8FAFC' }}>Contracts Health CSV</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--paper-wash)', border: '1px solid var(--rule)', color: 'var(--ink)' }}>
+                <Icon name="chart" size={16} />
+              </div>
+              <h4 style={{ margin: 0, fontSize: '15px', color: 'var(--ink)', fontFamily: 'var(--font-head)' }}>Contracts Health CSV</h4>
             </div>
-            <p style={{ fontSize: '12px', color: '#94A3B8', margin: '0 0 16px 0', lineHeight: 1.5 }}>
+            <p className="text-lo small" style={{ margin: '0 0 20px 0', lineHeight: 1.6 }}>
               Portfolio contracts ranking CSV with individual health scores, grades, and resolution metrics.
             </p>
           </div>
           <button
             onClick={() => handleDownload('contracts_csv', ComplianceAuditApi.downloadPortfolioContractsCsv)}
             disabled={downloading['contracts_csv']}
-            className="btn"
-            style={{
-              width: '100%',
-              fontSize: '12px',
-              fontWeight: 600,
-              padding: '8px 14px',
-              background: 'rgba(59, 130, 246, 0.15)',
-              border: '1px solid rgba(59, 130, 246, 0.4)',
-              color: '#60A5FA'
-            }}
+            className="btn btn-outline"
+            style={{ width: '100%', fontSize: '12px', fontWeight: 600, padding: '10px 14px' }}
           >
             {downloading['contracts_csv'] ? 'Generating CSV...' : 'Download Contracts CSV'}
           </button>
