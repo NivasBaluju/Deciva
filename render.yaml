@@ -41,6 +41,8 @@ services:
         sync: false
       - key: SMTP_PORT
         sync: false
+      - key: RESEND_API_KEY
+        sync: false
 
   # ---------------------------------------------------------------------------
   # Tier 4: Python / Flask AI Microservice

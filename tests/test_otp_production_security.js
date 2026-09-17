@@ -16,6 +16,7 @@ const assert = require('assert');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
+process.env.DOTENV_LOADED = 'true';
 const db = require('../server/db');
 
 // Helper to start test Express server
