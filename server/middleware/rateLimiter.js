@@ -2,7 +2,7 @@ const rateLimit = require('express-rate-limit');
 
 /**
  * Enterprise Rate Limiters for Deciva
- * Protects against brute-force attacks, OTP enumeration, SMTP exhaustion, and AI quota drainage.
+ * Protects against brute-force attacks, credential stuffing, SMTP exhaustion, and AI quota drainage.
  */
 
 const isDev = process.env.NODE_ENV !== 'production';

@@ -128,7 +128,7 @@ export const ChatTab = ({ doc }) => {
         {messages.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 16px' }}>
             <div style={{ fontSize: '28px', marginBottom: '8px' }}>⚖️</div>
-            <div style={{ fontWeight: 600, color: 'var(--hi)' }}>Ask DocuGuard AI About This Document</div>
+            <div style={{ fontWeight: 600, color: 'var(--hi)' }}>Ask Deciva AI About This Document</div>
             <p className="text-lo" style={{ fontSize: '12px', maxWidth: '420px', margin: '6px auto 0' }}>
               Select a suggested question above or type any query regarding clauses, obligations, liabilities, or deadlines.
             </p>

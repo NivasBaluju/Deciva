@@ -12,5 +12,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 TECHNICAL_ARCHITECTURE_DEEP_DIVE.md
+.venv/
+venv/
 storage/docx_exports/*
 storage/audit_exports/*
+

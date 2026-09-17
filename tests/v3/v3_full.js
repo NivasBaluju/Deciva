@@ -71,73 +71,54 @@ async function testAuth() {
   console.log('\n=== SECTION 2: AUTHENTICATION ===');
   const UA = 'v3ua_' + TS + '@v3cert.test';
   const UB = 'v3ub_' + TS + '@v3cert.test';
+  const passA = 'V3UserAPassword123!';
+  const passB = 'V3UserBPassword123!';
   state.UA_EMAIL = UA;
   state.UB_EMAIL = UB;
 
-  const regA = await post('/api/auth/register', { email: UA, name: 'V3UserA' });
-  rec('V3-AUTH01', 'Register User A - 200', regA.status === 200 ? 'PASS' : 'FAIL', '200', regA.status, '');
-  rec('V3-AUTH02', 'Register triggers mfaRequired=true', regA.body.mfaRequired === true ? 'PASS' : 'FAIL', 'true', regA.body.mfaRequired, '');
+  const regA = await post('/api/auth/register', { email: UA, name: 'V3UserA', password: passA, confirmPassword: passA });
+  rec('V3-AUTH01', 'Register User A - 200/201', [200, 201].includes(regA.status) ? 'PASS' : 'FAIL', '200 or 201', regA.status, '');
+  rec('V3-AUTH02', 'Register directly authenticates session (no OTP required)', regA.body.ok === true && !!regA.body.token ? 'PASS' : 'FAIL', 'ok: true with token', regA.body.ok, '');
 
-  const bpPresent = regA.body.backupPass !== undefined;
-  rec('V3-AUTH03', 'OTP NOT in response body [SECURITY CRITICAL]',
-    !bpPresent ? 'PASS' : 'FAIL',
-    'backupPass absent',
-    bpPresent ? 'SECURITY: OTP=' + regA.body.backupPass + ' in HTTP response body. deliveryFailed=' + regA.body.deliveryFailed : 'absent',
-    'auth.js:87 backupPass returned when deliveryFailed=true (SMTP configured but failing)');
+  const hashPresent = regA.body.password_hash !== undefined || (regA.body.user && regA.body.user.password_hash !== undefined);
+  rec('V3-AUTH03', 'Password hash NOT in response body [SECURITY CRITICAL]',
+    !hashPresent ? 'PASS' : 'FAIL',
+    'password_hash absent',
+    hashPresent ? 'SECURITY LEAK' : 'absent',
+    'password_hash must never be returned in API response body');
 
-  state.preA = regA.body.preToken;
-  state.backupA = regA.body.backupPass;
+  state.tokenA = regA.body.token;
+  state.userA_role = regA.body.user && regA.body.user.role;
 
-  const uARows = await qdb('SELECT id FROM users WHERE email=$1', [UA]);
+  const uARows = await qdb('SELECT id, password_hash, password_initialized FROM users WHERE email=$1', [UA]);
   state.userA_id = uARows[0] && uARows[0].id;
-  let otpA = null;
-  if (state.userA_id) {
-    const otpRows = await qdb('SELECT code FROM otp_codes WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1', [state.userA_id]);
-    otpA = otpRows[0] && otpRows[0].code;
-    rec('V3-AUTH04', 'OTP stored in otp_codes table', otpA ? 'PASS' : 'FAIL', 'code in DB', otpA ? 'code present' : 'NO ROW', '');
-  }
+  const passInit = uARows[0] && uARows[0].password_initialized;
+  const hashInDb = uARows[0] && uARows[0].password_hash;
+  rec('V3-AUTH04', 'Password hashed and initialized in PostgreSQL', (passInit && hashInDb && hashInDb.startsWith('$2')) ? 'PASS' : 'FAIL', 'bcrypt hash in DB', hashInDb ? 'hash present' : 'NO ROW', '');
 
-  const otpToUse = otpA || state.backupA;
-  if (otpToUse && state.preA) {
-    const vA = await post('/api/auth/mfa/otp/verify', { otp: otpToUse, preToken: state.preA });
-    rec('V3-AUTH05', 'OTP verify returns full JWT', vA.body.token ? 'PASS' : 'FAIL', 'token', vA.status + ' tok=' + !!vA.body.token, '');
-    state.tokenA = vA.body.token;
-    state.userA_role = vA.body.user && vA.body.user.role;
-    console.log('  UserA: tok=' + !!state.tokenA + ' role=' + state.userA_role + ' id=' + (state.userA_id && state.userA_id.substring(0, 8)));
-  } else {
-    rec('V3-AUTH05', 'OTP verify', 'BLOCKED', 'token', 'no OTP available', '');
-  }
+  const loginA = await post('/api/auth/login', { email: UA, password: passA });
+  rec('V3-AUTH05', 'Password login returns full JWT', (loginA.status === 200 && !!loginA.body.token) ? 'PASS' : 'FAIL', 'token', loginA.status + ' tok=' + !!loginA.body.token, '');
 
-  const regA2 = await post('/api/auth/register', { email: UA });
-  if (regA2.body.preToken && otpA) {
-    const replay = await post('/api/auth/mfa/otp/verify', { otp: otpA, preToken: regA2.body.preToken });
-    rec('V3-AUTH06', 'OTP replay rejected', replay.status >= 400 ? 'PASS' : 'FAIL', '4xx', replay.status, 'Replay consumed OTP');
-  }
+  const weakReg = await post('/api/auth/register', { email: 'weak_' + TS + '@v3cert.test', name: 'Weak', password: '123', confirmPassword: '123' });
+  rec('V3-AUTH06', 'Weak password rejected with 400', weakReg.status === 400 ? 'PASS' : 'FAIL', '400', weakReg.status, 'Password policy enforcement');
 
-  const regA3 = await post('/api/auth/register', { email: UA });
-  if (regA3.body.preToken) {
-    const wrong = await post('/api/auth/mfa/otp/verify', { otp: '000000', preToken: regA3.body.preToken });
-    rec('V3-AUTH07', 'Wrong OTP rejected', wrong.status >= 400 ? 'PASS' : 'FAIL', '4xx', wrong.status, '');
-  }
+  const wrongLogin = await post('/api/auth/login', { email: UA, password: 'WrongPassword123!' });
+  rec('V3-AUTH07', 'Wrong password rejected with 401', wrongLogin.status === 401 ? 'PASS' : 'FAIL', '401', wrongLogin.status, '');
 
   const unauth = await get('/api/documents');
   rec('V3-AUTH08', 'Unauthenticated access returns 401', unauth.status === 401 ? 'PASS' : 'FAIL', '401', unauth.status, '');
   const badJwt = await get('/api/documents', 'garbage.token');
   rec('V3-AUTH09', 'Malformed JWT returns 401', badJwt.status === 401 ? 'PASS' : 'FAIL', '401', badJwt.status, '');
-  if (state.preA) {
-    const preAccess = await get('/api/documents', state.preA);
-    rec('V3-AUTH10', 'preToken cannot access protected routes', preAccess.status === 401 ? 'PASS' : 'FAIL', '401', preAccess.status, 'preToken (preauth=true) used on /api/documents');
-  }
 
-  const regB = await post('/api/auth/register', { email: UB, name: 'V3UserB' });
-  rec('V3-AUTH11', 'Register User B - 200', regB.status === 200 ? 'PASS' : 'FAIL', '200', regB.status, '');
+  // Retired OTP route returns 410 Gone
+  const otpRetired = await post('/api/auth/mfa/otp/request', {});
+  rec('V3-AUTH10', 'Deprecated email OTP route returns 410 Gone', otpRetired.status === 410 ? 'PASS' : 'FAIL', '410', otpRetired.status, 'OTP retired in Phase 2');
+
+  const regB = await post('/api/auth/register', { email: UB, name: 'V3UserB', password: passB, confirmPassword: passB });
+  rec('V3-AUTH11', 'Register User B - 200/201', [200, 201].includes(regB.status) ? 'PASS' : 'FAIL', '200 or 201', regB.status, '');
   const uBRows = await qdb('SELECT id FROM users WHERE email=$1', [UB]);
   state.userB_id = uBRows[0] && uBRows[0].id;
-  const otpBToUse = regB.body.backupPass || (state.userB_id && (await qdb('SELECT code FROM otp_codes WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1', [state.userB_id]))[0] && (await qdb('SELECT code FROM otp_codes WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1', [state.userB_id]))[0].code);
-  if (otpBToUse && regB.body.preToken) {
-    const vB = await post('/api/auth/mfa/otp/verify', { otp: otpBToUse, preToken: regB.body.preToken });
-    state.tokenB = vB.body.token;
-  }
+  state.tokenB = regB.body.token;
   rec('V3-AUTH12', 'Login User B complete', state.tokenB ? 'PASS' : 'BLOCKED', 'token', !!state.tokenB, '');
 
   const adminRows = await qdb('SELECT email, role FROM users WHERE email=$1', ['balujunivas@gmail.com']);

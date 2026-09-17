@@ -106,40 +106,24 @@ async function runTests() {
   // --------------------------------------------------------------------------
   await test('T12-02: Authentication & Dual-Mode Cookie Issuance', async () => {
     const emailA = `test_user_a_${Date.now()}@example.com`;
+    const passwordA = 'AliceSecurePassword2026!';
     // Register
     const regRes = await fetch(`${GATEWAY_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: emailA, name: 'Alice Auditor' })
+      body: JSON.stringify({ email: emailA, name: 'Alice Auditor', password: passwordA, confirmPassword: passwordA })
     });
-    assert.strictEqual(regRes.status, 200, 'Registration must return 200');
+    assert.ok(regRes.status === 200 || regRes.status === 201, `Registration must return 200/201, got ${regRes.status}`);
     const regData = await regRes.json();
-    assert.ok(regData.preToken, 'Registration must provide preToken for MFA');
+    assert.strictEqual(regData.ok, true, 'Registration must return ok: true');
 
-    // Fetch OTP code directly from DB
     const { rows: userRows } = await db.query('SELECT id, email FROM users WHERE email = $1', [emailA]);
     assert.ok(userRows.length > 0, 'User record must exist in PostgreSQL');
     userA = userRows[0];
+    userA.password = passwordA;
 
-    const { rows: otpRows } = await db.query(
-      "SELECT code FROM otp_codes WHERE user_id = $1 AND purpose = 'login' AND used = false ORDER BY created_at DESC LIMIT 1",
-      [userA.id]
-    );
-    assert.ok(otpRows.length > 0, 'OTP code record must exist in DB');
-    const otpCode = otpRows[0].code;
-
-    // Verify OTP
-    const verifyRes = await fetch(`${GATEWAY_URL}/api/auth/mfa/otp/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ preToken: regData.preToken, code: otpCode })
-    });
-    assert.strictEqual(verifyRes.status, 200, 'OTP verification must return 200');
-    const verifyData = await verifyRes.json();
-    assert.ok(verifyData.token, 'OTP verification must return a session token');
-
-    // Verify Cookie
-    const setCookieHeader = verifyRes.headers.get('set-cookie') || '';
+    // Verify Cookie directly issued from registration
+    const setCookieHeader = regRes.headers.get('set-cookie') || '';
     assert.ok(setCookieHeader.includes('token='), 'Response must contain set-cookie token');
     assert.ok(setCookieHeader.toLowerCase().includes('httponly'), 'Cookie must have HttpOnly flag');
     assert.ok(setCookieHeader.toLowerCase().includes('samesite=lax') || setCookieHeader.toLowerCase().includes('samesite=none'), 'Cookie must have SameSite policy');
@@ -178,19 +162,10 @@ async function runTests() {
     const loginRes = await fetch(`${GATEWAY_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: userA.email })
+      body: JSON.stringify({ email: userA.email, password: userA.password })
     });
-    const loginData = await loginRes.json();
-    const { rows: newOtp } = await db.query(
-      "SELECT code FROM otp_codes WHERE user_id = $1 AND purpose = 'login' AND used = false ORDER BY created_at DESC LIMIT 1",
-      [userA.id]
-    );
-    const reauthRes = await fetch(`${GATEWAY_URL}/api/auth/mfa/otp/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ preToken: loginData.preToken, code: newOtp[0].code })
-    });
-    cookieA = (reauthRes.headers.get('set-cookie') || '').split(';')[0];
+    assert.strictEqual(loginRes.status, 200, 'Re-login must return 200');
+    cookieA = (loginRes.headers.get('set-cookie') || '').split(';')[0];
   });
 
   // --------------------------------------------------------------------------
@@ -234,24 +209,16 @@ async function runTests() {
   await test('T12-05: Strict Tenant Isolation & Authorization Boundary (User A vs User B)', async () => {
     // Provision User B
     const emailB = `test_user_b_${Date.now()}@example.com`;
+    const passwordB = 'BobSecurePassword2026!';
     const regResB = await fetch(`${GATEWAY_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: emailB, name: 'Bob Unauthorized' })
+      body: JSON.stringify({ email: emailB, name: 'Bob Unauthorized', password: passwordB, confirmPassword: passwordB })
     });
-    const regDataB = await regResB.json();
+    assert.ok(regResB.status === 200 || regResB.status === 201, 'User B registration must succeed');
     const { rows: userBRows } = await db.query('SELECT id, email FROM users WHERE email = $1', [emailB]);
     userB = userBRows[0];
-    const { rows: otpB } = await db.query(
-      "SELECT code FROM otp_codes WHERE user_id = $1 AND purpose = 'login' AND used = false ORDER BY created_at DESC LIMIT 1",
-      [userB.id]
-    );
-    const verifyResB = await fetch(`${GATEWAY_URL}/api/auth/mfa/otp/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ preToken: regDataB.preToken, code: otpB[0].code })
-    });
-    cookieB = (verifyResB.headers.get('set-cookie') || '').split(';')[0];
+    cookieB = (regResB.headers.get('set-cookie') || '').split(';')[0];
 
     // User B attempts to access User A's document
     const unauthorizedGet = await fetch(`${GATEWAY_URL}/api/documents/${docA.id}`, {
@@ -502,6 +469,16 @@ async function runTests() {
     // Verify row deleted from PostgreSQL
     const { rows: postDeleteRows } = await db.query('SELECT id FROM documents WHERE id = $1', [docA.id]);
     assert.strictEqual(postDeleteRows.length, 0, 'Document must be removed from PostgreSQL');
+
+    // Clean up test users
+    if (userA) {
+      await db.query('DELETE FROM sessions WHERE user_id = $1', [userA.id]).catch(() => {});
+      await db.query('DELETE FROM users WHERE id = $1', [userA.id]).catch(() => {});
+    }
+    if (userB) {
+      await db.query('DELETE FROM sessions WHERE user_id = $1', [userB.id]).catch(() => {});
+      await db.query('DELETE FROM users WHERE id = $1', [userB.id]).catch(() => {});
+    }
   });
 
   console.log('\n======================================================================');

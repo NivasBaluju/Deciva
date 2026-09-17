@@ -1,9 +1,12 @@
 const express = require('express');
+const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const { verifyChain, verifyLedger, recordAudit, logThreat } = require('../utils/audit');
 const { EnterpriseError, formatErrorResponse } = require('../utils/errorTaxonomy');
 const adminProvisioningService = require('../services/adminProvisioningService');
+const { validatePassword, hashPassword } = require('../utils/passwordPolicy');
 
 const router = express.Router();
 
@@ -174,6 +177,97 @@ router.post('/users/:id/role', requireAdmin, async (req, res) => {
       });
     }
     console.error('Admin provision user role error:', err);
+    res.status(500).json(formatErrorResponse(err, req.correlationId));
+  }
+});
+
+/**
+ * POST /api/admin/users/:id/setup-token
+ * Generates a single-use 24-hour setup token for a legacy account so the user can establish a password out-of-band.
+ */
+router.post('/users/:id/setup-token', requireAdmin, async (req, res) => {
+  try {
+    const targetUserId = req.params.id;
+    const { rows } = await db.query('SELECT id, email, role, password_initialized FROM users WHERE id = $1', [targetUserId]);
+    const targetUser = rows[0];
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+
+    if (targetUser.password_initialized === true) {
+      return res.status(400).json({
+        error: 'User password is already initialized. Setup tokens can only be issued for uninitialized legacy accounts.'
+      });
+    }
+
+    // Generate high-entropy 32-byte token
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const tokenId = uuidv4();
+
+    // Invalidate existing unused setup tokens for this user
+    await db.query('UPDATE legacy_setup_tokens SET used = true WHERE user_id = $1 AND used = false', [targetUserId]);
+
+    // Insert 24h setup token
+    await db.query(
+      `INSERT INTO legacy_setup_tokens (id, user_id, token_hash, created_by, expires_at)
+       VALUES ($1, $2, $3, $4, NOW() + INTERVAL '24 hours')`,
+      [tokenId, targetUserId, tokenHash, req.user.id]
+    );
+
+    await recordAudit(req.user.id, 'ADMIN_GENERATED_SETUP_TOKEN', {
+      targetUserId,
+      targetEmail: targetUser.email
+    });
+
+    res.json({
+      ok: true,
+      token: rawToken,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      user: { id: targetUser.id, email: targetUser.email }
+    });
+  } catch (err) {
+    console.error('Admin setup token error:', err);
+    res.status(500).json(formatErrorResponse(err, req.correlationId));
+  }
+});
+
+/**
+ * POST /api/admin/users/:id/initialize-password
+ * Allows an authorized administrator to initialize a strong password for an existing account.
+ */
+router.post('/users/:id/initialize-password', requireAdmin, async (req, res) => {
+  try {
+    const targetUserId = req.params.id;
+    const { password, confirmPassword } = req.body || {};
+
+    const pwCheck = validatePassword(password, confirmPassword !== undefined ? confirmPassword : null);
+    if (!pwCheck.valid) {
+      return res.status(400).json({ error: pwCheck.reason, field: 'password' });
+    }
+
+    const { rows } = await db.query('SELECT id, email, role FROM users WHERE id = $1', [targetUserId]);
+    const targetUser = rows[0];
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+
+    const hashedPassword = await hashPassword(password);
+    await db.query(
+      'UPDATE users SET password_hash = $1, password_initialized = true WHERE id = $2',
+      [hashedPassword, targetUserId]
+    );
+
+    // Invalidate active sessions to enforce fresh login
+    await db.query('UPDATE sessions SET revoked = true WHERE user_id = $1', [targetUserId]);
+
+    await recordAudit(req.user.id, 'ADMIN_INITIALIZED_USER_PASSWORD', {
+      targetUserId,
+      targetEmail: targetUser.email
+    });
+
+    res.json({
+      ok: true,
+      message: `Password initialized successfully for ${targetUser.email}. Prior sessions revoked.`
+    });
+  } catch (err) {
+    console.error('Admin initialize password error:', err);
     res.status(500).json(formatErrorResponse(err, req.correlationId));
   }
 });

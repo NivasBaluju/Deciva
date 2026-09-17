@@ -31,7 +31,7 @@ const fs = require('fs');
 const { chromium } = require('playwright');
 const db = require('../server/db');
 
-const BASE_URL = (process.env.CLIENT_URL || 'http://localhost:3000').replace(/\/+$/, '');
+const BASE_URL = (process.env.TEST_CLIENT_URL || 'http://localhost:3000').replace(/\/+$/, '');
 const GATEWAY_URL = (process.env.GATEWAY_URL || 'http://127.0.0.1:5000').replace(/\/+$/, '');
 
 // Detect system Chrome or Edge binary
@@ -88,6 +88,7 @@ async function runBrowserSuite() {
 
   const testEmail = `e2e_counsel_${Date.now()}@enterprise.com`;
   const testName = 'Sarah Jenkins, General Counsel';
+  const testPassword = 'SecurePassword2026!#$';
   let createdUserId = null;
   let uploadedDocId = null;
   const tempContractPath = path.join(__dirname, `temp_browser_contract_${Date.now()}.txt`);
@@ -157,7 +158,7 @@ async function runBrowserSuite() {
     // T14-02: Registration Form Validation & Submission
     // ------------------------------------------------------------------------
     await test('T14-02: Registration Form Validation & Submission', async () => {
-      await page.goto(`${BASE_URL}/#/register`, { waitUntil: 'networkidle' });
+      await page.goto(`${BASE_URL}/#/register`);
 
       // Wait for lazy Register component to mount
       await page.waitForSelector('form input#name', { timeout: 10000 });
@@ -171,64 +172,76 @@ async function runBrowserSuite() {
       const pageTextAfterEmpty = await page.innerText('body');
       assert.ok(
         pageTextAfterEmpty.includes('Please enter your full name') ||
-        pageTextAfterEmpty.includes('Please enter your corporate email'),
+        pageTextAfterEmpty.includes('Please enter your corporate email') ||
+        pageTextAfterEmpty.includes('Password is required'),
         'Empty registration submission must display field validation errors'
       );
 
-      // Fill valid registration credentials
+      // Test password mismatch validation
       await page.fill('input#name', testName);
       await page.fill('input#email', testEmail);
+      await page.fill('input#password', testPassword);
+      await page.fill('input#confirmPassword', 'DifferentPass123!');
+      await submitBtn.click();
+      await page.waitForTimeout(400);
+      const pageTextAfterMismatch = await page.innerText('body');
+      assert.ok(
+        pageTextAfterMismatch.includes('Passwords do not match'),
+        'Password mismatch must display validation error'
+      );
+
+      // Fill matching valid registration credentials
+      await page.fill('input#confirmPassword', testPassword);
       await submitBtn.click();
 
-      // Wait for navigation to /#/mfa
-      await page.waitForURL(/.*#\/mfa/, { timeout: 15000 });
+      // In password authentication architecture, registration establishes session directly
+      await page.waitForURL(/.*#\/dashboard/, { timeout: 20000 });
       const currentUrl = page.url();
-      assert.ok(currentUrl.includes('/mfa'), `Must navigate to MFA page, got: ${currentUrl}`);
+      assert.ok(currentUrl.includes('/dashboard'), `Must navigate to /dashboard after registration, got: ${currentUrl}`);
 
-      // Verify MFA screen rendered
-      await page.waitForSelector('#otpCode', { timeout: 10000 });
-      const mfaBody = await page.innerText('body');
-      assert.ok(mfaBody.includes(testEmail) || mfaBody.includes('Security Pass'), 'MFA screen must indicate destination email');
-    });
-
-    // ------------------------------------------------------------------------
-    // T14-03: Multi-Factor Authentication (MFA) & Passcode Validation
-    // ------------------------------------------------------------------------
-    await test('T14-03: Multi-Factor Authentication (MFA) & Passcode Validation', async () => {
-      // Find created user in PostgreSQL
+      // Verify user record created in PostgreSQL
       const { rows: userRows } = await db.query('SELECT id, email FROM users WHERE email = $1', [testEmail]);
       assert.ok(userRows.length > 0, `User ${testEmail} must exist in PostgreSQL`);
       createdUserId = userRows[0].id;
+    });
 
-      // Query OTP code from database
-      const { rows: otpRows } = await db.query(
-        "SELECT code FROM otp_codes WHERE user_id = $1 AND purpose = 'login' AND used = false ORDER BY created_at DESC LIMIT 1",
-        [createdUserId]
-      );
-      assert.ok(otpRows.length > 0, 'OTP code must exist in PostgreSQL otp_codes table');
-      const realOtp = otpRows[0].code;
+    // ------------------------------------------------------------------------
+    // T14-03: Password Login Verification & Session Establishment
+    // ------------------------------------------------------------------------
+    await test('T14-03: Password Login Verification & Session Establishment', async () => {
+      // Clear session via UI logout button
+      const logoutBtn = await page.waitForSelector('button[aria-label="Sign Out"], button:has-text("Sign Out"), button:has-text("Logout"), a:has-text("Sign Out")', { timeout: 5000 }).catch(() => null);
+      if (logoutBtn) {
+        await logoutBtn.click();
+      } else {
+        await context.clearCookies();
+        await page.goto(`${BASE_URL}/#/login`);
+      }
 
-      // Test invalid OTP
-      await page.fill('#otpCode', '000000');
-      const verifyBtn = await page.waitForSelector('form button[type="submit"]', { timeout: 5000 });
-      assert.ok(verifyBtn, 'Verify submit button must exist');
-      await verifyBtn.click();
-      await page.waitForTimeout(600);
+      await page.waitForSelector('form input#email', { timeout: 10000 });
+      await page.waitForSelector('form input#password', { timeout: 10000 });
+      const loginBtn = await page.waitForSelector('form button[type="submit"]', { timeout: 10000 });
 
-      const invalidMfaText = await page.innerText('body');
+      // Test invalid password rejection
+      await page.fill('input#email', testEmail);
+      await page.fill('input#password', 'WrongPassword123!');
+      await loginBtn.click();
+      await page.waitForTimeout(1000);
+
+      const invalidLoginText = await page.innerText('body');
       assert.ok(
-        invalidMfaText.includes('Incorrect') || invalidMfaText.includes('expired') || invalidMfaText.includes('verification code'),
-        'Submitting invalid OTP must render error feedback'
+        invalidLoginText.includes('Invalid email or password') || invalidLoginText.includes('Invalid') || invalidLoginText.includes('failed'),
+        'Submitting invalid password must render error feedback'
       );
 
-      // Submit valid OTP
-      await page.fill('#otpCode', realOtp);
-      await verifyBtn.click();
+      // Submit valid password
+      await page.fill('input#password', testPassword);
+      await loginBtn.click();
 
-      // Verification modal transition completes and redirects to /#/dashboard
+      // Navigation succeeds directly to dashboard
       await page.waitForURL(/.*#\/dashboard/, { timeout: 20000 });
       const dashUrl = page.url();
-      assert.ok(dashUrl.includes('/dashboard'), `Must navigate to /dashboard after valid MFA, got: ${dashUrl}`);
+      assert.ok(dashUrl.includes('/dashboard'), `Must navigate to /dashboard after valid login, got: ${dashUrl}`);
     });
 
     // ------------------------------------------------------------------------
@@ -554,6 +567,7 @@ async function runBrowserSuite() {
     if (createdUserId) {
       await db.query('DELETE FROM document_clauses WHERE document_id = $1', [uploadedDocId]).catch(() => {});
       await db.query('DELETE FROM documents WHERE user_id = $1', [createdUserId]).catch(() => {});
+      await db.query('DELETE FROM sessions WHERE user_id = $1', [createdUserId]).catch(() => {});
       await db.query('DELETE FROM otp_codes WHERE user_id = $1', [createdUserId]).catch(() => {});
       await db.query('DELETE FROM users WHERE id = $1', [createdUserId]).catch(() => {});
     }

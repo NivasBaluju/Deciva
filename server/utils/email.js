@@ -72,55 +72,12 @@ async function sendViaResend(toEmail, subject, text, html) {
   }
 }
 
-/** Send a styled Email OTP for Multi-Factor Authentication */
+/**
+ * @deprecated Phase 2: Email OTP authentication has been retired in favor of Password Authentication and RFC-6238 TOTP MFA.
+ */
 async function sendOtpEmail(toEmail, code) {
-  const html = `
-    <div style="font-family: Arial, sans-serif; background-color: #0b0f19; color: #e2e8f0; padding: 30px; border-radius: 12px; max-width: 500px; margin: 0 auto; border: 1px solid #1e293b;">
-      <div style="text-align: center; margin-bottom: 20px;">
-        <h2 style="color: #38bdf8; margin: 0; font-size: 24px;">Deciva</h2>
-        <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">Enterprise AI Legal Copilot — SOC Security</p>
-      </div>
-      <div style="background-color: #1e293b; padding: 20px; border-radius: 8px; text-align: center;">
-        <p style="margin-top: 0; color: #cbd5e1; font-size: 15px;">Your Multi-Factor Verification Code:</p>
-        <div style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #38bdf8; margin: 15px 0;">${code}</div>
-        <p style="font-size: 12px; color: #94a3b8; margin-bottom: 0;">This code will expire in <strong>10 minutes</strong>. Do not share it with anyone.</p>
-      </div>
-      <div style="margin-top: 25px; font-size: 11px; color: #64748b; text-align: center;">
-        <p>If you did not request this verification code, please secure your account immediately.</p>
-      </div>
-    </div>
-  `;
-  const subject = `[Deciva] Verification Code: ${code}`;
-  const text = `Your Deciva verification code is: ${code}. It expires in 10 minutes.`;
-
-  // 1. Try Resend HTTP API first (works on port 443, immune to cloud host SMTP port blocks)
-  if (process.env.RESEND_API_KEY) {
-    const resendRes = await sendViaResend(toEmail, subject, text, html);
-    if (resendRes) return resendRes;
-  }
-
-  // 2. Fallback to standard SMTP
-  const mailer = await getTransporter();
-  if (!mailer) {
-    console.warn(`[SMTP WARN] Outbound delivery requested for ${toEmail} — SMTP not configured.`);
-    return { devMode: true };
-  }
-
-
-  try {
-    await mailer.transporter.sendMail({
-      from: mailer.from,
-      to: toEmail,
-      subject: `[Deciva] Verification Code: ${code}`,
-      text: `Your Deciva verification code is: ${code}. It expires in 10 minutes.`,
-      html
-    });
-    return { devMode: false, success: true };
-  } catch (err) {
-    console.error('[SMTP ERROR] Email delivery failure for', toEmail, '—', err.message);
-    // [SECURITY] OTP must NOT be logged even on SMTP failure. User must retry or use TOTP.
-    return { devMode: false, deliveryFailed: true, error: err.message };
-  }
+  console.warn('[AUTH DEPRECATION] sendOtpEmail() called after Phase 2 OTP retirement.');
+  return { devMode: false, deliveryFailed: true, error: 'Email OTP authentication has been deprecated and retired' };
 }
 
 /** Send Welcome Email upon registration */
@@ -208,5 +165,6 @@ async function sendSecurityAlertEmail(toEmail, alertType, details) {
 module.exports = {
   sendOtpEmail,
   sendWelcomeEmail,
-  sendSecurityAlertEmail
+  sendSecurityAlertEmail,
+  sendViaResend
 };

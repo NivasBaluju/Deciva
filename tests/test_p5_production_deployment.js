@@ -152,13 +152,15 @@ async function main() {
   });
 
   // T17-08: Complete Database Migrations Verification
-  await runTest('T17-08: Complete Database Migrations Verification (19 migrations ordered & active)', async () => {
+  await runTest('T17-08: Complete Database Migrations Verification (20 migrations ordered & active)', async () => {
     const { rows } = await db.query('SELECT version, name FROM schema_migrations ORDER BY version ASC');
-    assert.strictEqual(rows.length, 19, `Expected exactly 19 applied migrations, found ${rows.length}`);
+    assert.strictEqual(rows.length, 20, `Expected exactly 20 applied migrations, found ${rows.length}`);
     const adminMigration = rows.find(r => r.version === '20260916_018_admin_role_governance');
     assert(adminMigration, 'Migration 20260916_018_admin_role_governance must be applied');
     const auditViewMigration = rows.find(r => r.version === '20260916_019_cryptographic_audit_ledger_view');
     assert(auditViewMigration, 'Migration 20260916_019_cryptographic_audit_ledger_view must be applied');
+    const passwordMigration = rows.find(r => r.version === '20260918_020_password_auth_governance');
+    assert(passwordMigration, 'Migration 20260918_020_password_auth_governance must be applied');
   });
 
   // T17-09: Production Health & Readiness Endpoints
@@ -238,37 +240,23 @@ async function main() {
   });
 
   // T17-14: End-to-End Authentication Journey Smoke
-  await runTest('T17-14: End-to-End Authentication Journey Smoke (Register -> OTP -> /me -> Logout)', async () => {
+  await runTest('T17-14: End-to-End Authentication Journey Smoke (Register -> Session -> /me -> Logout)', async () => {
     const testEmail = `t17_smoke_${Date.now()}@example.internal`;
+    const testPassword = 'SmokePassword123!@#';
     const regRes = await fetch(`${GATEWAY_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'Smoke Test User', email: testEmail })
+      body: JSON.stringify({ name: 'Smoke Test User', email: testEmail, password: testPassword, confirmPassword: testPassword })
     });
-    assert.strictEqual(regRes.status, 200, 'Registration must succeed');
+    assert.ok(regRes.status === 200 || regRes.status === 201, 'Registration must succeed');
     const regData = await regRes.json();
-    assert(regData.preToken, 'Must receive preToken for MFA step');
+    assert.strictEqual(regData.ok, true, 'Registration must return ok: true');
 
-    // Retrieve generated OTP from database
     const { rows: userRows } = await db.query('SELECT id FROM users WHERE email = $1', [testEmail]);
     const userId = userRows[0]?.id;
     assert(userId, 'User record must exist in database');
 
-    const { rows: otpRows } = await db.query(
-      `SELECT code FROM otp_codes WHERE user_id = $1 AND used = false ORDER BY created_at DESC LIMIT 1`,
-      [userId]
-    );
-    assert(otpRows.length > 0, 'OTP record must exist in database');
-    const otpCode = otpRows[0].code;
-
-    // Verify OTP and capture session cookie
-    const verifyRes = await fetch(`${GATEWAY_URL}/api/auth/mfa/otp/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ preToken: regData.preToken, code: otpCode })
-    });
-    assert.strictEqual(verifyRes.status, 200, 'OTP verification must return 200');
-    const cookieHeader = verifyRes.headers.get('set-cookie');
+    const cookieHeader = regRes.headers.get('set-cookie');
     assert(cookieHeader && cookieHeader.includes('token='), 'Must issue token cookie');
 
     // Call /api/auth/me using Cookie header
@@ -295,36 +283,60 @@ async function main() {
 
     // Clean up smoke user dependencies in proper order
     await db.query(`DELETE FROM sessions WHERE user_id = $1`, [userId]);
-    await db.query(`DELETE FROM otp_codes WHERE user_id = $1`, [userId]);
     await db.query(`DELETE FROM users WHERE id = $1`, [userId]);
   });
 
   // T17-15: Multi-Factor Authentication (MFA) Invariant Verification
   await runTest('T17-15: Multi-Factor Authentication (MFA) Invariant Verification', async () => {
+    const { authenticator } = require('otplib');
     const testEmail = `t17_mfa_${Date.now()}@example.internal`;
+    const testPassword = 'MfaPassword123!@#';
     const regRes = await fetch(`${GATEWAY_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'MFA Invariant User', email: testEmail })
+      body: JSON.stringify({ name: 'MFA Invariant User', email: testEmail, password: testPassword, confirmPassword: testPassword })
     });
-    const regData = await regRes.json();
+    assert.ok(regRes.status === 200 || regRes.status === 201, 'Registration must succeed');
 
-    // Invalid OTP must fail with 401
-    const badOtpRes = await fetch(`${GATEWAY_URL}/api/auth/mfa/otp/verify`, {
+    const { rows: userRows } = await db.query('SELECT id FROM users WHERE email = $1', [testEmail]);
+    const uid = userRows[0]?.id;
+    assert(uid, 'User record must exist in database');
+
+    // Enable TOTP MFA
+    const secret = authenticator.generateSecret();
+    const encryptedSecret = encryptSecret(secret);
+    await db.query('UPDATE users SET totp_secret = $1, mfa_enabled = true WHERE id = $2', [encryptedSecret, uid]);
+
+    // Login requiring MFA
+    const loginRes = await fetch(`${GATEWAY_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ preToken: regData.preToken, code: '999999' })
+      body: JSON.stringify({ email: testEmail, password: testPassword })
     });
-    assert.strictEqual(badOtpRes.status, 401, 'Invalid OTP must return 401');
+    assert.strictEqual(loginRes.status, 200, 'Login with MFA enabled should succeed with challenge');
+    const loginData = await loginRes.json();
+    assert.strictEqual(loginData.mfaRequired, true, 'mfaRequired should be true');
+
+    // Invalid TOTP must fail with 401
+    const badTotpRes = await fetch(`${GATEWAY_URL}/api/auth/mfa/totp/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ preToken: loginData.preToken, code: '999999' })
+    });
+    assert.strictEqual(badTotpRes.status, 401, 'Invalid TOTP must return 401');
+
+    // Valid TOTP must succeed
+    const validTotpCode = authenticator.generate(secret);
+    const validTotpRes = await fetch(`${GATEWAY_URL}/api/auth/mfa/totp/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ preToken: loginData.preToken, code: validTotpCode })
+    });
+    assert.strictEqual(validTotpRes.status, 200, 'Valid TOTP must return 200');
 
     // Clean up
-    const { rows: userRows } = await db.query('SELECT id FROM users WHERE email = $1', [testEmail]);
-    if (userRows.length > 0) {
-      const uid = userRows[0].id;
-      await db.query(`DELETE FROM otp_codes WHERE user_id = $1`, [uid]);
-      await db.query(`DELETE FROM sessions WHERE user_id = $1`, [uid]);
-      await db.query(`DELETE FROM users WHERE id = $1`, [uid]);
-    }
+    await db.query(`DELETE FROM sessions WHERE user_id = $1`, [uid]);
+    await db.query(`DELETE FROM users WHERE id = $1`, [uid]);
   });
 
   // T17-16: Strict Multi-Tenant Isolation & IDOR Protection

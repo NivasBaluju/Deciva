@@ -992,6 +992,26 @@ const MIGRATIONS = [
         created_at
       FROM blockchain_audit;
     `
+  },
+  {
+    version: '20260918_020_password_auth_governance',
+    name: 'Phase 2: Enterprise Password Authentication & Legacy Account Governance',
+    sql: `
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS password_initialized BOOLEAN NOT NULL DEFAULT FALSE;
+
+      CREATE TABLE IF NOT EXISTS legacy_setup_tokens (
+        id VARCHAR(36) PRIMARY KEY,
+        user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash VARCHAR(64) NOT NULL UNIQUE,
+        created_by VARCHAR(36) REFERENCES users(id) ON DELETE SET NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        used BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_legacy_setup_token_hash ON legacy_setup_tokens(token_hash);
+      CREATE INDEX IF NOT EXISTS idx_legacy_setup_user_id ON legacy_setup_tokens(user_id);
+    `
   }
 ];
 

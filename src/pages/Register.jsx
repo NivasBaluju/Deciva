@@ -10,10 +10,12 @@ import MetalFx from '../components/ui/MetalFx';
 export function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({ name: '', email: '' });
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [submitting, setSubmitting] = useState(false);
 
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, login, loading, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -33,9 +35,19 @@ export function Register() {
     if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
   };
 
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+    if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
+  };
+
+  const handleConfirmPasswordChange = (e) => {
+    setConfirmPassword(e.target.value);
+    if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: '' }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFieldErrors({ name: '', email: '' });
+    setFieldErrors({ name: '', email: '', password: '', confirmPassword: '' });
 
     let hasErr = false;
     if (!name.trim()) {
@@ -46,29 +58,43 @@ export function Register() {
       setFieldErrors((prev) => ({ ...prev, email: 'Please enter your corporate email' }));
       hasErr = true;
     }
+    if (!password) {
+      setFieldErrors((prev) => ({ ...prev, password: 'Password is required' }));
+      hasErr = true;
+    } else if (password.length < 8) {
+      setFieldErrors((prev) => ({ ...prev, password: 'Password must be at least 8 characters long' }));
+      hasErr = true;
+    }
+    if (password !== confirmPassword) {
+      setFieldErrors((prev) => ({ ...prev, confirmPassword: 'Passwords do not match' }));
+      hasErr = true;
+    }
     if (hasErr) return;
 
     setSubmitting(true);
     try {
       const cleanEmail = email.trim().toLowerCase();
-      const res = await Api.post('/api/auth/register', { name: name.trim(), email: cleanEmail });
-      sessionStorage.setItem('preToken', res.preToken);
-      sessionStorage.setItem('authEmail', cleanEmail);
-      if (res.backupPass) {
-        sessionStorage.setItem('backupPass', res.backupPass);
-      } else {
-        sessionStorage.removeItem('backupPass');
-      }
+      const res = await Api.post('/api/auth/register', {
+        name: name.trim(),
+        email: cleanEmail,
+        password,
+        confirmPassword
+      });
 
-      if (res.deliveryFailed) {
-        toast('Outbound mail was throttled by mail provider. Emergency pass ready.', 'warn');
-      } else {
-        toast('Verification pass dispatched to your email', 'ok');
+      if (res.user && res.token) {
+        await login(res.token, res.user);
       }
-      navigate('/mfa');
+      toast('Enterprise account created successfully', 'ok');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       const errMsg = err.message || 'Registration failed';
-      setFieldErrors({ name: '', email: errMsg });
+      if (errMsg.toLowerCase().includes('already exists')) {
+        setFieldErrors((prev) => ({ ...prev, email: errMsg }));
+      } else if (errMsg.toLowerCase().includes('password')) {
+        setFieldErrors((prev) => ({ ...prev, password: errMsg }));
+      } else {
+        setFieldErrors((prev) => ({ ...prev, email: errMsg }));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -100,10 +126,10 @@ export function Register() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="w-full">
+        <form onSubmit={handleSubmit} noValidate className="w-full flex flex-col gap-4">
           <FormField
             id="name"
-            label="Full Name & Title"
+            label="Full Name &amp; Title"
             required
             autoFocus
             value={name}
@@ -124,7 +150,31 @@ export function Register() {
             placeholder="counsel@enterprise.com"
           />
 
-          <div className="mt-8 mb-6">
+          <FormField
+            id="password"
+            label="Password (min 8 characters)"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={password}
+            onChange={handlePasswordChange}
+            error={fieldErrors.password}
+            placeholder="••••••••••••"
+          />
+
+          <FormField
+            id="confirmPassword"
+            label="Confirm Password"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={confirmPassword}
+            onChange={handleConfirmPasswordChange}
+            error={fieldErrors.confirmPassword}
+            placeholder="••••••••••••"
+          />
+
+          <div className="mt-4 mb-2">
             <MetalFx preset="chromatic" strength={0.90} className="w-full">
               <Button
                 type="submit"
@@ -133,12 +183,12 @@ export function Register() {
                 disabled={submitting}
                 className="w-full py-4 text-center font-medium"
               >
-                Register &amp; Receive Passcode
+                Create Enterprise Account
               </Button>
             </MetalFx>
           </div>
 
-          <div className="text-center pt-6 border-t border-rule text-body-sm text-ink-soft">
+          <div className="text-center pt-4 border-t border-rule text-body-sm text-ink-soft">
             Already have an account?{' '}
             <Link to="/login" className="editorial-link text-ink font-medium">
               Sign in

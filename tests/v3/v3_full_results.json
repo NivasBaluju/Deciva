@@ -50,39 +50,39 @@
     },
     {
       "id": "V3-AUTH01",
-      "cat": "Register User A - 200",
+      "cat": "Register User A - 200/201",
       "status": "PASS",
-      "expected": "200",
-      "actual": 200,
+      "expected": "200 or 201",
+      "actual": 201,
       "evidence": ""
     },
     {
       "id": "V3-AUTH02",
-      "cat": "Register triggers mfaRequired=true",
+      "cat": "Register directly authenticates session (no OTP required)",
       "status": "PASS",
-      "expected": "true",
+      "expected": "ok: true with token",
       "actual": true,
       "evidence": ""
     },
     {
       "id": "V3-AUTH03",
-      "cat": "OTP NOT in response body [SECURITY CRITICAL]",
+      "cat": "Password hash NOT in response body [SECURITY CRITICAL]",
       "status": "PASS",
-      "expected": "backupPass absent",
+      "expected": "password_hash absent",
       "actual": "absent",
-      "evidence": "auth.js:87 backupPass returned when deliveryFailed=true (SMTP configured but failing)"
+      "evidence": "password_hash must never be returned in API response body"
     },
     {
       "id": "V3-AUTH04",
-      "cat": "OTP stored in otp_codes table",
+      "cat": "Password hashed and initialized in PostgreSQL",
       "status": "PASS",
-      "expected": "code in DB",
-      "actual": "code present",
+      "expected": "bcrypt hash in DB",
+      "actual": "hash present",
       "evidence": ""
     },
     {
       "id": "V3-AUTH05",
-      "cat": "OTP verify returns full JWT",
+      "cat": "Password login returns full JWT",
       "status": "PASS",
       "expected": "token",
       "actual": "200 tok=true",
@@ -90,17 +90,17 @@
     },
     {
       "id": "V3-AUTH06",
-      "cat": "OTP replay rejected",
+      "cat": "Weak password rejected with 400",
       "status": "PASS",
-      "expected": "4xx",
-      "actual": 401,
-      "evidence": "Replay consumed OTP"
+      "expected": "400",
+      "actual": 400,
+      "evidence": "Password policy enforcement"
     },
     {
       "id": "V3-AUTH07",
-      "cat": "Wrong OTP rejected",
+      "cat": "Wrong password rejected with 401",
       "status": "PASS",
-      "expected": "4xx",
+      "expected": "401",
       "actual": 401,
       "evidence": ""
     },
@@ -122,18 +122,18 @@
     },
     {
       "id": "V3-AUTH10",
-      "cat": "preToken cannot access protected routes",
+      "cat": "Deprecated email OTP route returns 410 Gone",
       "status": "PASS",
-      "expected": "401",
-      "actual": 401,
-      "evidence": "preToken (preauth=true) used on /api/documents"
+      "expected": "410",
+      "actual": 410,
+      "evidence": "OTP retired in Phase 2"
     },
     {
       "id": "V3-AUTH11",
-      "cat": "Register User B - 200",
+      "cat": "Register User B - 200/201",
       "status": "PASS",
-      "expected": "200",
-      "actual": 200,
+      "expected": "200 or 201",
+      "actual": 201,
       "evidence": ""
     },
     {
@@ -173,7 +173,7 @@
       "cat": "Rate limiting triggers 429 on rapid requests",
       "status": "PASS",
       "expected": "any 429",
-      "actual": "200,200,200,200,200,429,429,429,429,429",
+      "actual": "400,400,429,429,429,429,429,429,429,429",
       "evidence": "10 concurrent register"
     },
     {
@@ -182,7 +182,7 @@
       "status": "PASS",
       "expected": "201",
       "actual": 201,
-      "evidence": "4705ms Flask=true"
+      "evidence": "4235ms Flask=true"
     },
     {
       "id": "V3-DOC02",
@@ -197,7 +197,7 @@
       "cat": "Doc A user_id correct",
       "status": "PASS",
       "expected": "matches userA",
-      "actual": "be39bdb4",
+      "actual": "36f0cd9c",
       "evidence": ""
     },
     {
@@ -221,7 +221,7 @@
       "cat": "Upload creates DOCUMENT_UPLOADED audit",
       "status": "PASS",
       "expected": "DOCUMENT_UPLOADED",
-      "actual": "DOCUMENT_UPLOADED,LOGIN_SUCCESS,USER_REGISTERED",
+      "actual": "DOCUMENT_UPLOADED,LOGIN_SUCCESS,LOGIN_SUCCESS,USER_REGISTERED",
       "evidence": ""
     },
     {
@@ -477,16 +477,16 @@
       "cat": "SQL injection in chat does not drop users table",
       "status": "PASS",
       "expected": "users table intact",
-      "actual": "users count=295",
+      "actual": "users count=312",
       "evidence": "chat status=200"
     },
     {
       "id": "V3-SEC02",
-      "cat": "XSS in name field sanitized or stored safely",
-      "status": "PASS",
-      "expected": "no <script> tag stored",
-      "actual": "alert(1)",
-      "evidence": "DB users.name"
+      "cat": "XSS in name field",
+      "status": "BLOCKED",
+      "expected": "check",
+      "actual": 400,
+      "evidence": ""
     },
     {
       "id": "V3-SEC03",
@@ -617,9 +617,9 @@
       "evidence": ""
     }
   ],
-  "PASS": 77,
+  "PASS": 76,
   "FAIL": 0,
-  "BLOCKED": 0,
+  "BLOCKED": 1,
   "passRate": 100,
-  "ts": "2026-09-17T04:37:00.121Z"
+  "ts": "2026-09-17T11:17:59.101Z"
 }

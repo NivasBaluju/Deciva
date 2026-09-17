@@ -158,13 +158,15 @@ async function main() {
   });
 
   // Setup database records for live testing
+  const { hashPassword } = require('../server/utils/passwordPolicy');
   const testUserId = uuidv4();
   const testEmail = `cookie-test-${Date.now()}@deciva.test`;
-  const dummyPasswordHash = '$2a$10$abcdefghijklmnopqrstuvwxyzABCDE';
+  const testPassword = 'CookieTesterPass123!';
+  const hashedPassword = await hashPassword(testPassword);
 
   await pool.query(
-    'INSERT INTO users (id, name, email, password_hash, role, mfa_enabled) VALUES ($1, $2, $3, $4, $5, true)',
-    [testUserId, 'CookieTester', testEmail, dummyPasswordHash, 'user']
+    'INSERT INTO users (id, name, email, password_hash, role, mfa_enabled, password_initialized) VALUES ($1, $2, $3, $4, $5, false, true)',
+    [testUserId, 'CookieTester', testEmail, hashedPassword, 'user']
   );
 
   const testApp = createTestApp();
@@ -173,30 +175,19 @@ async function main() {
   await new Promise((resolve) => testServer.listen(0, '127.0.0.1', resolve));
 
   try {
-    // Test 3: OTP verification issues HttpOnly token cookie + JSON
-    let issuedTokenFromOtp = null;
-    let cookieHeaderFromOtp = null;
+    // Test 3: Password Login issues HttpOnly token cookie + JSON
+    let issuedTokenFromLogin = null;
+    let cookieHeaderFromLogin = null;
 
-    await runAsyncTest('Test 3: POST /api/auth/mfa/otp/verify issues HttpOnly token cookie alongside JSON response', async () => {
-      // Seed OTP code in database
-      const code = '789123';
-      const otpId = uuidv4();
-      await pool.query(
-        `INSERT INTO otp_codes (id, user_id, code, purpose, expires_at, used)
-         VALUES ($1, $2, $3, 'login', NOW() + INTERVAL '10 minutes', false)`,
-        [otpId, testUserId, code]
-      );
-
-      const preToken = jwt.sign({ preauth: true, userId: testUserId }, JWT_SECRET, { expiresIn: '10m' });
-
-      const res = await requestHttp(testServer, 'POST', '/api/auth/mfa/otp/verify', {}, {
-        preToken,
-        code
+    await runAsyncTest('Test 3: POST /api/auth/login issues HttpOnly token cookie alongside JSON response', async () => {
+      const res = await requestHttp(testServer, 'POST', '/api/auth/login', {}, {
+        email: testEmail,
+        password: testPassword
       });
 
       assert.strictEqual(res.statusCode, 200, `Expected 200 OK, got ${res.statusCode}`);
       assert(res.body && res.body.token, 'Response body must contain token for backward compatibility');
-      issuedTokenFromOtp = res.body.token;
+      issuedTokenFromLogin = res.body.token;
 
       const setCookie = res.headers['set-cookie'];
       assert(Array.isArray(setCookie) && setCookie.length > 0, 'Set-Cookie header must be present');
@@ -204,7 +195,7 @@ async function main() {
       assert(tokenCookie, 'token cookie must be set');
       assert(/httponly/i.test(tokenCookie), 'token cookie must have HttpOnly flag');
       assert(/path=\//i.test(tokenCookie), 'token cookie must have Path=/');
-      cookieHeaderFromOtp = tokenCookie.split(';')[0]; // e.g. token=ey...
+      cookieHeaderFromLogin = tokenCookie.split(';')[0]; // e.g. token=ey...
     });
 
     // Test 4: TOTP verification issues HttpOnly token cookie + JSON
@@ -212,13 +203,19 @@ async function main() {
       const { authenticator } = require('otplib');
       const secret = authenticator.generateSecret();
       const encryptedSecret = encryptSecret(secret);
-      await pool.query('UPDATE users SET totp_secret = $1 WHERE id = $2', [encryptedSecret, testUserId]);
+      await pool.query('UPDATE users SET totp_secret = $1, mfa_enabled = true WHERE id = $2', [encryptedSecret, testUserId]);
+
+      const loginRes = await requestHttp(testServer, 'POST', '/api/auth/login', {}, {
+        email: testEmail,
+        password: testPassword
+      });
+      assert.strictEqual(loginRes.statusCode, 200, 'Login with MFA enabled should succeed');
+      assert.strictEqual(loginRes.body.mfaRequired, true, 'mfaRequired should be true');
+      assert(loginRes.body.preToken, 'preToken must be returned');
 
       const totpCode = authenticator.generate(secret);
-      const preToken = jwt.sign({ preauth: true, userId: testUserId }, JWT_SECRET, { expiresIn: '10m' });
-
       const res = await requestHttp(testServer, 'POST', '/api/auth/mfa/totp/verify', {}, {
-        preToken,
+        preToken: loginRes.body.preToken,
         code: totpCode
       });
 
@@ -233,9 +230,9 @@ async function main() {
 
     // Test 6: GET /api/auth/me succeeds with Cookie header alone (no Authorization header)
     await runAsyncTest('Test 6: GET /api/auth/me authenticates successfully using strictly Cookie header', async () => {
-      assert(cookieHeaderFromOtp, 'Must have cookieHeaderFromOtp from Test 3');
+      assert(cookieHeaderFromLogin, 'Must have cookieHeaderFromLogin from Test 3');
       const res = await requestHttp(testServer, 'GET', '/api/auth/me', {
-        'Cookie': cookieHeaderFromOtp
+        'Cookie': cookieHeaderFromLogin
         // Notice: NO Authorization header!
       });
 
@@ -258,14 +255,14 @@ async function main() {
 
     // Test 8: GET /api/auth/me with revoked session returns 401
     await runAsyncTest('Test 8: GET /api/auth/me with revoked session returns 401 Unauthorized', async () => {
-      const payload = jwt.decode(issuedTokenFromOtp);
+      const payload = jwt.decode(issuedTokenFromLogin);
       assert(payload && payload.sessionId, 'SessionId must be in payload');
 
       // Revoke this specific session in PostgreSQL
       await pool.query('UPDATE sessions SET revoked = true WHERE id = $1', [payload.sessionId]);
 
       const res = await requestHttp(testServer, 'GET', '/api/auth/me', {
-        'Cookie': cookieHeaderFromOtp
+        'Cookie': cookieHeaderFromLogin
       });
 
       assert.strictEqual(res.statusCode, 401, `Expected 401 for revoked session, got ${res.statusCode}`);
