@@ -25,7 +25,8 @@ const { createDeterministicProvenance } = require('../utils/aiProvenance');
 
 const FLASK_HOST = process.env.FLASK_HOST || '127.0.0.1';
 const FLASK_PORT = process.env.FLASK_PORT || 5001;
-const AI_MICROSERVICE_URL = (process.env.AI_MICROSERVICE_URL || `http://${FLASK_HOST}:${FLASK_PORT}`).replace(/\/+$/, '');
+const rawAiUrl = (process.env.AI_MICROSERVICE_URL || `http://${FLASK_HOST}:${FLASK_PORT}`).trim();
+const AI_MICROSERVICE_URL = (rawAiUrl.startsWith('http://') || rawAiUrl.startsWith('https://') ? rawAiUrl : `http://${rawAiUrl}`).replace(/\/+$/, '');
 const INTERNAL_KEY = getInternalServiceKey();
 
 const DECISION_DISCLAIMER = "This decision intelligence brief is grounded in detected contract evidence and deterministic decision logic. It provides structured guidance and does not constitute formal legal counsel.";

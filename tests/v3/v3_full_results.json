@@ -182,7 +182,7 @@
       "status": "PASS",
       "expected": "201",
       "actual": 201,
-      "evidence": "4547ms Flask=true"
+      "evidence": "4705ms Flask=true"
     },
     {
       "id": "V3-DOC02",
@@ -197,7 +197,7 @@
       "cat": "Doc A user_id correct",
       "status": "PASS",
       "expected": "matches userA",
-      "actual": "bd1044d9",
+      "actual": "be39bdb4",
       "evidence": ""
     },
     {
@@ -477,7 +477,7 @@
       "cat": "SQL injection in chat does not drop users table",
       "status": "PASS",
       "expected": "users table intact",
-      "actual": "users count=281",
+      "actual": "users count=295",
       "evidence": "chat status=200"
     },
     {
@@ -621,5 +621,5 @@
   "FAIL": 0,
   "BLOCKED": 0,
   "passRate": 100,
-  "ts": "2026-09-16T18:26:48.916Z"
+  "ts": "2026-09-17T04:37:00.121Z"
 }

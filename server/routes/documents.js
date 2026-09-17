@@ -39,7 +39,8 @@ const { recordAiTelemetry } = require('../utils/aiTelemetry');
 const logger = require('../utils/logger');
 const { getInternalServiceKey } = require('../services/productionConfigService');
 
-const AI_MICROSERVICE_URL = (process.env.AI_MICROSERVICE_URL || 'http://127.0.0.1:5001').replace(/\/+$/, '');
+const rawAiUrl = (process.env.AI_MICROSERVICE_URL || 'http://127.0.0.1:5001').trim();
+const AI_MICROSERVICE_URL = (rawAiUrl.startsWith('http://') || rawAiUrl.startsWith('https://') ? rawAiUrl : `http://${rawAiUrl}`).replace(/\/+$/, '');
 const INTERNAL_SERVICE_KEY = getInternalServiceKey();
 
 function getInternalHeaders(reqOrExtra = {}, extraHeaders = {}) {

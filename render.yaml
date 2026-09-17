@@ -1,20 +1,20 @@
 services:
   # ---------------------------------------------------------------------------
   # Tier 2: Node.js / Express API Gateway
+  # Note: Configured with plan: free for non-production verification.
+  # For high-throughput production SLA, restore plan: starter.
   # ---------------------------------------------------------------------------
   - type: web
     name: deciva-api-gateway
     env: node
-    plan: starter
-    buildCommand: npm ci --production && npm run build
+    plan: free
+    buildCommand: npm ci && npm run build
     startCommand: node server/index.js
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 5000
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
@@ -36,18 +36,21 @@ services:
 
   # ---------------------------------------------------------------------------
   # Tier 4: Python / Flask AI Microservice
+  # Note: Configured with plan: free and --workers 1 for non-production
+  # verification to strictly respect Render Free instance memory limits (512MB).
+  # For high-concurrency production SLA, restore plan: starter and --workers 2.
   # ---------------------------------------------------------------------------
   - type: web
     name: deciva-ai-backend
     env: python
-    plan: starter
+    plan: free
     buildCommand: pip install -r backend/requirements.txt
-    startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
     healthCheckPath: /health
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.5
+        value: 3.11.9
       - key: FLASK_ENV
         value: production
       - key: DATABASE_URL

@@ -34,7 +34,8 @@ const logger = require('./utils/logger');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const AI_MICROSERVICE_URL = (process.env.AI_MICROSERVICE_URL || 'http://127.0.0.1:5001').replace(/\/+$/, '');
+const rawAiUrl = (process.env.AI_MICROSERVICE_URL || 'http://127.0.0.1:5001').trim();
+const AI_MICROSERVICE_URL = (rawAiUrl.startsWith('http://') || rawAiUrl.startsWith('https://') ? rawAiUrl : `http://${rawAiUrl}`).replace(/\/+$/, '');
 
 // Trust reverse proxy hops (Vercel, Cloudflare, Nginx, ALB) for accurate client IP identification
 app.set('trust proxy', 1);
