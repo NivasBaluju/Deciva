@@ -104,7 +104,7 @@ async function main() {
     assert(apiJs.includes("credentials: 'include'"), "Frontend api.js must specify credentials: 'include'");
 
     const vercelJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'vercel.json'), 'utf8'));
-    assert(vercelJson.routes.some(r => r.dest === 'server/index.js' && r.src.includes('/api/')), 'vercel.json must route /api/ to server/index.js');
+    assert(vercelJson.routes.some(r => (r.dest === 'server/index.js' || r.dest.includes('deciva-api-gateway.onrender.com')) && r.src.includes('/api/')), 'vercel.json must route /api/ to server/index.js or Render Gateway proxy');
     assert(vercelJson.routes.some(r => r.dest === '/index.html'), 'vercel.json must route SPA paths to /index.html');
   });
 
