@@ -763,7 +763,7 @@ function complianceCheck(text) {
   return results;
 }
 
-const DATE_REGEX = /\b(?:(\d{1,2})(?:st|nd|rd|th)?\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})|(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})|(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4}))\b/gi;
+const DATE_REGEX = /\b(?:(\d{1,2})(?:st|nd|rd|th)?\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})|(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})|(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4}|\d{2}))\b/gi;
 
 const DEADLINE_CONTEXT = {
   renewal: /renew(al|s|ed)?/i,
@@ -777,6 +777,9 @@ function extractDeadlines(text) {
   const deadlines = [];
 
   sentences.forEach((sentence, idx) => {
+    // Exclude parcel numbers, tax IDs, and property identifiers
+    if (/tax\s*parcel|parcel\s*no|parcel\s*id|parcel\s*identification/i.test(sentence)) return;
+
     const dateMatches = sentence.match(DATE_REGEX);
     if (!dateMatches) return;
 
@@ -786,6 +789,12 @@ function extractDeadlines(text) {
     }
 
     dateMatches.forEach(dateStr => {
+      // Validate year is within a reasonable contract horizon (1990 - 2099)
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed.getTime())) {
+        const y = parsed.getFullYear();
+        if (y < 1990 || y > 2099) return;
+      }
       deadlines.push({
         date: dateStr,
         category,
