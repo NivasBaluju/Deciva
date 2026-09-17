@@ -47,42 +47,51 @@ export const ShareTab = ({ doc }) => {
         Secure Encrypted Link Sharing
       </div>
 
-      <form id="shareForm" onSubmit={handleSubmit} style={{ marginTop: '16px' }}>
-        <div className="grid grid-3">
-          <div>
-            <label>Access Password (optional)</label>
+      <form id="shareForm" onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+          <div className="input-group" style={{ marginBottom: 0 }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-soft, #94a3b8)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Access Password (Optional)
+            </label>
             <input
               name="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Leave blank for none"
+              className="form-input"
             />
           </div>
-          <div>
-            <label>Expires in (hours)</label>
+          <div className="input-group" style={{ marginBottom: 0 }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-soft, #94a3b8)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Expires In (Hours)
+            </label>
             <input
               name="expiresInHours"
               type="number"
               value={expiresInHours}
               onChange={(e) => setExpiresInHours(e.target.value)}
               placeholder="e.g. 48"
+              className="form-input"
             />
           </div>
-          <div>
-            <label>Max Downloads</label>
+          <div className="input-group" style={{ marginBottom: 0 }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-soft, #94a3b8)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Max Downloads
+            </label>
             <input
               name="maxDownloads"
               type="number"
               value={maxDownloads}
               onChange={(e) => setMaxDownloads(e.target.value)}
               placeholder="e.g. 3"
+              className="form-input"
             />
           </div>
         </div>
 
         <motion.button
-          className="btn btn-royal mt-16"
+          className="btn btn-royal mt-20"
           type="submit"
           disabled={submitting}
           {...buttonMotion}
