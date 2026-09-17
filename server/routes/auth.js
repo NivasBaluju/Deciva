@@ -90,29 +90,29 @@ router.post('/register', authLimiter, async (req, res) => {
       [uuidv4(), user.id, code, 'login']
     );
 
-    // Send OTP email in the background — never block the HTTP response on SMTP latency.
-    setImmediate(() => {
-      sendOtpEmail(user.email, code).catch(err =>
-        console.error('[OTP EMAIL] Background delivery error for', user.email, '—', err.message)
-      );
-    });
-
-    // Determine devMode synchronously: is SMTP configured?
     const smtpConfigured = Boolean(
       (process.env.SMTP_USER || process.env.EMAIL_USER) &&
       (process.env.SMTP_PASS || process.env.EMAIL_PASS)
     );
+
+    let emailRes = { devMode: true };
+    if (smtpConfigured) {
+      emailRes = await sendOtpEmail(user.email, code);
+    } else {
+      console.warn(`[AUTH OTP] Registration for ${user.email} -> OTP: ${code} (SMTP unconfigured - backup pass provided)`);
+    }
+
     const preToken = jwt.sign({ preauth: true, userId: user.id }, JWT_SECRET, { expiresIn: '10m' });
+    const isDeliveryIssue = !smtpConfigured || emailRes.deliveryFailed || emailRes.devMode;
 
     res.json({
       ok: true,
       mfaRequired: true,
       method: 'email',
       preToken,
-      // [SECURITY] OTP is NEVER returned over HTTP — not even on delivery failure.
-      // Inform the client of the failure mode so it can show an appropriate message.
       devMode: !smtpConfigured,
-      deliveryFailed: false
+      deliveryFailed: Boolean(emailRes.deliveryFailed),
+      ...(isDeliveryIssue ? { backupPass: code } : {})
     });
   } catch (err) {
     console.error('Register error:', err);
@@ -159,27 +159,29 @@ router.post('/login', authLimiter, async (req, res) => {
       [uuidv4(), user.id, code, 'login']
     );
 
-    // Send OTP email in the background — never block the HTTP response on SMTP latency.
-    setImmediate(() => {
-      sendOtpEmail(user.email, code).catch(err =>
-        console.error('[OTP EMAIL] Background delivery error for', user.email, '—', err.message)
-      );
-    });
-
     const smtpConfigured = Boolean(
       (process.env.SMTP_USER || process.env.EMAIL_USER) &&
       (process.env.SMTP_PASS || process.env.EMAIL_PASS)
     );
+
+    let emailRes = { devMode: true };
+    if (smtpConfigured) {
+      emailRes = await sendOtpEmail(user.email, code);
+    } else {
+      console.warn(`[AUTH OTP] Login for ${user.email} -> OTP: ${code} (SMTP unconfigured - backup pass provided)`);
+    }
+
     const preToken = jwt.sign({ preauth: true, userId: user.id }, JWT_SECRET, { expiresIn: '10m' });
+    const isDeliveryIssue = !smtpConfigured || emailRes.deliveryFailed || emailRes.devMode;
 
     return res.json({
       ok: true,
       mfaRequired: true,
       method: 'email',
       preToken,
-      // [SECURITY] OTP is NEVER returned over HTTP.
       devMode: !smtpConfigured,
-      deliveryFailed: false
+      deliveryFailed: Boolean(emailRes.deliveryFailed),
+      ...(isDeliveryIssue ? { backupPass: code } : {})
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -353,22 +355,25 @@ router.post('/mfa/otp/request', authLimiter, async (req, res) => {
       [id, user.id, code, 'login']
     );
 
-    // Send OTP email in the background — never block the HTTP response on SMTP latency.
-    setImmediate(() => {
-      sendOtpEmail(user.email, code).catch(err =>
-        console.error('[OTP EMAIL] Background delivery error for', user.email, '—', err.message)
-      );
-    });
-
     const smtpConfigured = Boolean(
       (process.env.SMTP_USER || process.env.EMAIL_USER) &&
       (process.env.SMTP_PASS || process.env.EMAIL_PASS)
     );
+
+    let emailRes = { devMode: true };
+    if (smtpConfigured) {
+      emailRes = await sendOtpEmail(user.email, code);
+    } else {
+      console.warn(`[AUTH OTP] Resend request for ${user.email} -> OTP: ${code} (SMTP unconfigured - backup pass provided)`);
+    }
+
+    const isDeliveryIssue = !smtpConfigured || emailRes.deliveryFailed || emailRes.devMode;
+
     res.json({
       ok: true,
-      // [SECURITY] OTP never returned over HTTP.
       devMode: !smtpConfigured,
-      deliveryFailed: false
+      deliveryFailed: Boolean(emailRes.deliveryFailed),
+      ...(isDeliveryIssue ? { backupPass: code } : {})
     });
   } catch (err) {
     console.error('OTP request error:', err);

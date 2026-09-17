@@ -33,6 +33,14 @@ services:
           property: host
       - key: CLIENT_URL
         value: https://deciva-ai.vercel.app
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
 
   # ---------------------------------------------------------------------------
   # Tier 4: Python / Flask AI Microservice

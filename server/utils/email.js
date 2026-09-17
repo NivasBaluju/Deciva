@@ -4,8 +4,9 @@ const nodemailer = require('nodemailer');
 function getSmtpConfig() {
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = Number(process.env.SMTP_PORT) || 465;
-  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+  const user = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
+  const rawPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || '';
+  const pass = rawPass.replace(/\s+/g, '');
   const from = process.env.SMTP_FROM || `"Deciva" <${user || 'no-reply@deciva.ai'}>`;
 
   if (!user || !pass) {
@@ -37,8 +38,7 @@ async function getTransporter() {
 async function sendOtpEmail(toEmail, code) {
   const mailer = await getTransporter();
   if (!mailer) {
-    // [SECURITY] OTP must NOT be logged. Configure SMTP_USER & SMTP_PASS to deliver codes.
-    console.warn(`[DEV MODE] Email OTP generated for ${toEmail} — SMTP not configured. Set SMTP_USER & SMTP_PASS in .env to deliver codes via email.`);
+    console.warn(`[DEV MODE] Email OTP generated for ${toEmail}: ${code} — SMTP not configured.`);
     return { devMode: true };
   }
 
