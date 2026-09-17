@@ -44,6 +44,15 @@ function getClearCookieOptions() {
   };
 }
 
+// [SECURITY] Gated non-production development/test emergency OTP fallback.
+// In production (NODE_ENV === 'production'), this is strictly hard-coded to false.
+function isDevOtpFallbackAllowed() {
+  return (
+    process.env.NODE_ENV !== 'production' &&
+    process.env.MFA_DEV_FALLBACK === 'true'
+  );
+}
+
 router.post('/register', authLimiter, async (req, res) => {
   try {
     const { name, email } = req.body;
@@ -90,20 +99,31 @@ router.post('/register', authLimiter, async (req, res) => {
       [uuidv4(), user.id, code, 'login']
     );
 
+    const isProduction = process.env.NODE_ENV === 'production';
     const smtpConfigured = Boolean(
       (process.env.SMTP_USER || process.env.EMAIL_USER) &&
       (process.env.SMTP_PASS || process.env.EMAIL_PASS)
     );
 
-    let emailRes = { devMode: true };
+    let emailRes = { devMode: !smtpConfigured };
     if (smtpConfigured) {
       emailRes = await sendOtpEmail(user.email, code);
     } else {
-      console.warn(`[AUTH OTP] Registration for ${user.email} -> OTP: ${code} (SMTP unconfigured - backup pass provided)`);
+      console.warn(`[AUTH] Outbound verification requested for user ${user.id} (SMTP not configured)`);
+    }
+
+    // In production, if SMTP is unavailable or delivery failed, reject with generic error (no OTP leak):
+    if (isProduction && (!smtpConfigured || emailRes.deliveryFailed)) {
+      return res.status(503).json({
+        error: 'Verification code could not be delivered. Please try again.',
+        deliveryFailed: true
+      });
     }
 
     const preToken = jwt.sign({ preauth: true, userId: user.id }, JWT_SECRET, { expiresIn: '10m' });
-    const isDeliveryIssue = !smtpConfigured || emailRes.deliveryFailed || emailRes.devMode;
+
+    // Strictly gate non-production test fallback: requires NODE_ENV !== 'production' AND MFA_DEV_FALLBACK === 'true'
+    const includeDevBackup = isDevOtpFallbackAllowed() && (!smtpConfigured || emailRes.deliveryFailed);
 
     res.json({
       ok: true,
@@ -112,7 +132,7 @@ router.post('/register', authLimiter, async (req, res) => {
       preToken,
       devMode: !smtpConfigured,
       deliveryFailed: Boolean(emailRes.deliveryFailed),
-      ...(isDeliveryIssue ? { backupPass: code } : {})
+      ...(includeDevBackup ? { backupPass: code } : {})
     });
   } catch (err) {
     console.error('Register error:', err);
@@ -159,20 +179,28 @@ router.post('/login', authLimiter, async (req, res) => {
       [uuidv4(), user.id, code, 'login']
     );
 
+    const isProduction = process.env.NODE_ENV === 'production';
     const smtpConfigured = Boolean(
       (process.env.SMTP_USER || process.env.EMAIL_USER) &&
       (process.env.SMTP_PASS || process.env.EMAIL_PASS)
     );
 
-    let emailRes = { devMode: true };
+    let emailRes = { devMode: !smtpConfigured };
     if (smtpConfigured) {
       emailRes = await sendOtpEmail(user.email, code);
     } else {
-      console.warn(`[AUTH OTP] Login for ${user.email} -> OTP: ${code} (SMTP unconfigured - backup pass provided)`);
+      console.warn(`[AUTH] Login verification requested for user ${user.id} (SMTP not configured)`);
+    }
+
+    if (isProduction && (!smtpConfigured || emailRes.deliveryFailed)) {
+      return res.status(503).json({
+        error: 'Verification code could not be delivered. Please try again.',
+        deliveryFailed: true
+      });
     }
 
     const preToken = jwt.sign({ preauth: true, userId: user.id }, JWT_SECRET, { expiresIn: '10m' });
-    const isDeliveryIssue = !smtpConfigured || emailRes.deliveryFailed || emailRes.devMode;
+    const includeDevBackup = isDevOtpFallbackAllowed() && (!smtpConfigured || emailRes.deliveryFailed);
 
     return res.json({
       ok: true,
@@ -181,7 +209,7 @@ router.post('/login', authLimiter, async (req, res) => {
       preToken,
       devMode: !smtpConfigured,
       deliveryFailed: Boolean(emailRes.deliveryFailed),
-      ...(isDeliveryIssue ? { backupPass: code } : {})
+      ...(includeDevBackup ? { backupPass: code } : {})
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -355,25 +383,33 @@ router.post('/mfa/otp/request', authLimiter, async (req, res) => {
       [id, user.id, code, 'login']
     );
 
+    const isProduction = process.env.NODE_ENV === 'production';
     const smtpConfigured = Boolean(
       (process.env.SMTP_USER || process.env.EMAIL_USER) &&
       (process.env.SMTP_PASS || process.env.EMAIL_PASS)
     );
 
-    let emailRes = { devMode: true };
+    let emailRes = { devMode: !smtpConfigured };
     if (smtpConfigured) {
       emailRes = await sendOtpEmail(user.email, code);
     } else {
-      console.warn(`[AUTH OTP] Resend request for ${user.email} -> OTP: ${code} (SMTP unconfigured - backup pass provided)`);
+      console.warn(`[AUTH] Resend verification requested for user ${user.id} (SMTP not configured)`);
     }
 
-    const isDeliveryIssue = !smtpConfigured || emailRes.deliveryFailed || emailRes.devMode;
+    if (isProduction && (!smtpConfigured || emailRes.deliveryFailed)) {
+      return res.status(503).json({
+        error: 'Verification code could not be delivered. Please try again.',
+        deliveryFailed: true
+      });
+    }
+
+    const includeDevBackup = isDevOtpFallbackAllowed() && (!smtpConfigured || emailRes.deliveryFailed);
 
     res.json({
       ok: true,
       devMode: !smtpConfigured,
       deliveryFailed: Boolean(emailRes.deliveryFailed),
-      ...(isDeliveryIssue ? { backupPass: code } : {})
+      ...(includeDevBackup ? { backupPass: code } : {})
     });
   } catch (err) {
     console.error('OTP request error:', err);

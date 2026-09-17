@@ -38,7 +38,7 @@ async function getTransporter() {
 async function sendOtpEmail(toEmail, code) {
   const mailer = await getTransporter();
   if (!mailer) {
-    console.warn(`[DEV MODE] Email OTP generated for ${toEmail}: ${code} — SMTP not configured.`);
+    console.warn(`[SMTP WARN] Outbound delivery requested for ${toEmail} — SMTP not configured.`);
     return { devMode: true };
   }
 
